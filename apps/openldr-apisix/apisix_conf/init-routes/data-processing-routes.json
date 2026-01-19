@@ -1,0 +1,26 @@
+[
+  {
+    "id": "data-processing-manual-data-entry-route",
+    "uri": "/api/v1/openldr/event/manual-data-entry",
+    "name": "Data processing manual data entry route",
+    "methods": ["POST", "OPTIONS"],
+    "rewrite_uri": ["/api/v1/openldr/event/manual-data-entry", "/data-processing/manual-data-entry"],
+    "upstream_url": "${DATA_PROCESSING_URL}"
+  },
+  {
+    "id": "data-processing-send-message-route",
+    "uri": "/api/v1/openldr/event/send-message",
+    "name": "Data processing send-message route",
+    "methods": ["POST", "OPTIONS"],
+    "rewrite_uri": ["/api/v1/openldr/event/send-message", "/data-processing/send-message"],
+    "upstream_url": "${DATA_PROCESSING_URL}"
+  },
+  {
+    "id": "data-processing-process-feed-route",
+    "uri": "/api/v1/openldr/event/process-feed",
+    "name": "Data processing process-feed route",
+    "methods": ["POST", "OPTIONS"],
+    "rewrite_uri": ["/api/v1/openldr/event/process-feed", "/data-processing/process-feed"],
+    "upstream_url": "${DATA_PROCESSING_URL}"
+  }
+]

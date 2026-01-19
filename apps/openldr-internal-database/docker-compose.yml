@@ -1,0 +1,218 @@
+services:
+  openldr-db-mysql:
+    image: mysql:8
+    container_name: openldr-db-mysql
+    hostname: openldr-db-mysql
+    command: --mysql-native-password=ON
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: openldr
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+    ports:
+      - "${MYSQL_PORT}:3306"
+    deploy:
+      resources:
+        limits:
+          cpus: ${CPU_LIMIT}
+          memory: ${MEMORY_LIMIT}
+        reservations:
+          memory: ${MEMORY_RESERVATIONS}
+    memswap_limit: ${MEMSWAP_LIMIT}
+    volumes:
+      - openldr-vol-mysql:/var/lib/mysql
+      - ./database/mysql/migrations:/docker-entrypoint-initdb.d
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "mysqladmin",
+          "ping",
+          "-h",
+          "localhost",
+          "-u$$MYSQL_USER",
+          "-p$$MYSQL_PASSWORD",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 30s
+    networks:
+      - openldr-network
+
+  openldr-db-postgres:
+    image: postgres:16
+    hostname: openldr-db-postgres
+    container_name: openldr-db-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_INITDB_ARGS: "--encoding=UTF-8 --lc-collate=C --lc-ctype=C"
+      POSTGRES_HOST_AUTH_METHOD: "scram-sha-256"
+      # POSTGRES_HOST_AUTH_METHOD: trust
+    ports:
+      - "${POSTGRES_PORT}:5432"
+    deploy:
+      resources:
+        limits:
+          cpus: ${CPU_LIMIT}
+          memory: ${MEMORY_LIMIT}
+        reservations:
+          memory: ${MEMORY_RESERVATIONS}
+    memswap_limit: ${MEMSWAP_LIMIT}
+    volumes:
+      - openldr-vol-postgres:/var/lib/postgresql/data
+      - ./database/postgres/migrations:/docker-entrypoint-initdb.d
+    networks:
+      - ${DOCKER_NETWORK_NAME:-openldr-network}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  openldr-db-redis:
+    image: redis:7-alpine
+    container_name: openldr-db-redis
+    hostname: openldr-db-redis
+    restart: unless-stopped
+    command: redis-server
+      --requirepass ${REDIS_PASSWORD}
+      --appendonly yes
+      --maxmemory-policy allkeys-lru
+    ports:
+      - "${REDIS_PORT}:6379"
+    volumes:
+      - openldr-vol-redis:/data
+    networks:
+      - openldr-network
+    deploy:
+      resources:
+        limits:
+          cpus: ${CPU_LIMIT}
+          memory: ${MEMORY_LIMIT}
+        reservations:
+          memory: ${MEMORY_RESERVATIONS}
+    memswap_limit: ${MEMSWAP_LIMIT}
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  #admin consoles
+  # openldr-db-mysql-console:
+  #   image: phpmyadmin/phpmyadmin
+  #   container_name: openldr-db-mysql-console
+  #   restart: unless-stopped
+  #   deploy:
+  #     resources:
+  #       limits:
+  #         cpus: ${CPU_LIMIT}
+  #         memory: ${MEMORY_LIMIT}
+  #       reservations:
+  #         memory: ${MEMORY_RESERVATIONS}
+  #   memswap_limit: ${MEMSWAP_LIMIT}
+  #   ports:
+  #     - 1001:80
+  #   environment:
+  #     - PMA_HOST=${PMA_HOST}
+  #     - PMA_PORT=${PMA_PORT}
+  #     - MAX_EXECUTION_TIME=${PMA_MAX_EXECUTION_TIME}
+  #     - MEMORY_LIMIT=${PMA_MEMORY_LIMIT}
+  #   depends_on:
+  #     openldr-db-mysql:
+  #       condition: service_healthy
+  #   networks:
+  #     - openldr-network
+
+  openldr-db-postgres-console:
+    image: dpage/pgadmin4:latest
+    container_name: openldr-db-postgres-console
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: ${CPU_LIMIT}
+          memory: ${MEMORY_LIMIT}
+        reservations:
+          memory: ${MEMORY_RESERVATIONS}
+    memswap_limit: ${MEMSWAP_LIMIT}
+    ports:
+      - 1002:80
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=${PGADMIN_DEFAULT_EMAIL}
+      - PGADMIN_DEFAULT_PASSWORD=${PGADMIN_DEFAULT_PASSWORD}
+      - PGADMIN_CONFIG_SERVER_MODE=${PGADMIN_CONFIG_SERVER_MODE}
+      - PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED=${PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED}
+    entrypoint: /bin/sh -c "chmod 600 /pgpass; /entrypoint.sh;"
+    user: root
+    configs:
+      - source: servers.json
+        target: /pgadmin4/servers.json
+      - source: pgpass
+        target: /pgpass
+    depends_on:
+      openldr-db-postgres:
+        condition: service_healthy
+    networks:
+      - openldr-network
+
+  # openldr-db-redis-console:
+  #   image: redis/redisinsight:latest
+  #   container_name: openldr-db-redis-console
+  #   hostname: openldr-db-redis-console
+  #   restart: unless-stopped
+  #   deploy:
+  #     resources:
+  #       limits:
+  #         cpus: ${CPU_LIMIT}
+  #         memory: ${MEMORY_LIMIT}
+  #       reservations:
+  #         memory: ${MEMORY_RESERVATIONS}
+  #   memswap_limit: ${MEMSWAP_LIMIT}
+  #   ports:
+  #     - "${REDIS_INSIGHT_PORT}:5540"
+  #   # volumes:
+  #   #   - redisinsight-data:/data
+  #   networks:
+  #     - openldr-network
+  #   environment:
+  #     - REDIS_HOST=openldr-db-redis
+  #     - REDIS_PORT=6379
+  #     # # Configure RedisInsight for subpath
+  #     # - RI_BASE_PATH=/redis-dashboard
+  #     # - RI_PROXY_PATH=/redis-dashboard
+
+volumes:
+  openldr-vol-mysql:
+    driver: local
+  openldr-vol-postgres:
+    driver: local
+  openldr-vol-redis:
+    driver: local
+
+networks:
+  openldr-network:
+    name: openldr-network
+    external: true
+
+configs:
+  pgpass:
+    content: openldr-db-postgres:5432:*:openldr:openldr123
+  servers.json:
+    content: |
+      {"Servers": {"1": {
+        "Group": "Servers",
+        "Name": "Server",
+        "Host": "openldr-db-postgres",
+        "Port": 5432,
+        "MaintenanceDB": "postgres",
+        "Username": "openldr",
+        "PassFile": "/pgpass",
+        "SSLMode": "prefer"
+      }}}

@@ -1,0 +1,81 @@
+services:
+  apisix:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: openldr-apisix
+    hostname: openldr-apisix
+    restart: unless-stopped
+    volumes:
+      - ./apisix_conf/config.yaml:/usr/local/apisix/conf/config.yaml:ro
+      - ./apisix_conf/custom_plugins:/opt/apisix/plugins:ro
+      - ./apisix_conf/init-routes:/opt/apisix/init-routes:ro
+      # - ./certs/apisix.crt:/usr/local/apisix/conf/cert/apisix.crt
+      # - ./certs/apisix.key:/usr/local/apisix/conf/cert/apisix.key
+    depends_on:
+      - etcd
+    environment:
+      - APISIX_API_KEY=${APISIX_API_KEY}
+    ports:
+      - "${APISIX_PORT}:9080/tcp" # Main API gateway port - configurable via APISIX_PORT
+      - "${APISIX_ADMIN_PORT}:9180/tcp" # Admin API port - configurable via APISIX_ADMIN_PORT
+      - "${APISIX_HTTPS_PORT}:9443/tcp" # HTTPS port for secure API access - configurable via APISIX_HTTPS_PORT
+      - "9091:9091/tcp" # Prometheus metrics port (internal monitoring)
+      - "9092:9092/tcp" # gRPC port for gRPC service communication
+    networks:
+      - openldr-network
+    deploy:
+      resources:
+        limits:
+          cpus: ${CPU_LIMIT}
+          memory: ${MEMORY_LIMIT}
+        reservations:
+          memory: ${MEMORY_RESERVATIONS}
+    memswap_limit: ${MEMSWAP_LIMIT}
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "curl -f http://localhost:9180/apisix/admin/services -H 'X-API-KEY: ${APISIX_API_KEY:-edd1c9f034335f136f87ad84b625c8f1}' || exit 1",
+        ]
+      interval: 15s
+      timeout: 10s
+      retries: 3
+      start_period: 45s
+  etcd:
+    image: quay.io/coreos/etcd:v3.6.4
+    hostname: openldr-apisix-etcd
+    container_name: openldr-apisix-etcd
+    ports:
+      - "2379:2379"
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 512M
+        reservations:
+          memory: 128M
+    memswap_limit: 1G
+    volumes:
+      - etcd_data:/etcd-data
+    command: >
+      /usr/local/bin/etcd
+      --name s1
+      --data-dir /etcd-data
+      --listen-client-urls http://0.0.0.0:2379
+      --advertise-client-urls http://0.0.0.0:2379
+      --log-level info
+      --logger zap
+      --log-outputs stderr
+    restart: unless-stopped
+    networks:
+      - openldr-network
+
+volumes:
+  etcd_data:
+    driver: local
+
+networks:
+  openldr-network:
+    name: openldr-network
+    external: true

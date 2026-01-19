@@ -1,0 +1,146 @@
+[
+  {
+    "id": "extensions-route",
+    "uri": "/api/v1/openldr/extensions",
+    "name": "Get all published extensions for the marketplace hub",
+    "methods": ["GET", "OPTIONS"],
+    "rewrite_uri": ["/api/v1/openldr/extensions", "/extensions"],
+    "upstream_url": "${ENTITY_SERVICE_URL}"
+  },
+  {
+    "id": "extensions-info-route",
+    "uri": "/api/v1/openldr/extensions/*/info",
+    "name": "Get detailed information about a specific extension",
+    "methods": ["GET", "OPTIONS"],
+    "rewrite_uri": ["/api/v1/openldr/extensions/(.*?)/info", "/extensions/$1/info"],
+    "upstream_url": "${ENTITY_SERVICE_URL}"
+  },
+  {
+    "id": "extensions-versions-route",
+    "uri": "/api/v1/openldr/extensions/*/versions",
+    "name": "Get all published versions for an extension",
+    "methods": ["GET", "OPTIONS"],
+    "rewrite_uri": ["/api/v1/openldr/extensions/(.*?)/versions", "/extensions/$1/versions"],
+    "upstream_url": "${ENTITY_SERVICE_URL}"
+  },
+  {
+    "id": "extensions-version-details-route",
+    "uri": "/api/v1/openldr/extensions/*/versions/.*",
+    "name": "Get specific version details",
+    "methods": ["GET", "OPTIONS"],
+    "rewrite_uri": ["/api/v1/openldr/extensions/(.*?)/versions/(.*)", "/extensions/$1/versions/$2"],
+    "upstream_url": "${ENTITY_SERVICE_URL}"
+  },
+  {
+    "id": "extensions-new-version-route",
+    "uri": "/api/v1/openldr/extensions/*/versions",
+    "name": "Publish a new version of an extension",
+    "methods": ["POST", "OPTIONS"],
+    "rewrite_uri": ["/api/v1/openldr/extensions/(.*?)/versions", "/extensions/$1/versions"],
+    "upstream_url": "${ENTITY_SERVICE_URL}"
+  },
+  {
+    "id": "extensions-check-updates-route",
+    "uri": "/api/v1/openldr/extensions/*/check-updates",
+    "name": "Check if updates are available for current check-updates",
+    "methods": ["GET", "OPTIONS"],
+    "rewrite_uri": ["/api/v1/openldr/extensions/(.*?)/check-updates", "/extensions/$1/check-updates"],
+    "upstream_url": "${ENTITY_SERVICE_URL}"
+  },
+  {
+    "id": "extensions-version-download-route",
+    "uri": "/api/v1/openldr/extensions/version/*/download",
+    "name": "Download extension code for a specific version",
+    "methods": ["GET", "OPTIONS"],
+    "rewrite_uri": ["/api/v1/openldr/extensions/version/(.*?)/download", "/extensions/version/$1/download"],
+    "upstream_url": "${ENTITY_SERVICE_URL}"
+  },
+  {
+    "id": "extensions-user-installed-route",
+    "uri": "/api/v1/openldr/extensions/user/installed",
+    "name": "Get all extensions installed by the current user",
+    "methods": ["GET", "OPTIONS"],
+    "rewrite_uri": ["/api/v1/openldr/extensions/user/installed", "/extensions/user/installed"],
+    "upstream_url": "${ENTITY_SERVICE_URL}"
+  },
+  {
+    "id": "extension-user-install-route",
+    "uri": "/api/v1/openldr/extensions/*/install",
+    "name": "Install an extension for the current user",
+    "methods": ["POST", "OPTIONS"],
+    "rewrite_uri": ["/api/v1/openldr/extensions/(.*?)/install", "/extensions/$1/install"],
+    "upstream_url": "${ENTITY_SERVICE_URL}"
+  },
+  {
+    "id": "extension-user-update-route",
+    "uri": "/api/v1/openldr/extensions/*/update",
+    "name": "Update extension to a new version",
+    "methods": ["PUT", "OPTIONS"],
+    "rewrite_uri": ["/api/v1/openldr/extensions/(.*?)/update", "/extensions/$1/update"],
+    "upstream_url": "${ENTITY_SERVICE_URL}"
+  },
+  {
+    "id": "extension-user-enable-route",
+    "uri": "/api/v1/openldr/extensions/*/enable",
+    "name": "Enable an installed extension",
+    "methods": ["POST", "OPTIONS"],
+    "rewrite_uri": ["/api/v1/openldr/extensions/(.*?)/enable", "/extensions/$1/enable"],
+    "upstream_url": "${ENTITY_SERVICE_URL}"
+  },
+  {
+    "id": "extension-user-disable-route",
+    "uri": "/api/v1/openldr/extensions/*/disable",
+    "name": "Disable an installed extension",
+    "methods": ["POST", "OPTIONS"],
+    "rewrite_uri": ["/api/v1/openldr/extensions/(.*?)/disable", "/extensions/$1/disable"],
+    "upstream_url": "${ENTITY_SERVICE_URL}"
+  },
+  {
+    "id": "extension-user-uninstall-route",
+    "uri": "/api/v1/openldr/extensions/*/uninstall",
+    "name": "Uninstall an extension (soft delete)",
+    "methods": ["DELETE", "OPTIONS"],
+    "rewrite_uri": ["/api/v1/openldr/extensions/(.*?)/uninstall", "/extensions/$1/uninstall"],
+    "upstream_url": "${ENTITY_SERVICE_URL}"
+  },
+  {
+    "id": "extension-user-settings-route",
+    "uri": "/api/v1/openldr/extensions/*/settings",
+    "name": "Update extension settings for the current user",
+    "methods": ["PATCH", "OPTIONS"],
+    "rewrite_uri": ["/api/v1/openldr/extensions/(.*?)/settings", "/extensions/$1/settings"],
+    "upstream_url": "${ENTITY_SERVICE_URL}"
+  },
+  {
+    "id": "extension-user-auto-update-route",
+    "uri": "/api/v1/openldr/extensions/*/auto-update",
+    "name": "Toggle auto-update for an extension",
+    "methods": ["PATCH", "OPTIONS"],
+    "rewrite_uri": ["/api/v1/openldr/extensions/(.*?)/auto-update", "/extensions/$1/auto-update"],
+    "upstream_url": "${ENTITY_SERVICE_URL}"
+  },
+  {
+    "id": "extension-version-permissions-route",
+    "uri": "/api/v1/openldr/extensions/version/*/permissions",
+    "name": "Get all permissions required by a specific version",
+    "methods": ["GET", "OPTIONS"],
+    "rewrite_uri": ["/api/v1/openldr/extensions/version/(.*?)/permissions", "/extensions/version/$1/permissions"],
+    "upstream_url": "${ENTITY_SERVICE_URL}"
+  },
+  {
+    "id": "extension-version-review-route",
+    "uri": "/api/v1/openldr/extensions/*/review",
+    "name": "Submit a review for an extension",
+    "methods": ["POST", "OPTIONS"],
+    "rewrite_uri": ["/api/v1/openldr/extensions/(.*?)/review", "/extensions/$1/review"],
+    "upstream_url": "${ENTITY_SERVICE_URL}"
+  },
+  {
+    "id": "extension-version-reviews-route",
+    "uri": "/api/v1/openldr/extensions/*/reviews",
+    "name": "Get all reviews for an extension",
+    "methods": ["GET", "OPTIONS"],
+    "rewrite_uri": ["/api/v1/openldr/extensions/(.*?)/reviews", "/extensions/$1/reviews"],
+    "upstream_url": "${ENTITY_SERVICE_URL}"
+  }
+]

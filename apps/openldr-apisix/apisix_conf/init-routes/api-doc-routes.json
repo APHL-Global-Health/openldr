@@ -1,0 +1,10 @@
+[
+    {
+        "id": "api-doc-route",
+        "uri": "/api/v1/openldr/api-doc/*",
+        "name": "API doc route",
+        "methods": ["GET", "OPTIONS"],
+        "rewrite_uri": ["/api/v1/openldr/api-doc/(.*)", "/api-doc/$1"],
+        "upstream_url": "${ENTITY_SERVICE_URL}"
+    }
+]

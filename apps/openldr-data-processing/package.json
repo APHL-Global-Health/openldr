@@ -1,0 +1,42 @@
+{
+  "name": "@openldr/data-processing",
+  "version": "1.2.0",
+  "description": "OpenLDR data processing service - authenticates the data feed and saves raw message object in minio",
+  "main": "src/index.ts",
+  "scripts": {
+    "copy:env": "cpy ../../.env.microservices . --rename=.env",
+    "docker:build": "npm run copy:env && tsx ./docker-compose.ts build",
+    "docker:start": "npm run copy:env && tsx ./docker-compose.ts up -d",
+    "docker:stop": "npm run copy:env && tsx ./docker-compose.ts stop",
+    "docker:reset": "docker compose -f docker-compose.yml down --rmi all -v --remove-orphans && rimraf ./.env",
+    "setup:services": "tsx openldr.ts setup",
+    "reset:services": "tsx openldr.ts reset",
+    "stop:services": "tsx openldr.ts stop",
+    "start:services": "tsx openldr.ts start",
+    "start": "ts-node src/index.ts"
+  },
+  "author": "Association of Public Health Laboratories (APHL)",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "@keycloak/keycloak-admin-client": "^26.3.2",
+    "@openldr/internal-database": "*",
+    "@openldr/minio": "*",
+    "@repo/openldr-core": "*",
+    "@sequelize/core": "^7.0.0-alpha.42",
+    "@sequelize/mariadb": "^7.0.0-alpha.46",
+    "@sequelize/mssql": "^7.0.0-alpha.46",
+    "@sequelize/mysql": "^7.0.0-alpha.46",
+    "@sequelize/postgres": "^7.0.0-alpha.46",
+    "@sequelize/sqlite3": "^7.0.0-alpha.46",
+    "axios": "^1.7.9",
+    "express": "^4.21.2",
+    "jsonwebtoken": "^9.0.2",
+    "minio": "^8.0.2",
+    "ts-node": "^10.9.2"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.3",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/uuid": "^10.0.0"
+  }
+}

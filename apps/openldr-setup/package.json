@@ -1,0 +1,22 @@
+{
+  "name": "@openldr/setup",
+  "private": true,
+  "version": "1.2.0",
+  "scripts": {
+    "docker:build": "tsx openldr.ts build",
+    "init": "tsx openldr.ts init",
+    "setup:services": "tsx openldr.ts setup",
+    "reset:services": "tsx openldr.ts reset",
+    "stop:services": "tsx openldr.ts stop",
+    "start:services": "tsx openldr.ts start"
+  },
+  "dependencies": {
+    "@inquirer/prompts": "^7.8.6",
+    "@repo/openldr-core": "*"
+  },
+  "devDependencies": {
+    "@repo/eslint-config": "*",
+    "@repo/typescript-config": "*",
+    "@types/node": "^24.2.0"
+  }
+}

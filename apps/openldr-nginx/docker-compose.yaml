@@ -1,0 +1,28 @@
+name: openldr
+services:
+  nginx:
+    image: nginx:latest
+    container_name: nginx
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: ${CPU_LIMIT}
+          memory: ${MEMORY_LIMIT}
+        reservations:
+          memory: ${MEMORY_RESERVATIONS}
+    memswap_limit: ${MEMSWAP_LIMIT}
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+      - ../../packages/openldr-core/certs:/etc/nginx/certs
+      # - ./data:/usr/share/nginx/html
+    networks:
+      - openldr-network
+    ports:
+      # - 8090:80
+      - 443:443
+
+networks:
+  openldr-network:
+    name: openldr-network
+    external: true

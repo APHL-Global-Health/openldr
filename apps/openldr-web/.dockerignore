@@ -1,0 +1,7 @@
+/src-tauri/target/
+/src-tauri/gen/schemas
+.qodo
+/dist-electron
+/release
+/build
+/node_modules

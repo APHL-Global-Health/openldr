@@ -1,0 +1,79 @@
+{
+  "app": {
+    "name": "OpenLDR",
+    "tagline": "Hifadhi Wazi ya Data za Maabara",
+    "description": "Mfumo kamili wa usimamizi wa data za maabara"
+  },
+  "navigation": {
+    "dashboard": "Dashibodi",
+    "extensions": "Viendelezi",
+    "settings": "Mipangilio",
+    "help": "Msaada",
+    "logout": "Toka"
+  },
+  "actions": {
+    "save": "Hifadhi",
+    "cancel": "Ghairi",
+    "delete": "Futa",
+    "edit": "Hariri",
+    "create": "Tengeneza",
+    "update": "Sasisha",
+    "search": "Tafuta",
+    "filter": "Chuja",
+    "export": "Hamisha",
+    "import": "Ingiza",
+    "refresh": "Onyesha Upya",
+    "close": "Funga",
+    "confirm": "Thibitisha",
+    "submit": "Wasilisha",
+    "back": "Rudi",
+    "next": "Ifuatayo",
+    "previous": "Iliyotangulia",
+    "finish": "Maliza"
+  },
+  "status": {
+    "loading": "Inapakia...",
+    "saving": "Inahifadhi...",
+    "saved": "Imehifadhiwa kwa mafanikio",
+    "error": "Kosa limetokea",
+    "success": "Shughuli imekamilika kwa mafanikio",
+    "pending": "Inasubiri",
+    "active": "Inafanya Kazi",
+    "inactive": "Haifanyi Kazi",
+    "enabled": "Imewezeshwa",
+    "disabled": "Imezimwa"
+  },
+  "validation": {
+    "required": "Sehemu hii inahitajika",
+    "invalid_email": "Tafadhali weka anwani sahihi ya barua pepe",
+    "invalid_format": "Muundo si sahihi",
+    "min_length": "Urefu wa chini ni herufi {{min}}",
+    "max_length": "Urefu wa juu ni herufi {{max}}",
+    "must_match": "Sehemu lazima zilingane",
+    "invalid_url": "Tafadhali weka URL sahihi"
+  },
+  "messages": {
+    "confirm_delete": "Je, una uhakika unataka kufuta kipengee hiki?",
+    "unsaved_changes": "Una mabadiliko ambayo hayajahifadhiwa. Je, unataka kuendelea?",
+    "no_data": "Hakuna data inayopatikana",
+    "no_results": "Hakuna matokeo yaliyopatikana",
+    "try_again": "Tafadhali jaribu tena",
+    "contact_support": "Kama tatizo linaendelea, tafadhali wasiliana na msaada"
+  },
+  "time": {
+    "just_now": "Sasa hivi",
+    "minutes_ago": "Dakika {{count}} iliyopita",
+    "minutes_ago_plural": "Dakika {{count}} zilizopita",
+    "hours_ago": "Saa {{count}} iliyopita",
+    "hours_ago_plural": "Masaa {{count}} yaliyopita",
+    "days_ago": "Siku {{count}} iliyopita",
+    "days_ago_plural": "Siku {{count}} zilizopita",
+    "weeks_ago": "Wiki {{count}} iliyopita",
+    "weeks_ago_plural": "Wiki {{count}} zilizopita"
+  },
+  "pagination": {
+    "showing": "Inaonyesha {{from}} hadi {{to}} kati ya matokeo {{total}}",
+    "per_page": "Kwa kila ukurasa",
+    "page": "Ukurasa {{current}} kati ya {{total}}"
+  }
+}

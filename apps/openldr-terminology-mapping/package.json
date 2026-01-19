@@ -1,0 +1,29 @@
+{
+    "name": "@openldr/terminology-mapping",
+    "version": "1.2.0",
+    "description": "OpenLDR Terminology Mapping Service - Simplified JavaScript service for generating terminology mappings from OCL",
+    "main": "src/index.ts",
+    "scripts": {
+        "copy:env": "cpy ../../.env.microservices . --rename=.env",
+        "docker:build": "npm run copy:env && tsx ./docker-compose.ts build",
+        "docker:start": "npm run copy:env && tsx ./docker-compose.ts up -d",
+        "docker:stop": "npm run copy:env && tsx ./docker-compose.ts stop",
+        "docker:reset": "docker compose -f docker-compose.yml down --rmi all -v --remove-orphans && rimraf ./.env",
+        "setup:services": "tsx openldr.ts setup",
+        "reset:services": "tsx openldr.ts reset",
+        "stop:services": "tsx openldr.ts stop",
+        "start:services": "tsx openldr.ts start",
+        "start": "tsx src/index.ts"
+    },
+    "author": "Association of Public Health Laboratories (APHL)",
+    "license": "Apache-2.0",
+    "dependencies": {
+        "@openldr/entity-services": "*",
+        "@repo/openldr-core":"*",        
+        "express": "^4.18.2",
+        "axios": "^1.6.0"
+    },
+    "devDependencies": {
+        "nodemon": "^3.0.1"
+    }
+}

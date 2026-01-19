@@ -1,0 +1,27 @@
+services:
+  openldr-entity-services:
+    image: openldr-entity-services:latest
+    build:
+      context: ../../
+      dockerfile: ./apps/openldr-entity-services/Dockerfile
+    container_name: openldr-entity-services
+    hostname: openldr-entity-services
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: ${CPU_LIMIT}
+          memory: ${MEMORY_LIMIT}
+        reservations:
+          memory: ${MEMORY_RESERVATIONS}
+    memswap_limit: ${MEMSWAP_LIMIT}
+    env_file:
+      - .env
+    ports:
+      - "${ENTITY_SERVICES_PORT}:3002"
+    networks:
+      - openldr-network
+
+networks:
+  openldr-network:
+    external: true

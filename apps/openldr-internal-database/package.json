@@ -1,0 +1,40 @@
+{
+  "name": "@openldr/internal-database",
+  "version": "1.0.0",
+  "description": "OpenLDR Database Models and Utilities",
+  "main": "src/index.ts",
+  "author": "Association of Public Health Laboratories (APHL)",
+  "license": "Apache-2.0",
+  "private": true,
+  "scripts": {
+    "copy:env": "cpy ../../.env.infrastructure . --rename=.env",
+    "docker:build": "npm run setup:services && npm run copy:env && tsx ./docker-compose.ts build",
+    "docker:start": "npm run copy:env && tsx ./docker-compose.ts up -d && npm run start:services",
+    "docker:stop": "npm run copy:env && tsx ./docker-compose.ts stop && npm run stop:services",
+    "docker:reset": "tsx ./docker-compose.ts -f docker-compose.yml down --rmi all -v --remove-orphans && npm run stop:services && rimraf ./.env",
+    "setup:services": "ts-node openldr.ts setup",
+    "reset:services": "ts-node openldr.ts reset",
+    "stop:services": "ts-node openldr.ts stop",
+    "start:services": "ts-node openldr.ts start",
+    "dev": "tsx src/index.ts"
+  },
+  "keywords": [],
+  "dependencies": {
+    "@openldr/nginx": "*",
+    "@repo/typescript-config": "*",
+    "@sequelize/core": "^7.0.0-alpha.42",
+    "@sequelize/mariadb": "^7.0.0-alpha.46",
+    "@sequelize/mssql": "^7.0.0-alpha.46",
+    "@sequelize/mysql": "^7.0.0-alpha.46",
+    "@sequelize/postgres": "^7.0.0-alpha.46",
+    "@sequelize/sqlite3": "^7.0.0-alpha.46",
+    "dotenv": "^17.2.3",
+    "tsx": "^4.20.6",
+    "typescript": "^5.9.3",
+    "uuid": "^8.3.2"
+  },
+  "devDependencies": {
+    "@types/node": "^24.7.0",
+    "@types/uuid": "^10.0.0"
+  }
+}

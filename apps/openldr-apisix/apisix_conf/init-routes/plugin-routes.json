@@ -1,0 +1,74 @@
+[
+  {
+    "id": "plugin-creation-route",
+    "uri": "/api/v1/openldr/plugin/create",
+    "name": "Plugin creation route",
+    "methods": ["POST", "OPTIONS"],
+    "rewrite_uri": ["/api/v1/openldr/plugin/create", "/plugin/create-plugin"],
+    "upstream_url": "${PLUGIN_URL}"
+  },
+  {
+    "id": "plugin-mapper-creation-route",
+    "uri": "/api/v1/openldr/plugin/create-mapper",
+    "name": "Plugin mapper creation route",
+    "methods": ["POST", "OPTIONS"],
+    "rewrite_uri": ["/api/v1/openldr/plugin/create-mapper", "/plugin/create-mapper-plugin"],
+    "upstream_url": "${PLUGIN_URL}"
+  },
+  {
+    "id": "plugin-retrieval-route",
+    "uri": "/api/v1/openldr/plugin/retrieve/*",
+    "name": "Plugin retrieval route",
+    "methods": ["GET", "OPTIONS"],
+    "rewrite_uri": ["/api/v1/openldr/plugin/retrieve/(.*)", "/plugin/get-plugin/$1"],
+    "upstream_url": "${PLUGIN_URL}"
+  },
+  {
+    "id": "plugin-get-all-route",
+    "uri": "/api/v1/openldr/plugin",
+    "name": "Plugin get all route",
+    "methods": ["GET", "OPTIONS"],
+    "rewrite_uri": ["/api/v1/openldr/plugin", "/plugin/plugins"],
+    "upstream_url": "${PLUGIN_URL}"
+  },
+  {
+    "id": "plugin-update-route",
+    "uri": "/api/v1/openldr/plugin/update/*",
+    "name": "Plugin update route",
+    "methods": ["PUT", "OPTIONS"],
+    "rewrite_uri": ["/api/v1/openldr/plugin/update/(.*)", "/plugin/update-plugin/$1"],
+    "upstream_url": "${PLUGIN_URL}"
+  },
+  {
+    "id": "plugin-mapper-update-route",
+    "uri": "/api/v1/openldr/plugin/update-mapper/*",
+    "name": "Plugin mapper update route",
+    "methods": ["PUT", "OPTIONS"],
+    "rewrite_uri": ["/api/v1/openldr/plugin/update-mapper/(.*)", "/plugin/update-mapper-plugin/$1"],
+    "upstream_url": "${PLUGIN_URL}"
+  },
+  {
+    "id": "plugin-delete-route",
+    "uri": "/api/v1/openldr/plugin/delete/*",
+    "name": "Plugin delete route",
+    "methods": ["DELETE", "OPTIONS"],
+    "rewrite_uri": ["/api/v1/openldr/plugin/delete/(.*)", "/plugin/delete-plugin/$1"],
+    "upstream_url": "${PLUGIN_URL}"
+  },
+  {
+    "id": "plugin-retrieval-by-type-route",
+    "uri": "/api/v1/openldr/plugin/retrieve",
+    "name": "Plugin retrieval by type route",
+    "methods": ["GET", "OPTIONS"],
+    "rewrite_uri": ["/api/v1/openldr/plugin/retrieve", "/plugin/get-plugins"],
+    "upstream_url": "${PLUGIN_URL}"
+  },
+  {
+    "id": "plugin-regenerate-mapper-plugin-route",
+    "uri": "/api/v1/openldr/plugin/regenerate-mapper/*",
+    "name": "Plugin regenerate mapper plugin route",
+    "methods": ["POST", "OPTIONS"],
+    "rewrite_uri": ["/api/v1/openldr/plugin/regenerate-mapper/(.*)", "/plugin/regenerate-mapper-plugin/$1"],
+    "upstream_url": "${PLUGIN_URL}"
+  }
+]

@@ -1,0 +1,77 @@
+services:
+  openldr-mcp-server:
+    image: openldr-mcp-server:latest
+    build:
+      context: ../../
+      dockerfile: ./apps/openldr-mcp-server/Dockerfile
+    container_name: openldr-mcp-server
+    hostname: openldr-mcp-server
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          # cpus: ${CPU_LIMIT}
+          memory: 2G
+        reservations:
+          memory: 1024M
+    env_file:
+      - .env
+    ports:
+      - "6060:6060"
+    networks:
+      - openldr-network
+
+  openldr-mcp-inspector:
+    image: ghcr.io/modelcontextprotocol/inspector:latest
+    container_name: openldr-mcp-inspector
+    hostname: openldr-mcp-inspector
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: ${CPU_LIMIT}
+          memory: ${MEMORY_LIMIT}
+        reservations:
+          memory: ${MEMORY_RESERVATIONS}
+    memswap_limit: ${MEMSWAP_LIMIT}
+    environment:
+      - DANGEROUSLY_OMIT_AUTH=true
+      - CLIENT_PORT=6274
+      - SERVER_PORT=6277
+      - HOST=0.0.0.0
+      - MCP_AUTO_OPEN_ENABLED=false
+      - ALLOWED_ORIGINS=http://127.0.0.1:6274,http://localhost:6274,http://0.0.0.0:6274
+    ports:
+      - "6277:6277"
+      - "6274:6274"
+    networks:
+      - openldr-network
+
+  # openldr-n8n:
+  #   image: docker.n8n.io/n8nio/n8n
+  #   container_name: n8n
+  #   restart: unless-stopped
+  #   # - uncomment if not using reverse proxy
+  #   ports:
+  #     - "5678:5678"
+  #   deploy:
+  #     resources:
+  #       limits:
+  #         cpus: ${CPU_LIMIT}
+  #         memory: ${MEMORY_LIMIT}
+  #       reservations:
+  #         memory: ${MEMORY_RESERVATIONS}
+  #   memswap_limit: ${MEMSWAP_LIMIT}
+  #   networks:
+  #     - openldr-network
+  #   environment:
+  #     - N8N_PROTOCOL=http
+  #     - N8N_HOST=localhost
+  #     - N8N_PORT=5678
+  #     - N8N_COMMUNITY_PACKAGES_ALLOW_TOOL_USAGE=true
+  #   volumes:
+  #     - ./n8n:/home/node/.n8n
+
+networks:
+  openldr-network:
+    external: true

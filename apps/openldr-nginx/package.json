@@ -1,0 +1,17 @@
+{
+  "name": "@openldr/nginx",
+  "scripts": {
+    "copy:env": "cpy ../../.env.infrastructure . --rename=.env",
+    "docker:build": "npm run copy:env && tsx ./docker-compose.ts build",
+    "docker:start": "npm run copy:env && tsx ./docker-compose.ts up -d",
+    "docker:stop": "npm run copy:env && tsx ./docker-compose.ts stop",
+    "docker:reset": "tsx ./docker-compose.ts down --rmi all -v --remove-orphans && rimraf ./.env",
+    "setup:services": "tsx openldr.ts setup",
+    "reset:services": "tsx openldr.ts reset",
+    "stop:services": "tsx openldr.ts stop",
+    "start:services": "tsx openldr.ts start"
+  },
+  "dependencies": {
+    "@openldr/setup": "*"  
+  }
+}

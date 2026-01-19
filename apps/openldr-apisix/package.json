@@ -1,0 +1,27 @@
+{
+  "name": "@openldr/apisix",
+  "private": true,
+  "version": "1.2.0",
+  "author": "Association of Public Health Laboratories (APHL)",
+  "license": "Apache-2.0",
+  "scripts": {
+    "copy:env": "cpy ../../.env.infrastructure . --rename=.env",
+    "docker:build": "npm run setup:services && npm run copy:env && tsx ./docker-compose.ts build",
+    "docker:start": "npm run copy:env && tsx ./docker-compose.ts up -d --force-recreate && npm run start:services",
+    "docker:stop": "npm run copy:env && tsx ./docker-compose.ts stop && npm run stop:services",
+    "docker:reset": "tsx ./docker-compose.ts down --rmi all -v --remove-orphans && npm run stop:services && rimraf ./.env",
+    "setup:services": "tsx openldr.ts setup",
+    "reset:services": "tsx openldr.ts reset",
+    "stop:services": "tsx openldr.ts stop",
+    "start:services": "tsx openldr.ts start"
+  },
+  "dependencies": {
+    "@openldr/keycloak": "*",
+    "@repo/openldr-core":"*"    
+  },
+  "devDependencies": {
+    "@types/node": "^24.2.0",
+    "@repo/eslint-config": "*",
+    "@repo/typescript-config": "*"
+  }
+}

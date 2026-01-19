@@ -1,0 +1,18 @@
+[
+  {
+    "id": "dataentry-get-form-route",
+    "uri": "/api/v1/openldr/forms/form/*",
+    "name": "Get all entry forms route",
+    "methods": ["GET", "OPTIONS"],
+    "rewrite_uri": ["/api/v1/openldr/forms/form/(.*?)/(.*?)/(.*)", "/forms/get-form/$1/$2/$3"],
+    "upstream_url": "${ENTITY_SERVICE_URL}"
+  },
+  {
+    "id": "dataentry-get-all-forms-route",
+    "uri": "/api/v1/openldr/forms/*",
+    "name": "Get all entry forms route",
+    "methods": ["GET", "OPTIONS"],
+    "rewrite_uri": ["/api/v1/openldr/forms/(.*)", "/forms/$1"],
+    "upstream_url": "${ENTITY_SERVICE_URL}"
+  }
+]

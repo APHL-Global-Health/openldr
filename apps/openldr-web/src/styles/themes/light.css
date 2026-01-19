@@ -1,0 +1,109 @@
+/* VSCode-Style Light Theme */
+[data-theme="light"],
+.light {
+  /* Base color corrections */
+  --color-black: #000000;
+  --color-white: #ffffff;
+
+  /* Main background and text - VSCode light style */
+  --color-background: #ffffff;
+  --color-foreground: #383a42;
+  --color-foreground-default: #383a42;
+
+  /* Card and surface colors - VSCode light panels */
+  --color-card: #f8f8f8;
+  --color-card-foreground: #383a42;
+  --color-popover: #ffffff;
+  --color-popover-foreground: #383a42;
+
+  /* Primary - VSCode blue accent */
+  --color-primary: #0066cc;
+  --color-primary-foreground: #ffffff;
+  --color-primary-hover: #005a9e;
+
+  /* Secondary - VSCode light panel colors */
+  --color-secondary: #f3f3f3;
+  --color-secondary-foreground: #6c6c6c;
+
+  /* Muted backgrounds and text */
+  --color-muted: #f3f3f3;
+  --color-muted-foreground: #6c6c6c;
+
+  /* Accent colors */
+  --color-accent: #f3f3f3;
+  --color-accent-foreground: #0066cc;
+
+  /* Destructive - VSCode error red */
+  --color-destructive: #e51400;
+  --color-destructive-foreground: #ffffff;
+
+  /* Borders and inputs - subtle like VSCode */
+  --color-border: #e1e4e8;
+  --color-border-default: #e1e4e8;
+  --color-border-muted: #f3f3f3;
+  --color-input: #e1e4e8;
+  --color-ring: #0066cc;
+
+  /* Surface variations - VSCode inspired */
+  --color-surface-75: #fafafa;
+  --color-surface-100: #f8f8f8;
+  --color-surface-200: #f3f3f3;
+  --color-surface-300: #e1e4e8;
+  --color-surface-400: #d1d5da;
+
+  /* Alternative and overlay colors */
+  --color-alternative: #f8f8f8;
+  --color-overlay: #ffffff;
+  --color-overlay-hover: #f3f3f3;
+  --color-strong: #e1e4e8;
+  --color-stronger: #d1d5da;
+  --color-border-stronger: #d1d5da;
+
+  /* Button and control colors */
+  --color-border-control: #e1e4e8;
+  --color-border-button-default: #e1e4e8;
+  --color-border-button-hover: #d1d5da;
+
+  /* Text variations - VSCode text hierarchy */
+  --color-foreground-light: #6c6c6c;
+  --color-foreground-lighter: #959da5;
+  --color-foreground-muted: #c6cbd1;
+  --color-foreground-contrast: #ffffff;
+
+  /* Chart colors - VSCode-inspired blue palette */
+  --color-chart-1: #0066cc;
+  --color-chart-2: #2684ff;
+  --color-chart-3: #579dff;
+  --color-chart-4: #85b8ff;
+  --color-chart-5: #cce0ff;
+
+  /* Sidebar - VSCode sidebar style */
+  --color-sidebar-background: #f8f8f8;
+  --color-sidebar-foreground: #383a42;
+  --color-sidebar-primary: #0066cc;
+  --color-sidebar-primary-foreground: #ffffff;
+  --color-sidebar-accent: #f3f3f3;
+  --color-sidebar-accent-foreground: #6c6c6c;
+  --color-sidebar-border: #e1e4e8;
+  --color-sidebar-ring: #0066cc;
+
+  /* Brand and control colors */
+  --color-control: #0066cc;
+  --color-studio: #f8f8f8;
+  --color-brand-default: #0066cc;
+  --color-brand-button: #0066cc;
+  --color-brand-link: #0066cc;
+
+  /* Background alternatives */
+  --color-background-alternative-default: #f8f8f8;
+  --color-background-alternative-200: #f3f3f3;
+
+  /* Grid and layout - VSCode style */
+  --color-grid: #e1e4e8;
+  --color-dash-canvas: #ffffff;
+  --color-dash-sidebar: #f8f8f8;
+
+  /* Additional VSCode-inspired colors */
+  --color-typography-body-light: #383a42;
+  --color-typography-body-dark: #383a42;
+}

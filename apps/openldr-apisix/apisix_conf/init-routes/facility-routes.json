@@ -1,0 +1,42 @@
+[
+  {
+    "id": "facility-creation-route",
+    "uri": "/api/v1/openldr/facility/create",
+    "name": "Facility creation route",
+    "methods": ["POST", "OPTIONS"],
+    "rewrite_uri": ["/api/v1/openldr/facility/create", "/facility/create-facility"],
+    "upstream_url": "${ENTITY_SERVICE_URL}"
+  },
+  {
+    "id": "facility-get-all-route",
+    "uri": "/api/v1/openldr/facility",
+    "name": "Facility get all route",
+    "methods": ["GET", "OPTIONS"],
+    "rewrite_uri": ["/api/v1/openldr/facility", "/facility"],
+    "upstream_url": "${ENTITY_SERVICE_URL}"
+  },
+  {
+    "id": "facility-retrieval-route",
+    "uri": "/api/v1/openldr/facility/retrieve/*",
+    "name": "Facility retrieval route",
+    "methods": ["GET", "OPTIONS"],
+    "rewrite_uri": ["/api/v1/openldr/facility/retrieve/(.*)", "/facility/get-facility/$1"],
+    "upstream_url": "${ENTITY_SERVICE_URL}"
+  },
+  {
+    "id": "facility-update-route",
+    "uri": "/api/v1/openldr/facility/update/*",
+    "name": "Facility update route",
+    "methods": ["PUT", "OPTIONS"],
+    "rewrite_uri": ["/api/v1/openldr/facility/update/(.*)", "/facility/update-facility/$1"],
+    "upstream_url": "${ENTITY_SERVICE_URL}"
+  },
+  {
+    "id": "facility-delete-route",
+    "uri": "/api/v1/openldr/facility/delete/*",
+    "name": "Facility delete route",
+    "methods": ["DELETE", "OPTIONS"],
+    "rewrite_uri": ["/api/v1/openldr/facility/delete/(.*)", "/facility/delete-facility/$1"],
+    "upstream_url": "${ENTITY_SERVICE_URL}"
+  }
+]

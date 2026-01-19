@@ -1,0 +1,5 @@
+{
+  "extends": "../../packages/typescript-config/openldr.json",
+  "exclude": ["node_modules", "dist"],
+  "include": ["openldr.ts"]
+}

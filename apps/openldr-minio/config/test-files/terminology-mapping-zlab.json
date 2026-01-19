@@ -1,0 +1,236 @@
+{
+  "lastSync": "2025-06-24T05:15:23.162Z",
+  "oclAPIUrl": "https://api.openconceptlab.org",
+  "organization": "ZLAB",
+  "source": "OpenLDR",
+  "auth": {
+    "type": "none"
+  },
+  "concepts": {
+    "ZLB_TREAT_ARTE": {
+    "concept": {
+      "code": "ZLB_TREAT_ARTE",
+      "name": "Artemether-Lumefantrine",
+      "sourceUrl": "/orgs/ZLAB/sources/OpenLDR/concepts/ZLB_TREAT_ARTE/"
+    },
+    "mappings": [
+      {
+      "relationship": "SAME_AS",
+      "externalId": "SNOMED_TREAT_ARTE",
+      "toConceptCode": "430193006",
+      "toConceptName": "Artemether + lumefantrine (substance)",
+      "toSourceName": "SNOMED-CT",
+      "toSourceOwner": "IHTSDO",
+      "toSourceUrl": "/orgs/IHTSDO/sources/SNOMED-CT/"
+      },
+      {
+      "relationship": "SAME_AS",
+      "externalId": "LOINC_TREAT_ARTE",
+      "toConceptCode": "76437-3",
+      "toConceptName": "Treatment recommendation [Type] in Specimen",
+      "toSourceName": "LOINC",
+      "toSourceOwner": "Regenstrief",
+      "toSourceUrl": "/orgs/Regenstrief/sources/LOINC/"
+      }
+    ]
+    },
+    "ZLB_TREATMENT": {
+    "concept": {
+      "code": "ZLB_TREATMENT",
+      "name": "Recommended Treatment",
+      "sourceUrl": "/orgs/ZLAB/sources/OpenLDR/concepts/ZLB_TREATMENT/"
+    },
+    "mappings": [
+      {
+      "relationship": "SAME_AS",
+      "externalId": "SNOMED_TREATMENT",
+      "toConceptCode": "71388002",
+      "toConceptName": "Procedure (procedure)",
+      "toSourceName": "SNOMED-CT",
+      "toSourceOwner": "IHTSDO",
+      "toSourceUrl": "/orgs/IHTSDO/sources/SNOMED-CT/"
+      },
+      {
+      "relationship": "SAME_AS",
+      "externalId": "LOINC_TREATMENT",
+      "toConceptCode": "76437-3",
+      "toConceptName": "Treatment recommendation [Type] in Specimen",
+      "toSourceName": "LOINC",
+      "toSourceOwner": "Regenstrief",
+      "toSourceUrl": "/orgs/Regenstrief/sources/LOINC/"
+      }
+    ]
+    },
+    "ZLB_PARASITE_COUNT": {
+    "concept": {
+      "code": "ZLB_PARASITE_COUNT",
+      "name": "Parasite Count",
+      "sourceUrl": "/orgs/ZLAB/sources/OpenLDR/concepts/ZLB_PARASITE_COUNT/"
+    },
+    "mappings": [
+      {
+      "relationship": "SAME_AS",
+      "externalId": "SNOMED_PARASITE_COUNT",
+      "toConceptCode": "16541001",
+      "toConceptName": "Plasmodium falciparum (organism)",
+      "toSourceName": "SNOMED-CT",
+      "toSourceOwner": "IHTSDO",
+      "toSourceUrl": "/orgs/IHTSDO/sources/SNOMED-CT/"
+      },
+      {
+      "relationship": "SAME_AS",
+      "externalId": "LOINC_PARASITE_COUNT",
+      "toConceptCode": "664-3",
+      "toConceptName": "Plasmodium falciparum [#/volume] in Blood by Light microscopy",
+      "toSourceName": "LOINC",
+      "toSourceOwner": "Regenstrief",
+      "toSourceUrl": "/orgs/Regenstrief/sources/LOINC/"
+      }
+    ]
+    },
+    "ZLB_PARASITES": {
+    "concept": {
+      "code": "ZLB_PARASITES",
+      "name": "Parasites Seen",
+      "sourceUrl": "/orgs/ZLAB/sources/OpenLDR/concepts/ZLB_PARASITES/"
+    },
+    "mappings": [
+      {
+      "relationship": "SAME_AS",
+      "externalId": "SNOMED_PARASITES",
+      "toConceptCode": "16541001",
+      "toConceptName": "Plasmodium falciparum (organism)",
+      "toSourceName": "SNOMED-CT",
+      "toSourceOwner": "IHTSDO",
+      "toSourceUrl": "/orgs/IHTSDO/sources/SNOMED-CT/"
+      },
+      {
+      "relationship": "SAME_AS",
+      "externalId": "LOINC_PARASITES",
+      "toConceptCode": "664-3",
+      "toConceptName": "Plasmodium falciparum [Presence] in Blood by Light microscopy",
+      "toSourceName": "LOINC",
+      "toSourceOwner": "Regenstrief",
+      "toSourceUrl": "/orgs/Regenstrief/sources/LOINC/"
+      }
+    ]
+    },
+    "ZLB_TEMP_HIGH": {
+    "concept": {
+      "code": "ZLB_TEMP_HIGH",
+      "name": "Body Temperature",
+      "sourceUrl": "/orgs/ZLAB/sources/OpenLDR/concepts/ZLB_TEMP_HIGH/"
+    },
+    "mappings": [
+      {
+      "relationship": "SAME_AS",
+      "externalId": "UCUM_TEMP_HIGH",
+      "toConceptCode": "Cel",
+      "toConceptName": "Celsius",
+      "toSourceUrl": "/orgs/UCUM/sources/UCUM/"
+      },
+      {
+      "relationship": "SAME_AS",
+      "externalId": "SNOMED_TEMP_HIGH",
+      "toConceptCode": "386725007",
+      "toConceptName": "Body temperature (observable entity)",
+      "toSourceName": "SNOMED-CT",
+      "toSourceOwner": "IHTSDO",
+      "toSourceUrl": "/orgs/IHTSDO/sources/SNOMED-CT/"
+      },
+      {
+      "relationship": "SAME_AS",
+      "externalId": "LOINC_TEMP_HIGH",
+      "toConceptCode": "8310-5",
+      "toConceptName": "Body temperature",
+      "toSourceName": "LOINC",
+      "toSourceOwner": "Regenstrief",
+      "toSourceUrl": "/orgs/Regenstrief/sources/LOINC/"
+      }
+    ]
+    },
+    "ZLB_MALARIA_001": {
+    "concept": {
+      "code": "ZLB_MALARIA_001",
+      "name": "Malaria P.falciparum Test",
+      "sourceUrl": "/orgs/ZLAB/sources/OpenLDR/concepts/ZLB_MALARIA_001/"
+    },
+    "mappings": [
+      {
+      "relationship": "SAME_AS",
+      "externalId": "SNOMED_MALARIA_001",
+      "toConceptCode": "16541001",
+      "toConceptName": "Plasmodium falciparum (organism)",
+      "toSourceName": "SNOMED-CT",
+      "toSourceOwner": "IHTSDO",
+      "toSourceUrl": "/orgs/IHTSDO/sources/SNOMED-CT/"
+      },
+      {
+      "relationship": "SAME_AS",
+      "externalId": "LOINC_MALARIA_001",
+      "toConceptCode": "664-3",
+      "toConceptName": "Plasmodium falciparum [Presence] in Blood by Light microscopy",
+      "toSourceName": "LOINC",
+      "toSourceOwner": "Regenstrief",
+      "toSourceUrl": "/orgs/Regenstrief/sources/LOINC/"
+      }
+    ]
+    },
+    "ZLB_DRUG_RESIST": {
+    "concept": {
+      "code": "ZLB_DRUG_RESIST",
+      "name": "Drug Resistance",
+      "sourceUrl": "/orgs/ZLAB/sources/OpenLDR/concepts/ZLB_DRUG_RESIST/"
+    },
+    "mappings": [
+      {
+      "relationship": "SAME_AS",
+      "externalId": "SNOMED_DRUG_RESIST",
+      "toConceptCode": "418038007",
+      "toConceptName": "Drug resistance (finding)",
+      "toSourceName": "SNOMED-CT",
+      "toSourceOwner": "IHTSDO",
+      "toSourceUrl": "/orgs/IHTSDO/sources/SNOMED-CT/"
+      },
+      {
+      "relationship": "SAME_AS",
+      "externalId": "LOINC_DRUG_RESIST",
+      "toConceptCode": "29576-6",
+      "toConceptName": "Drug resistance panel [Identifier] in Isolate",
+      "toSourceName": "LOINC",
+      "toSourceOwner": "Regenstrief",
+      "toSourceUrl": "/orgs/Regenstrief/sources/LOINC/"
+      }
+    ]
+    },
+    "ZLB_RESIST_CHLORO": {
+    "concept": {
+      "code": "ZLB_RESIST_CHLORO",
+      "name": "Chloroquine Resistance",
+      "sourceUrl": "/orgs/ZLAB/sources/OpenLDR/concepts/ZLB_RESIST_CHLORO/"
+    },
+    "mappings": [
+      {
+      "relationship": "SAME_AS",
+      "externalId": "SNOMED_RESIST_CHLORO",
+      "toConceptCode": "418038007",
+      "toConceptName": "Drug resistance (finding)",
+      "toSourceName": "SNOMED-CT",
+      "toSourceOwner": "IHTSDO",
+      "toSourceUrl": "/orgs/IHTSDO/sources/SNOMED-CT/"
+      },
+      {
+      "relationship": "SAME_AS",
+      "externalId": "LOINC_RESIST_CHLORO",
+      "toConceptCode": "29576-6",
+      "toConceptName": "Drug resistance panel [Identifier] in Isolate",
+      "toSourceName": "LOINC",
+      "toSourceOwner": "Regenstrief",
+      "toSourceUrl": "/orgs/Regenstrief/sources/LOINC/"
+      }
+    ]
+    }
+  }	
+  }
+  
+  

@@ -1,0 +1,34 @@
+[
+  {
+    "id": "user-creation-route",
+    "uri": "/api/v1/openldr/user/create",
+    "name": "User creation route",
+    "methods": ["POST", "OPTIONS"],
+    "rewrite_uri": ["/api/v1/openldr/user/create", "/user/create-user"],
+    "upstream_url": "${ENTITY_SERVICE_URL}"
+  },
+  {
+    "id": "user-get-all-route",
+    "uri": "/api/v1/openldr/user",
+    "name": "User get all route",
+    "methods": ["GET", "OPTIONS"],
+    "rewrite_uri": ["/api/v1/openldr/user", "/user"],
+    "upstream_url": "${ENTITY_SERVICE_URL}"
+  },
+  {
+    "id": "user-update-route",
+    "uri": "/api/v1/openldr/user/update/*",
+    "name": "User update route",
+    "methods": ["PUT", "OPTIONS"],
+    "rewrite_uri": ["/api/v1/openldr/user/update/(.*)", "/user/update-user/$1"],
+    "upstream_url": "${ENTITY_SERVICE_URL}"
+  },
+  {
+    "id": "user-delete-route",
+    "uri": "/api/v1/openldr/user/delete/*",
+    "name": "User delete route",
+    "methods": ["DELETE", "OPTIONS"],
+    "rewrite_uri": ["/api/v1/openldr/user/delete/(.*)", "/user/delete-user/$1"],
+    "upstream_url": "${ENTITY_SERVICE_URL}"
+  }
+]

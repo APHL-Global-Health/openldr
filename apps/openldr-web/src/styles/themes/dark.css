@@ -1,0 +1,111 @@
+/* VSCode-Style Dark Theme with Steelblue Accents */
+[data-theme="deep-dark"],
+.deep-dark,
+[data-theme="dark"],
+.dark {
+  /* Base color corrections */
+  --color-black: #000000;
+  --color-white: #ffffff;
+
+  /* Main background and text - VSCode style */
+  --color-background: #1e1e1e;
+  --color-foreground: #cccccc;
+  --color-foreground-default: #cccccc;
+
+  /* Card and surface colors - darker like VSCode */
+  --color-card: #252526;
+  --color-card-foreground: #cccccc;
+  --color-popover: #252526;
+  --color-popover-foreground: #cccccc;
+
+  /* Primary - Steelblue for dark theme */
+  --color-primary: #4682b4;
+  --color-primary-foreground: #ffffff;
+  --color-primary-hover: #5b9bd5;
+
+  /* Secondary - VSCode panel colors */
+  --color-secondary: #2d2d30;
+  --color-secondary-foreground: #9d9d9d;
+
+  /* Muted backgrounds and text */
+  --color-muted: #2d2d30;
+  --color-muted-foreground: #6a6a6a;
+
+  /* Accent colors */
+  --color-accent: #2d2d30;
+  --color-accent-foreground: #4682b4;
+
+  /* Destructive - VSCode error red */
+  --color-destructive: #f48771;
+  --color-destructive-foreground: #ffffff;
+
+  /* Borders and inputs - very subtle like VSCode */
+  --color-border: #3c3c3c;
+  --color-border-default: #3c3c3c;
+  --color-border-muted: #2d2d30;
+  --color-input: #3c3c3c;
+  --color-ring: #4682b4;
+
+  /* Surface variations - VSCode inspired */
+  --color-surface-75: #252526;
+  --color-surface-100: #2d2d30;
+  --color-surface-200: #3c3c3c;
+  --color-surface-300: #464647;
+  --color-surface-400: #6a6a6a;
+
+  /* Alternative and overlay colors */
+  --color-alternative: #252526;
+  --color-overlay: #1e1e1e;
+  --color-overlay-hover: #2d2d30;
+  --color-strong: #3c3c3c;
+  --color-stronger: #464647;
+  --color-border-stronger: #464647;
+
+  /* Button and control colors */
+  --color-border-control: #3c3c3c;
+  --color-border-button-default: #3c3c3c;
+  --color-border-button-hover: #464647;
+
+  /* Text variations - VSCode text hierarchy */
+  --color-foreground-light: #9d9d9d;
+  --color-foreground-lighter: #6a6a6a;
+  --color-foreground-muted: #525252;
+  --color-foreground-contrast: #1e1e1e;
+
+  /* Chart colors - Dark steelblue palette */
+  --color-chart-1: #4682b4;
+  --color-chart-2: #5b9bd5;
+  --color-chart-3: #7ba7d1;
+  --color-chart-4: #9bb3cd;
+  --color-chart-5: #bbc0c9;
+
+  /* Sidebar - VSCode sidebar style */
+  --color-sidebar-background: #252526;
+  --color-sidebar-foreground: #cccccc;
+  --color-sidebar-primary: #4682b4;
+  --color-sidebar-primary-foreground: #ffffff;
+  --color-sidebar-accent: #2d2d30;
+  --color-sidebar-accent-foreground: #9d9d9d;
+  --color-sidebar-border: #3c3c3c;
+  --color-sidebar-ring: #4682b4;
+
+  /* Brand and control colors */
+  --color-control: #4682b4;
+  --color-studio: #252526;
+  --color-brand-default: #4682b4;
+  --color-brand-button: #4682b4;
+  --color-brand-link: #5b9bd5;
+
+  /* Background alternatives */
+  --color-background-alternative-default: #252526;
+  --color-background-alternative-200: #2d2d30;
+
+  /* Grid and layout - VSCode style */
+  --color-grid: #3c3c3c;
+  --color-dash-canvas: #1e1e1e;
+  --color-dash-sidebar: #252526;
+
+  /* Additional VSCode-inspired colors */
+  --color-typography-body-light: #cccccc;
+  --color-typography-body-dark: #cccccc;
+}

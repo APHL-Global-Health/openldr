@@ -1,0 +1,50 @@
+{
+  "name": "@openldr/mcp-server",
+  "version": "1.0.0",
+  "description": "OpenLDR MCP",
+  "main": "src/index.ts",
+  "author": "Association of Public Health Laboratories (APHL)",
+  "license": "Apache-2.0",
+  "private": true,
+  "scripts": {
+    "copy:env": "cpy ../../.env.microservices . --rename=.env",
+    "docker:build": "npm run copy:env && tsx ./docker-compose.ts build",
+    "docker:start": "npm run copy:env && tsx ./docker-compose.ts up -d",
+    "docker:stop": "npm run copy:env && tsx ./docker-compose.ts stop",
+    "docker:reset": "docker compose -f docker-compose.yml down --rmi all -v --remove-orphans && rimraf ./.env",
+    "setup:services": "tsx openldr.ts setup",
+    "reset:services": "tsx openldr.ts reset",
+    "stop:services": "tsx openldr.ts stop",
+    "start:services": "tsx openldr.ts start",
+    "start": "ts-node src/index.ts",
+    "inspect": "npm run copy:env && cross-env DANGEROUSLY_OMIT_AUTH=true CLIENT_PORT=6274 SERVER_PORT=6277 HOST=127.0.0.1 MCP_AUTO_OPEN_ENABLED=false ALLOWED_ORIGINS=http://127.0.0.1:6274,http://localhost:6274 npx @modelcontextprotocol/inspector"
+  },
+  "keywords": [],
+  "dependencies": {
+    "@keycloak/keycloak-admin-client": "^26.4.7",
+    "@modelcontextprotocol/sdk": "^1.25.1",
+    "@openldr/internal-database": "*",
+    "@openldr/ocl": "*",
+    "@opensearch-project/opensearch": "^3.5.1",
+    "@repo/openldr-core": "*",
+    "@repo/typescript-config": "*",
+    "@sequelize/core": "^7.0.0-alpha.42",
+    "@sequelize/mariadb": "^7.0.0-alpha.46",
+    "@sequelize/mssql": "^7.0.0-alpha.46",
+    "@sequelize/mysql": "^7.0.0-alpha.46",
+    "@sequelize/postgres": "^7.0.0-alpha.46",
+    "@sequelize/sqlite3": "^7.0.0-alpha.46",
+    "axios": "^1.13.2",
+    "cross-env": "^10.1.0",
+    "dotenv": "^17.2.3",
+    "kafkajs": "^2.2.4",
+    "minio": "^8.0.6",
+    "tsx": "^4.20.6",
+    "typescript": "^5.9.3",
+    "zod": "^4.1.11"
+  },
+  "devDependencies": {
+    "@modelcontextprotocol/inspector": "^0.18.0",
+    "@types/node": "^24.7.0"
+  }
+}
