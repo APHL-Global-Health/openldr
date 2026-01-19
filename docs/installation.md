@@ -16,7 +16,7 @@ Before you begin, ensure you have the following installed:
 
 - **Memory**: Minimum 16GB RAM (32GB recommended for production)
 - **Storage**: At least 512GB free disk space
-- **CPU**: 4 cores recommended
+- **CPU**: Minimum 4 cores recommended (10 cores recommended for production)
 - **OS**: Linux, macOS, or Windows with WSL2
 
 ## Initial Setup
