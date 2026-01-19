@@ -67,8 +67,8 @@ A comprehensive, microservices-based platform for managing and processing labora
 ### Prerequisites
 
 - Docker and Docker Compose
-- Node.js 18+ (for local development)
-- 16GB+ RAM recommended for running all services
+- Node.js 24+ (for local development)
+- 16GB+ RAM recommended for running all services (in production)
 
 ### Quick Start
 
