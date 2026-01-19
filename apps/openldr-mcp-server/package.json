@@ -44,6 +44,8 @@
   },
   "devDependencies": {
     "@modelcontextprotocol/inspector": "^0.18.0",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
     "@types/node": "^24.7.0"
   }
 }

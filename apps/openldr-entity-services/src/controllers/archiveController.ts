@@ -60,7 +60,7 @@ export const router = (modelManager: DynamicModelManager) => {
     authentication,
     async (req: express.Request, res: express.Response) => {
       try {
-        const table = req.params.name!;
+        const table = req.params.name as string;
         const { where, ...rest } = req.body;
 
         let options: any = {};
@@ -87,9 +87,9 @@ export const router = (modelManager: DynamicModelManager) => {
     "/table/:name",
     authentication,
     async (req: express.Request, res: express.Response) => {
-      const name = req.params.name;
+      const name = req.params.name as string;
 
-      const cols = await modelManager.getColums(name!);
+      const cols = await modelManager.getColums(name);
 
       // return result based on return type format
       res.status(200).json({ status: "successful", data: cols });
@@ -109,9 +109,9 @@ export const router = (modelManager: DynamicModelManager) => {
     "/table/:version/:name/:type",
     authentication,
     async (req: express.Request, res: express.Response) => {
-      const name = req.params.name!;
-      const version = req.params.version!;
-      const type = req.params.type!;
+      const name = req.params.name as string;
+      const version = req.params.version as string;
+      const type = req.params.type as string;
       const data = req.body;
 
       const schema = await getEnryForm(modelManager, name, version, type);
@@ -239,9 +239,9 @@ export const router = (modelManager: DynamicModelManager) => {
     "/table/:version/:name/:type",
     authentication,
     async (req: express.Request, res: express.Response) => {
-      const name = req.params.name!;
-      const version = req.params.version!;
-      const type = req.params.type!;
+      const name = req.params.name as string;
+      const version = req.params.version as string;
+      const type = req.params.type as string;
       const data = req.body;
 
       try {
@@ -311,9 +311,9 @@ export const router = (modelManager: DynamicModelManager) => {
     "/table/:version/:name/:type",
     authentication,
     async (req: express.Request, res: express.Response) => {
-      const name = req.params.name!;
-      const version = req.params.version!;
-      const type = req.params.type!;
+      const name = req.params.name as string;
+      const version = req.params.version as string;
+      const type = req.params.type as string;
       const data = req.body;
       // Remove all null/undefined properties
       const cleanData = Object.fromEntries(

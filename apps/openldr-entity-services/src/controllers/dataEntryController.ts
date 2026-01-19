@@ -6,7 +6,7 @@ export const router = (modelManager: DynamicModelManager) => {
   const _router = express.Router();
 
   _router.get("/:type", async (req, res) => {
-    const type = req.params.type!;
+    const type = req.params.type as string;
     try {
       const forms = await getAllEntryForms(modelManager, type);
       res.status(200).json(forms);
@@ -16,9 +16,9 @@ export const router = (modelManager: DynamicModelManager) => {
   });
 
   _router.get("/get-form/:name/:version/:type", async (req, res) => {
-    const name = req.params.name!;
-    const version = req.params.version;
-    const type = req.params.type;
+    const name = req.params.name as string;
+    const version = req.params.version as string;
+    const type = req.params.type as string;
     try {
       const form = await getEnryForm(modelManager, name, version, type);
       res.status(200).json(form);

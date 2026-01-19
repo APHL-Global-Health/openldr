@@ -184,7 +184,7 @@ router.put(
       fileContent = fs.readFileSync(file.path, "utf-8");
     }
 
-    const pluginId = req.params.id!;
+    const pluginId = req.params.id as string;
 
     try {
       // generate new minio object path
@@ -220,7 +220,7 @@ router.put(
 );
 
 router.put("/update-mapper-plugin/:id", async (req, res) => {
-  const pluginId = req.params.id;
+  const pluginId = req.params.id as string;
   const config = req.body.config || {};
   const { oclUrl, orgId, sourceId, auth } = config;
 
@@ -332,7 +332,7 @@ router.delete("/delete-plugin/:id", async (req, res) => {
 });
 
 router.post("/regenerate-mapper-plugin/:id", async (req, res) => {
-  const pluginId = req.params.id;
+  const pluginId = req.params.id as string;
   const config = req.body.config || {};
   const { oclUrl, orgId, sourceId, auth } = config;
 

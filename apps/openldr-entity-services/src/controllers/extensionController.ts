@@ -318,7 +318,7 @@ export const router = (modelManager: DynamicModelManager) => {
     upload.single("package"),
     async (req, res) => {
       try {
-        const packageId = req.params.packageId;
+        const packageId = req.params.packageId as string;
         const file = req.file;
 
         if (!packageId) {
