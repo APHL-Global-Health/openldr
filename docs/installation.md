@@ -58,7 +58,7 @@ When prompted for IP address, select: 127.0.0.1
 
 **Access URLs (Local)**:
 
-- Frontend: `https://127.0.0.1:3000/web/`
+- Frontend: `https://127.0.0.1/web/`
 
 ### Remote/Production Instance
 
@@ -77,7 +77,7 @@ Example: 203.0.113.45
 
 **Access URLs (Remote)**:
 
-- Frontend: `https://<your-public-ip>:3000/web/`
+- Frontend: `https://<your-public-ip>/web/`
 
 ## Building the Services
 
@@ -116,8 +116,8 @@ All services should show status as `Up` or `healthy`.
 
 Once all services are running, navigate to the frontend URL in your browser:
 
-- **Local**: `https://127.0.0.1:3000/web/`
-- **Remote**: `https://<your-public-ip>:3000/web/`
+- **Local**: `https://127.0.0.1/web/`
+- **Remote**: `https://<your-public-ip>/web/`
 
 > **Note**: Initial startup may take 5-10 minutes for all services to become fully available. If you see connection errors, wait a few moments and refresh.
 
