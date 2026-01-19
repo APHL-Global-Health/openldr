@@ -24,7 +24,6 @@
     "@keycloak/keycloak-admin-client": "^26.4.7",
     "@modelcontextprotocol/sdk": "^1.25.1",
     "@openldr/internal-database": "*",
-    "@openldr/ocl": "*",
     "@opensearch-project/opensearch": "^3.5.1",
     "@repo/openldr-core": "*",
     "@repo/typescript-config": "*",
