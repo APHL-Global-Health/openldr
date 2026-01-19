@@ -1,4 +1,4 @@
-# OpenLDR - Open Laboratory Data Repository
+# Open Laboratory Data Repository
 
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
 [![Docker](https://img.shields.io/badge/docker-ready-brightgreen.svg)](https://www.docker.com/)
