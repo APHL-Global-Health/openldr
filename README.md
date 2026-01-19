@@ -2,7 +2,7 @@
 
 [![Docker](https://img.shields.io/badge/Docker-ready-brightgreen.svg)](https://www.docker.com/)
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
-[![Node.js](https://img.shields.io/badge/Node.js-18+-brightgreen.svg)](https://nodejs.org/)
+[![Node.js](https://img.shields.io/badge/Node.js-24+-brightgreen.svg)](https://nodejs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0+-blue.svg)](https://www.typescriptlang.org/)
 [![Turborepo](https://img.shields.io/badge/Turborepo-2.7+-brightgreen.svg?logoColor=white)](https://turborepo.dev/)
 
@@ -25,28 +25,33 @@ A comprehensive, microservices-based platform for managing and processing labora
 ## Technology Stack
 
 ### Frontend
+
 - React
 - TypeScript
 - Modern UI/UX components
 
 ### Backend
+
 - Node.js
 - TypeScript
 - RESTful APIs
 
 ### Data Layer
+
 - **PostgreSQL**: Primary relational database
 - **OpenSearch**: Full-text search and analytics
 - **MinIO**: S3-compatible object storage
 - **Apache Kafka**: Message streaming and event processing
 
 ### Infrastructure
+
 - **Keycloak**: Identity and access management
 - **APISIX**: API Gateway
 - **Docker**: Containerization
 - **Docker Compose**: Multi-container orchestration
 
 ### Documentation
+
 - Scalar API Documentation
 
 ## Use Cases
@@ -66,6 +71,7 @@ A comprehensive, microservices-based platform for managing and processing labora
 - 16GB+ RAM recommended for running all services
 
 ### Quick Start
+
 ```bash
 # Clone the repository
 git clone https://github.com/APHL-Global-Health/openldr.git
