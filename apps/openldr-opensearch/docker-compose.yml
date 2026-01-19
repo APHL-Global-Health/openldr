@@ -11,6 +11,9 @@ services:
       - OPENSEARCH_JAVA_OPTS=-Xms${OPENSEARCH_MEMORY:-512m} -Xmx${OPENSEARCH_MEMORY:-512m}
       - DISABLE_INSTALL_DEMO_CONFIG=true
       - DISABLE_SECURITY_PLUGIN=true
+      - network.host=0.0.0.0
+      - network.bind_host=0.0.0.0
+      - network.publish_host=openldr-opensearch
     ports:
       - ${OPENSEARCH_PORT}:9200
       - 9600:9600 # Performance Analyzer port (9600) - Internal monitoring and diagnostics port for OpenSearch metrics collection
