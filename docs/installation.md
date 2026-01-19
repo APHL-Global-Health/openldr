@@ -8,8 +8,8 @@ Before you begin, ensure you have the following installed:
 
 - **Docker** (version 20.10 or higher)
 - **Docker Compose** (version 2.0 or higher)
-- **Node.js** (version 18 or higher)
-- **npm** (version 9 or higher)
+- **Node.js** (version 24 or higher)
+- **npm** (version 11 or higher)
 - **Git**
 
 ### System Requirements
