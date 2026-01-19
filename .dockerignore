@@ -1,0 +1,46 @@
+# Dependencies
+node_modules
+
+# Local env files
+
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Build Outputs
+.next/
+out/
+build
+dist
+
+
+# Debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Misc
+.DS_Store
+*.pem
+
+./docker/
+./packages/**/**/node_modules
+./apps/**/**/node_modules
+
+./packages/**/**/build
+./apps/**/**/build
+
+./packages/**/**/out
+./apps/**/**/out
+
+./packages/**/**/dist
+./apps/**/**/dist
+
+./apps/api/**/migrations
+!./apps/api/openldr.api.sqlite/migrations
+
+./apps/**/**/src-tauri/target/
+./apps/**/**/src-tauri/gen/schemas
+
+postman.txt
