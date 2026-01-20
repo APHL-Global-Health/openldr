@@ -369,11 +369,7 @@ subscription.unsubscribe();
    - Update `changelog` with version changes
 
 3. **Package your extension**
-
-```bash
-   # Create a zip file with manifest.json and index.js
-   zip -r my-extension.zip manifest.json index.js assets/
-```
+   - Create a zip file with manifest.json and index.js
 
 ## Best Practices
 
