@@ -31,7 +31,7 @@ OpenLDR follows these core architectural principles:
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                         Client Layer                             │
+│                         Client Layer                            │
 │  ┌──────────────┐              ┌──────────────┐                 │
 │  │   Web UI     │              │  External    │                 │
 │  │   (React)    │              │   Clients    │                 │
@@ -40,7 +40,7 @@ OpenLDR follows these core architectural principles:
                               │
                               ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│                      Gateway Layer                               │
+│                      Gateway Layer                              │
 │  ┌──────────────┐              ┌──────────────┐                 │
 │  │    NGINX     │              │    APISIX    │                 │
 │  │ Reverse Proxy│              │  API Gateway │                 │
@@ -49,7 +49,7 @@ OpenLDR follows these core architectural principles:
                               │
                               ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│                   Authentication Layer                           │
+│                   Authentication Layer                          │
 │                   ┌──────────────┐                              │
 │                   │   Keycloak   │                              │
 │                   │   Identity   │                              │
@@ -58,24 +58,24 @@ OpenLDR follows these core architectural principles:
                               │
                               ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│                    Application Layer                             │
-│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐            │
-│  │   Entity    │  │ Lab Data    │  │   Mapper    │            │
-│  │  Services   │  │     API     │  │             │            │
-│  └─────────────┘  └─────────────┘  └─────────────┘            │
-│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐            │
-│  │   Data      │  │ Validation  │  │ Terminology │            │
-│  │ Processing  │  │             │  │   Mapping   │            │
-│  └─────────────┘  └─────────────┘  └─────────────┘            │
-│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐            │
-│  │   Plugins   │  │ MCP Server  │  │   External  │            │
-│  │             │  │             │  │   Storage   │            │
-│  └─────────────┘  └─────────────┘  └─────────────┘            │
+│                    Application Layer                            │
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐              │
+│  │   Entity    │  │ Lab Data    │  │   Mapper    │              │
+│  │  Services   │  │     API     │  │             │              │
+│  └─────────────┘  └─────────────┘  └─────────────┘              │
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐              │
+│  │   Data      │  │ Validation  │  │ Terminology │              │
+│  │ Processing  │  │             │  │   Mapping   │              │
+│  └─────────────┘  └─────────────┘  └─────────────┘              │
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐              │
+│  │   Plugins   │  │ MCP Server  │  │   External  │              │
+│  │             │  │             │  │   Storage   │              │
+│  └─────────────┘  └─────────────┘  └─────────────┘              │
 └─────────────────────────────────────────────────────────────────┘
                               │
                               ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│                    Integration Layer                             │
+│                    Integration Layer                            │
 │                   ┌──────────────┐                              │
 │                   │    Kafka     │                              │
 │                   │ Message Bus  │                              │
@@ -84,11 +84,11 @@ OpenLDR follows these core architectural principles:
                               │
                               ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│                      Data Layer                                  │
-│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐            │
-│  │ PostgreSQL  │  │   MinIO     │  │ OpenSearch  │            │
-│  │  Database   │  │   Storage   │  │   Search    │            │
-│  └─────────────┘  └─────────────┘  └─────────────┘            │
+│                      Data Layer                                 │
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐              │
+│  │ PostgreSQL  │  │   MinIO     │  │ OpenSearch  │              │
+│  │  Database   │  │   Storage   │  │   Search    │              │
+│  └─────────────┘  └─────────────┘  └─────────────┘              │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
