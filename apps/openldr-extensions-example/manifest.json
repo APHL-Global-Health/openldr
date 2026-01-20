@@ -1,0 +1,44 @@
+{
+  "id": "org.openldr.extension.example.fakelis",
+  "name": "FakeLis Extension",
+  "publisher": {
+    "displayName": "APHL",
+    "domain": "aphl.org"
+  },
+  "icon": {
+    "menu": "<Cable />",
+    "package":
+      "data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHdpZHRoPScyNCcgaGVpZ2h0PScyNCcgdmlld0JveD0nMCAwIDI0IDI0JyBmaWxsPSdub25lJyBzdHJva2U9JyMzQjgyRjYnIHN0cm9rZS13aWR0aD0nMicgc3Ryb2tlLWxpbmVjYXA9J3JvdW5kJyBzdHJva2UtbGluZWpvaW49J3JvdW5kJyBjbGFzcz0nbHVjaWRlIGx1Y2lkZS1jYWJsZS1pY29uIGx1Y2lkZS1jYWJsZSc+PHBhdGggZD0nTTE3IDE5YTEgMSAwIDAgMS0xLTF2LTJhMiAyIDAgMCAxIDItMmgyYTIgMiAwIDAgMSAyIDJ2MmExIDEgMCAwIDEtMSAxeicvPjxwYXRoIGQ9J00xNyAyMXYtMicvPjxwYXRoIGQ9J00xOSAxNFY2LjVhMSAxIDAgMCAwLTcgMHYxMWExIDEgMCAwIDEtNyAwVjEwJy8+PHBhdGggZD0nTTIxIDIxdi0yJy8+PHBhdGggZD0nTTMgNVYzJy8+PHBhdGggZD0nTTQgMTBhMiAyIDAgMCAxLTItMlY2YTEgMSAwIDAgMSAxLTFoNGExIDEgMCAwIDEgMSAxdjJhMiAyIDAgMCAxLTIgMnonLz48cGF0aCBkPSdNNyA1VjMnLz48L3N2Zz4="
+  },
+  "description": "Example of an openldr extension for FakeLis",
+  "version": "1.0.0",
+  "lastUpdated": "2024-12-10",
+  "author": "APHL",
+  "main": "index.js",
+  "permissions": [],
+  "contributes": {
+    "commands": [],
+    "views": []
+  },
+  "activationEvents": [
+    "onStartup"
+  ],
+  "installs": 5234567,
+  "rating": 4.5,
+  "ratingCount": 1234,
+  "license": "Apache 2.0",
+  "repository": "https://github.com/APHL-Global-Health/openldr",
+  "categories": [
+    "Debuggers",
+    "Other"
+  ],
+  "tags": [
+    "react",
+    "debugging",
+    "devtools",
+    "components"
+  ],
+  "readme": "\n# React Developer Tools\nThe React Developer Tools extension helps you inspect React component hierarchies in the browser.\n\n## Usage\n1. Install the extension\n2. Open your browser's DevTools\n3. Navigate to the \"Components\" or \"Profiler\" tab\n4. Start inspecting your React application!\n\n## Requirements\n- React 16.8+\n- Modern browser (Chrome, Firefox, Edge)\n\n## Extension Settings\nThis extension contributes the following settings:\n* `reactDevTools.showInlineWarnings`: Enable/disable inline warnings\n* `reactDevTools.theme`: Set the DevTools theme (auto/light/dark)\n\n## Known Issues\nSee the [GitHub issues](https://github.com/facebook/react-devtools/issues) for known problems.\n\n## Release Notes\n### 4.28.5\n- Fixed issue with Suspense boundaries\n- Improved performance for large component trees\n- Added support for React 18.3 features\n### 4.28.0\n- Added support for React Server Components\n- Improved hook inspection UI\n- Bug fixes and stability improvements\n## More Information\n* [Documentation](https://react.dev/learn/react-developer-tools)\n* [Report Issues](https://github.com/facebook/react-devtools/issues)\n* [Changelog](https://github.com/facebook/react-devtools/blob/main/CHANGELOG.md)\n\n---\n\n**Enjoy!**\n",
+  "features":"\n# Features\n- 🔍 **Component Inspector** - Browse the component tree and examine props and state\n- ⚡ **Performance Profiler** - Record and analyze component render performance\n- 🎨 **Highlight Updates** - Visualize component updates in real-time\n- 🔧 **Edit Props & State** - Modify values directly in DevTools\n- 📊 **Hooks Support** - Full support for React Hooks inspection\n\n",
+  "changelog": "\n# Change Log\n## [4.28.5] - 2024-12-10\n### Fixed\n- Resolved crash when inspecting Suspense boundaries\n- Fixed memory leak in profiler\n- Improved error handling for malformed components\n### Changed\n- Performance improvements for large trees (1000+ components)\n## [4.28.0] - 2024-11-15\n### Added\n- Support for React Server Components\n- New hook inspection panel\n- Enhanced profiler with flame graphs\n### Fixed\n- Various stability improvements\n- Better TypeScript support\n## [4.27.0] - 2024-10-20\n### Added\n- React 18.3 compatibility\n- Improved accessibility features\n### Changed\n- UI refinements and polish\n- Updated dependencies\n"
+}
