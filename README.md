@@ -1,12 +1,22 @@
-# Open Laboratory Data Repository
+<p align="center">
+  <img src="./docs/assets/img/OpenODRv2Logo.png" alt="OpenLDR Logo" width="400"/>
+</p>
 
-[![Docker](https://img.shields.io/badge/Docker-ready-brightgreen.svg)](https://www.docker.com/)
-[![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
-[![Node.js](https://img.shields.io/badge/Node.js-24+-brightgreen.svg)](https://nodejs.org/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.0+-blue.svg)](https://www.typescriptlang.org/)
-[![Turborepo](https://img.shields.io/badge/Turborepo-2.7+-brightgreen.svg?logoColor=white)](https://turborepo.dev/)
+<h1 align="center">Open Laboratory Data Repository</h1>
 
-A comprehensive, microservices-based platform for managing and processing laboratory data using open source tools/resources.
+<p align="center">
+  <a href="https://www.docker.com/"><img src="https://img.shields.io/badge/Docker-ready-brightgreen.svg" alt="Docker"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-Apache%202.0-blue.svg" alt="License"></a>
+  <a href="https://nodejs.org/"><img src="https://img.shields.io/badge/Node.js-24+-brightgreen.svg" alt="Node.js"></a>
+  <a href="https://www.typescriptlang.org/"><img src="https://img.shields.io/badge/TypeScript-5.0+-blue.svg" alt="TypeScript"></a>
+  <a href="https://turborepo.dev/"><img src="https://img.shields.io/badge/Turborepo-2.7+-brightgreen.svg?logoColor=white" alt="Turborepo"></a>
+</p>
+
+<p align="center">
+  A comprehensive, microservices-based platform for managing and processing laboratory data using open source tools/resources.
+</p>
+
+---
 
 ## Key Features
 
