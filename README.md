@@ -94,8 +94,6 @@ npm run docker:start
 
 - [Installation Guide](docs/installation.md)
 - [Architecture Overview](docs/architecture.md)
-- [API Documentation](docs/api.md)
-- [Extension Development](docs/extensions.md)
 - [MCP Server Guide](docs/mcp-server.md)
 
 ## Architecture
