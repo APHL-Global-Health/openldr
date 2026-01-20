@@ -133,35 +133,36 @@ services:
       retries: 3
       start_period: 60s # Increased start period
 
-  # openldr-kafka-conduktor-console:
-  #   image: conduktor/conduktor-console:1.41.0
-  #   hostname: openldr-kafka-conduktor-console
-  #   container_name: openldr-kafka-conduktor-console
-  #   restart: unless-stopped
-  #   ports:
-  #     - "${KAFKA_CONDUKTOR_PORT}:8080"
-  #   deploy:
-  #     resources:
-  #       limits:
-  #         # cpus: ${CPU_LIMIT}
-  #         memory: 2G
-  #       reservations:
-  #         memory: 1024M
-  #   memswap_limit: 3G
-  #   volumes:
-  #     - ./conduktor-data:/var/conduktor
-  #   environment:
-  #     CDK_ADMIN_EMAIL: "${KAFKA_CONDUKTOR_USERNAME}" # look to add env variable for this
-  #     CDK_ADMIN_PASSWORD: "${KAFKA_CONDUKTOR_PASSWORD}" # look to add env variable for this
-  #     CDK_DATABASE_URL: "postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOSTNAME}:5432/conduktor_console"
-  #     CDK_CLUSTERS_0_ID: "default"
-  #     CDK_CLUSTERS_0_NAME: "OpenLDR Kafka"
-  #     CDK_CLUSTERS_0_COLOR: "#0013E7"
-  #     CDK_CLUSTERS_0_BOOTSTRAPSERVERS: "PLAINTEXT://openldr-kafka1:19092"
-  #     CDK_CLUSTERS_0_KAFKACONNECTS_0_URL: "http://openldr-kafka-connect:8083"
-  #     CDK_CLUSTERS_0_KAFKACONNECTS_0_NAME: "full stack kafka connect"
-  #   networks:
-  #     - openldr-network
+  openldr-kafka-conduktor-console:
+    image: conduktor/conduktor-console:1.41.0
+    hostname: openldr-kafka-conduktor-console
+    container_name: openldr-kafka-conduktor-console
+    restart: unless-stopped
+    ports:
+      - "${KAFKA_CONDUKTOR_PORT}:8080"
+    deploy:
+      resources:
+        limits:
+          # cpus: ${CPU_LIMIT}
+          memory: 2G
+        reservations:
+          memory: 1024M
+    memswap_limit: 3G
+    volumes:
+      - ./conduktor-data:/var/conduktor
+    environment:
+      CDK_ADMIN_EMAIL: "${KAFKA_CONDUKTOR_USERNAME}" # look to add env variable for this
+      CDK_ADMIN_PASSWORD: "${KAFKA_CONDUKTOR_PASSWORD}" # look to add env variable for this
+      CDK_DATABASE_URL: "postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOSTNAME}:5432/conduktor_console"
+      CDK_CLUSTERS_0_ID: "default"
+      CDK_CLUSTERS_0_NAME: "OpenLDR Kafka"
+      CDK_CLUSTERS_0_COLOR: "#0013E7"
+      CDK_CLUSTERS_0_BOOTSTRAPSERVERS: "PLAINTEXT://openldr-kafka1:19092"
+      CDK_CLUSTERS_0_KAFKACONNECTS_0_URL: "http://openldr-kafka-connect:8083"
+      CDK_CLUSTERS_0_KAFKACONNECTS_0_NAME: "full stack kafka connect"
+      CDK_PLATFORM_EXTERNAL_URL: "https://${HOST_IP}/kafka-console"
+    networks:
+      - openldr-network
 
 volumes:
   conduktor-data: {}
