@@ -371,6 +371,19 @@ subscription.unsubscribe();
 3. **Package your extension**
    - Create a zip file with manifest.json and index.js
 
+4. **Import extension**
+   - Click the import button
+   - Search for extension, it should appear on the list
+
+   ![Import extension](./assets/img/extensions-2.png)
+
+5. **Install extension**
+   - Select the extension
+   - Click install
+   - It should appear on the sidebar
+
+   ![Install extension](./assets/img/extensions-3.png)
+
 ## Best Practices
 
 ### Security
