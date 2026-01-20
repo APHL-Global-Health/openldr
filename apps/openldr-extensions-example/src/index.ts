@@ -35,7 +35,7 @@ const MyExtension: typeof types.Extension = {
         Status: "successful",
         Data: [
           {
-            LabNumber: "TDS0138895",
+            LabNumber: "FAKE0138895",
             InnerLabNumber: "2019017",
             ReferenceNumber: null,
             NID: null,
@@ -214,7 +214,7 @@ const MyExtension: typeof types.Extension = {
             TestResults: [
               {
                 DATESTAMP: "2019-01-09T09:13:58.257Z",
-                LABNO: "TDS0138895",
+                LABNO: "FAKE0138895",
                 TESTCODE: "MICBM",
                 TESTINDEX: 3,
                 ORDER: {
@@ -433,7 +433,7 @@ const MyExtension: typeof types.Extension = {
               },
               {
                 DATESTAMP: "2019-01-09T09:13:58.257Z",
-                LABNO: "TDS0138895",
+                LABNO: "FAKE0138895",
                 TESTCODE: "MRCSW",
                 TESTINDEX: 1,
                 ORDER: {
@@ -700,7 +700,7 @@ const MyExtension: typeof types.Extension = {
               },
               {
                 DATESTAMP: "2019-01-09T09:13:58.257Z",
-                LABNO: "TDS0138895",
+                LABNO: "FAKE0138895",
                 TESTCODE: "MSENS",
                 TESTINDEX: 2,
                 ORDER: {
@@ -970,7 +970,7 @@ const MyExtension: typeof types.Extension = {
   <div class="flex w-full flex-col max-h-[52px] min-h-[52px]">
     <div class="flex w-[100%] items-center py-2 my-0">
       <div data-slot="input-group" role="group" class="group/input-group border-input dark:bg-input/30 relative flex w-full items-center border shadow-xs transition-[color,box-shadow] outline-none h-9 min-w-0 has-[&gt;textarea]:h-auto has-[&gt;[data-align=inline-start]]:[&amp;&gt;input]:pl-2 has-[&gt;[data-align=inline-end]]:[&amp;&gt;input]:pr-2 has-[&gt;[data-align=block-start]]:h-auto has-[&gt;[data-align=block-start]]:flex-col has-[&gt;[data-align=block-start]]:[&amp;&gt;input]:pb-3 has-[&gt;[data-align=block-end]]:h-auto has-[&gt;[data-align=block-end]]:flex-col has-[&gt;[data-align=block-end]]:[&amp;&gt;input]:pt-3 has-[[data-slot=input-group-control]:focus-visible]:border-ring has-[[data-slot=input-group-control]:focus-visible]:ring-ring/50 has-[[data-slot=input-group-control]:focus-visible]:ring-[3px] has-[[data-slot][aria-invalid=true]]:ring-destructive/20 has-[[data-slot][aria-invalid=true]]:border-destructive dark:has-[[data-slot][aria-invalid=true]]:ring-destructive/40 rounded-[2px]">
-        <input value="TDS0138895" id="searchInput" data-slot="input-group-control" class="file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground border-input h-9 w-full min-w-0 px-3 py-1 text-base transition-[color,box-shadow] outline-none file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm focus-visible:border-ring focus-visible:ring-ring/50 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive flex-1 rounded-none border-0 bg-transparent shadow-none focus-visible:ring-0 dark:bg-transparent" placeholder="Search"><div role="group" data-slot="input-group-addon" data-align="inline-end" class="text-muted-foreground flex h-auto cursor-text items-center justify-center gap-2 py-1.5 text-sm font-medium select-none [&amp;&gt;svg:not([class*='size-'])]:size-4 [&amp;&gt;kbd]:rounded-[calc(var(--radius)-5px)] group-data-[disabled=true]/input-group:opacity-50 order-last pr-3 has-[&gt;button]:mr-[-0.45rem] has-[&gt;kbd]:mr-[-0.35rem]"/>
+        <input value="FAKE0138895" id="searchInput" data-slot="input-group-control" class="file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground border-input h-9 w-full min-w-0 px-3 py-1 text-base transition-[color,box-shadow] outline-none file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm focus-visible:border-ring focus-visible:ring-ring/50 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive flex-1 rounded-none border-0 bg-transparent shadow-none focus-visible:ring-0 dark:bg-transparent" placeholder="Search"><div role="group" data-slot="input-group-addon" data-align="inline-end" class="text-muted-foreground flex h-auto cursor-text items-center justify-center gap-2 py-1.5 text-sm font-medium select-none [&amp;&gt;svg:not([class*='size-'])]:size-4 [&amp;&gt;kbd]:rounded-[calc(var(--radius)-5px)] group-data-[disabled=true]/input-group:opacity-50 order-last pr-3 has-[&gt;button]:mr-[-0.45rem] has-[&gt;kbd]:mr-[-0.35rem]"/>
         <button onclick="search(document.getElementById('searchInput'), document.getElementById('json'));" data-slot="button" class="justify-center whitespace-nowrap font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&amp;_svg]:pointer-events-none [&amp;_svg:not([class*='size-'])]:size-4 shrink-0 [&amp;_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50 text-sm shadow-none flex gap-2 items-center size-6 rounded-[calc(var(--radius)-5px)] p-0 has-[&gt;svg]:p-0" type="button" data-size="icon-xs" aria-label="Search" title="Search">
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-search" aria-hidden="true">
             <path d="m21 21-4.34-4.34"></path>
