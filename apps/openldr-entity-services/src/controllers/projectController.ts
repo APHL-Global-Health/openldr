@@ -2,6 +2,7 @@ import { DynamicModelManager } from "@openldr/internal-database";
 import express from "express";
 import * as projectService from "../services/projectService";
 import { v4 as uuidv4 } from "uuid";
+import * as minioUtil from "../utils/minioUtil";
 
 export const router = (modelManager: DynamicModelManager) => {
   const _router = express.Router();
@@ -18,6 +19,11 @@ export const router = (modelManager: DynamicModelManager) => {
         description,
         isEnabled,
       });
+
+      // Create MinIO bucket for the facility
+      await minioUtil.createBucket(projectId);
+
+      await minioUtil.setBucketKafkaNotifications(projectId);
 
       res.status(200).json(project);
     } catch (error: any) {
@@ -52,7 +58,7 @@ export const router = (modelManager: DynamicModelManager) => {
       res
         .status(500)
         .send(
-          `Failed to update project (${JSON.stringify(error.response ? error.response.data : error.message, null, 2)})`
+          `Failed to update project (${JSON.stringify(error.response ? error.response.data : error.message, null, 2)})`,
         );
     }
   });
@@ -62,6 +68,7 @@ export const router = (modelManager: DynamicModelManager) => {
 
     try {
       await projectService.deleteProject(id);
+      await minioUtil.deleteBucket(id);
 
       res.status(200).send(`Project deleted successfully.`);
     } catch (error: any) {
@@ -70,7 +77,7 @@ export const router = (modelManager: DynamicModelManager) => {
       res
         .status(500)
         .send(
-          `Failed to delete project (${JSON.stringify(error.response ? error.response.data : error.message, null, 2)})`
+          `Failed to delete project (${JSON.stringify(error.response ? error.response.data : error.message, null, 2)})`,
         );
     }
   });

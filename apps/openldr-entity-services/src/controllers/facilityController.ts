@@ -1,11 +1,7 @@
 import { DynamicModelManager } from "@openldr/internal-database";
 import express from "express";
 import * as facilityService from "../services/facilityService";
-import * as minioUtil from "../utils/minioUtil";
 import { v4 as uuidv4 } from "uuid";
-import * as dataFeedService from "../services/dataFeedService";
-import * as keycloakUtil from "../utils/keycloakUtil";
-
 export const router = (modelManager: DynamicModelManager) => {
   const _router = express.Router();
 
@@ -42,26 +38,6 @@ export const router = (modelManager: DynamicModelManager) => {
         lattLong,
       });
 
-      // Create MinIO bucket for the facility
-      await minioUtil.createBucket(facilityId);
-
-      await minioUtil.setBucketKafkaNotifications(facilityId);
-
-      const dataFeedId = await uuidv4();
-
-      await dataFeedService.createDataFeed({
-        dataFeedId,
-        dataFeedName: `Manual Data Entry for facility: ${facilityName}`,
-        facilityId,
-        schemaPluginId: null,
-        mapperPluginId: null,
-        recipientPluginId: null,
-        projectId: process.env.OPENLDR_PROJECT_ID!,
-        useCaseId: process.env.MANUAL_ENTRY_USE_CASE_ID!,
-        isEnabled: true,
-        isProtected: true,
-      });
-
       res.status(200).json(facility);
     } catch (error: any) {
       console.error("Error creating facility:", error);
@@ -78,7 +54,7 @@ export const router = (modelManager: DynamicModelManager) => {
   _router.get("/get-facility/:facilityId", async (req, res) => {
     try {
       const facility = await facilityService.getFacilityById(
-        req.params.facilityId
+        req.params.facilityId,
       );
       res.status(200).json(facility);
     } catch (error) {
@@ -123,7 +99,7 @@ export const router = (modelManager: DynamicModelManager) => {
       res
         .status(500)
         .send(
-          `Failed to update facility (${JSON.stringify(error.response ? error.response.data : error.message, null, 2)})`
+          `Failed to update facility (${JSON.stringify(error.response ? error.response.data : error.message, null, 2)})`,
         );
     }
   });
@@ -147,7 +123,6 @@ export const router = (modelManager: DynamicModelManager) => {
       }
 
       await facilityService.deleteFacility(id);
-      await minioUtil.deleteBucket(id);
 
       res.status(200).send(`Facility deleted successfully.`);
     } catch (error: any) {
@@ -156,7 +131,7 @@ export const router = (modelManager: DynamicModelManager) => {
       res
         .status(500)
         .send(
-          `Failed to delete facility (${JSON.stringify(error.response ? error.response.data : error.message, null, 2)})`
+          `Failed to delete facility (${JSON.stringify(error.response ? error.response.data : error.message, null, 2)})`,
         );
     }
   });
