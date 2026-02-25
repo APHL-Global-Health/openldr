@@ -753,7 +753,7 @@ const start = async (dir: string) => {
       dir,
       "..",
       "..",
-      ".env.microservices"
+      ".env"
     );
     if (!(await services.fileExists(env))) {
       throw new Error(
