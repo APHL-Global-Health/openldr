@@ -17,7 +17,7 @@ export class RepositoryError extends Error {
   constructor(
     message: string,
     public readonly repositoryName: string,
-    public readonly action: RepositoryAction
+    public readonly action: RepositoryAction,
   ) {
     super(message);
     this.name = "RepositoryError";
@@ -29,4 +29,31 @@ export class SetupError extends RepositoryError {
     super(message, repositoryName, "setup");
     this.name = "SetupError";
   }
+}
+
+export interface MinioService {
+  name: string;
+  policies: string[];
+  key: string;
+}
+
+export interface MinioPlugin {
+  file: string;
+  id: string;
+  name: string;
+}
+
+export interface MinioBucket {
+  id: string;
+  name: string;
+}
+
+export interface MinioEvent {
+  prefix: string;
+  arn: string;
+}
+
+export interface KafkaNotification {
+  id: string;
+  topic: string;
 }

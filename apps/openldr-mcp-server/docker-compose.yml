@@ -7,13 +7,6 @@ services:
     container_name: openldr-mcp-server
     hostname: openldr-mcp-server
     restart: unless-stopped
-    deploy:
-      resources:
-        limits:
-          # cpus: ${CPU_LIMIT}
-          memory: 2G
-        reservations:
-          memory: 1024M
     env_file:
       - .env
     ports:
@@ -26,14 +19,6 @@ services:
     container_name: openldr-mcp-inspector
     hostname: openldr-mcp-inspector
     restart: unless-stopped
-    deploy:
-      resources:
-        limits:
-          cpus: ${CPU_LIMIT}
-          memory: ${MEMORY_LIMIT}
-        reservations:
-          memory: ${MEMORY_RESERVATIONS}
-    memswap_limit: ${MEMSWAP_LIMIT}
     environment:
       - DANGEROUSLY_OMIT_AUTH=true
       - CLIENT_PORT=6274
@@ -54,14 +39,6 @@ services:
   #   # - uncomment if not using reverse proxy
   #   ports:
   #     - "5678:5678"
-  #   deploy:
-  #     resources:
-  #       limits:
-  #         cpus: ${CPU_LIMIT}
-  #         memory: ${MEMORY_LIMIT}
-  #       reservations:
-  #         memory: ${MEMORY_RESERVATIONS}
-  #   memswap_limit: ${MEMSWAP_LIMIT}
   #   networks:
   #     - openldr-network
   #   environment:
@@ -74,4 +51,4 @@ services:
 
 networks:
   openldr-network:
-    external: true
+    driver: bridge

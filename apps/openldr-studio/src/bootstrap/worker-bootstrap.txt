@@ -1,0 +1,24 @@
+const _pending=new Map(),_evL=new Map(),_cmdH=new Map();let _seq=0;
+const _EID='__EXT_ID__',_API='__API_BASE__',_TOK='__TOKEN__';
+function _fire(e,a=[]){self.postMessage({_event:e,_args:a,_extId:_EID})}
+function _rpc(m,a=[]){return new Promise((res,rej)=>{const id=String(++_seq);_pending.set(id,{res,rej});self.postMessage({_reqId:id,_method:m,_args:a,_extId:_EID});setTimeout(()=>{if(_pending.has(id)){_pending.delete(id);rej(new Error('RPC timeout:'+m))}},15000)})}
+async function _apiPost(path,body){const r=await fetch(_API+path,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+_TOK,'X-Extension-Id':_EID},body:JSON.stringify(body)});if(!r.ok){const e=await r.json().catch(()=>({}));throw new Error(e.error||'HTTP '+r.status)}return r.json()}
+self.addEventListener('message',e=>{const m=e.data;if(!m)return;if(m._reqId&&_pending.has(m._reqId)){const{res,rej}=_pending.get(m._reqId);_pending.delete(m._reqId);m._error?rej(new Error(m._error)):res(m._result);return}if(m._appEvent){(_evL.get(m._appEvent)||[]).forEach(f=>{try{f(m._payload)}catch(e){}});return}if(m._invokeCommand&&_cmdH.has(m._invokeCommand)){try{_cmdH.get(m._invokeCommand)(...(m._args||[]))}catch(e){}return}if(m._type==='activate'){try{activate(openldr)}catch(err){_fire('extension.error',[err.message])}}});
+const openldr={
+  extensionId:_EID,
+  data:{query:(schema,table,params={})=>_apiPost('/api/v1/query/engine',{schema,table,params})},
+  events:{
+    on:(ev,h)=>{if(!_evL.has(ev))_evL.set(ev,[]);_evL.get(ev).push(h);_fire('events.subscribe',[ev]);return{dispose:()=>{const l=_evL.get(ev)||[];_evL.set(ev,l.filter(f=>f!==h))}}},
+    emit:(ev,p)=>_fire('events.emit',[ev,p])
+  },
+  ui:{
+    showNotification:(msg,t='info')=>_fire('ui.notification',[msg,t]),
+    statusBar:{setText:(t,p=0)=>_fire('ui.statusBar.setText',[t,p]),hide:()=>_fire('ui.statusBar.hide',[])},
+    registerCommand:(id,title,h)=>{_cmdH.set(id,h);_fire('ui.command.register',[id,title]);return{dispose:()=>_fire('ui.command.unregister',[id])}}
+  },
+  storage:{
+    get:k=>_apiPost('/api/v1/query/engine/storage/get',{key:k}).then(r=>r.value),
+    set:(k,v)=>_apiPost('/api/v1/query/engine/storage/set',{key:k,value:v}),
+    delete:k=>_apiPost('/api/v1/query/engine/storage/delete',{key:k})
+  }
+};

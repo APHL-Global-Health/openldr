@@ -1,0 +1,42 @@
+name: openldr
+services:
+  # openldr-nginx:
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfile
+  #   container_name: openldr-nginx
+  #   restart: unless-stopped
+  #   env_file:
+  #     - .env
+  #   volumes:
+  #     - ../../packages/openldr-core/certs:/etc/nginx/certs
+  #   networks:
+  #     - openldr-network
+  #   ports:
+  #     # - 8090:80
+  #     - 443:443
+
+  openldr-nginx-ui:
+    stdin_open: true
+    tty: true
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: openldr-nginx-ui
+    restart: unless-stopped
+    env_file:
+      - .env
+    volumes:
+      - ../../packages/openldr-core/certs:/etc/nginx/certs
+      - ./nginx-ui:/etc/nginx-ui
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - openldr-network
+    ports:
+      - "8090:9000"
+      - "9081:9081"
+      - "443:443"
+
+networks:
+  openldr-network:
+    driver: bridge

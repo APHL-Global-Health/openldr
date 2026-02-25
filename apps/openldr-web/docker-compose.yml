@@ -8,23 +8,15 @@ services:
     container_name: openldr-web
     hostname: openldr-web
     restart: unless-stopped
-    deploy:
-      resources:
-        limits:
-          cpus: ${CPU_LIMIT}
-          memory: ${MEMORY_LIMIT}
-        reservations:
-          memory: ${MEMORY_RESERVATIONS}
-    memswap_limit: ${MEMSWAP_LIMIT}
     env_file:
       - .env
     ##uncomment below if not using proxy
     # ports:
-    #   - "3111:3000"
+    #   - "3112:3000"
     stdin_open: true
     networks:
       - openldr-network
+
 networks:
   openldr-network:
-    name: openldr-network
-    external: true
+    driver: bridge

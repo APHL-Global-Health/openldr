@@ -1,0 +1,15 @@
+{
+  "name": "openldr-ext-patients",
+  "version": "1.0.0",
+  "description": "Patient statistics dashboard for OpenLDR",
+  "private": true,
+  "scripts": {
+    "build": "node build.mjs",
+    "dev":   "node build.mjs --watch",
+    "pack":  "node pack.mjs"
+  },
+  "devDependencies": {
+    "esbuild": "^0.21.0",
+    "adm-zip": "^0.5.10"
+  }
+}

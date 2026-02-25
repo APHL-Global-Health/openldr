@@ -3,3 +3,4 @@ migrations
 dist
 build
 conduktor-data
+kafka-connect

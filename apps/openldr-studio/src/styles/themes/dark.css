@@ -1,0 +1,60 @@
+/* VSCode-Style Dark Theme with Steelblue Accents */
+[data-theme="dark"],
+.dark {
+  /* Base colors */
+  --color-black: #000000;
+  --color-white: #ffffff;
+
+  /* Main background and text - VSCode style */
+  --color-background: #1e1e1e;
+  --color-foreground: #cccccc;
+
+  /* Card and surface colors */
+  --color-card: #252526;
+  --color-card-foreground: #cccccc;
+  --color-popover: #252526;
+  --color-popover-foreground: #cccccc;
+
+  /* Primary - Steelblue */
+  --color-primary: #4682b4;
+  --color-primary-foreground: #ffffff;
+  --color-primary-hover: #5b9bd5;
+
+  /* Secondary */
+  --color-secondary: #2d2d30;
+  --color-secondary-foreground: #9d9d9d;
+
+  /* Muted */
+  --color-muted: #2d2d30;
+  --color-muted-foreground: #6a6a6a;
+
+  /* Accent */
+  --color-accent: #2d2d30;
+  --color-accent-foreground: #4682b4;
+
+  /* Destructive */
+  --color-destructive: #f48771;
+  --color-destructive-foreground: #ffffff;
+
+  /* Borders and inputs */
+  --color-border: #3c3c3c;
+  --color-input: #3c3c3c;
+  --color-ring: #4682b4;
+
+  /* Chart colors */
+  --color-chart-1: #4682b4;
+  --color-chart-2: #5b9bd5;
+  --color-chart-3: #7ba7d1;
+  --color-chart-4: #9bb3cd;
+  --color-chart-5: #bbc0c9;
+
+  /* Sidebar */
+  --color-sidebar-background: #252526;
+  --color-sidebar-foreground: #cccccc;
+  --color-sidebar-primary: #4682b4;
+  --color-sidebar-primary-foreground: #ffffff;
+  --color-sidebar-accent: #2d2d30;
+  --color-sidebar-accent-foreground: #9d9d9d;
+  --color-sidebar-border: #3c3c3c;
+  --color-sidebar-ring: #4682b4;
+}

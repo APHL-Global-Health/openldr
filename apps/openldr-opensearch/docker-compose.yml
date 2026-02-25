@@ -11,9 +11,9 @@ services:
       - OPENSEARCH_JAVA_OPTS=-Xms${OPENSEARCH_MEMORY:-512m} -Xmx${OPENSEARCH_MEMORY:-512m}
       - DISABLE_INSTALL_DEMO_CONFIG=true
       - DISABLE_SECURITY_PLUGIN=true
-    ports:
-      - ${OPENSEARCH_PORT}:9200
-      - 9600:9600 # Performance Analyzer port (9600) - Internal monitoring and diagnostics port for OpenSearch metrics collection
+    # ports:
+    #   - ${OPENSEARCH_PORT}:9200
+    #   - 9600:9600 # Performance Analyzer port (9600) - Internal monitoring and diagnostics port for OpenSearch metrics collection
     networks:
       - openldr-network
     volumes:
@@ -31,8 +31,8 @@ services:
     image: opensearchproject/opensearch-dashboards:2.18.0
     container_name: openldr-opensearch-dashboard
     restart: unless-stopped
-    ports:
-      - ${OPENSEARCH_DASHBOARD_PORT}:5601
+    # ports:
+    #   - ${OPENSEARCH_DASHBOARD_PORT}:5601
     environment:
       - OPENSEARCH_HOSTS=["http://openldr-opensearch:9200"]
       - DISABLE_SECURITY_DASHBOARDS_PLUGIN=true
@@ -48,5 +48,4 @@ volumes:
 
 networks:
   openldr-network:
-    name: openldr-network
-    external: true
+    driver: bridge

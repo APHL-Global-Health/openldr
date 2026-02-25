@@ -7,21 +7,15 @@ services:
     container_name: openldr-data-processing
     hostname: openldr-data-processing
     restart: unless-stopped
-    deploy:
-      resources:
-        limits:
-          cpus: ${CPU_LIMIT}
-          memory: ${MEMORY_LIMIT}
-        reservations:
-          memory: ${MEMORY_RESERVATIONS}
-    memswap_limit: ${MEMSWAP_LIMIT}
     env_file:
       - .env
-    ports:
-      - "${DATA_PROCESSING_PORT}:3001"
+    # ports:
+    #   - "${DATA_PROCESSING_PORT}:3001"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
     networks:
       - openldr-network
 
 networks:
   openldr-network:
-    external: true
+    driver: bridge

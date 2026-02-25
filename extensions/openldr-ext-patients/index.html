@@ -1,0 +1,364 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline';  connect-src https://127.0.0.1;"
+    />
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        font-family: ui-monospace, monospace;
+        background: #080a0f;
+        color: #e2e8f0;
+        font-size: 12px;
+      }
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <script>
+      OPENLDR_BRIDGE_INJECT;
+      ("use strict");
+      var _ext = (() => {
+        var d = null,
+          y = !1;
+        function k(t) {
+          if (!t) return null;
+          let e = Date.now() - new Date(t).getTime();
+          return Math.floor(e / (1e3 * 60 * 60 * 24 * 365.25));
+        }
+        function v(t) {
+          return t === null
+            ? "Unknown"
+            : t < 5
+              ? "0\u20134"
+              : t < 18
+                ? "5\u201317"
+                : t < 35
+                  ? "18\u201334"
+                  : t < 50
+                    ? "35\u201349"
+                    : t < 65
+                      ? "50\u201364"
+                      : "65+";
+        }
+        function L(t) {
+          if (!t) return "Unknown";
+          let e = new Date(t);
+          return `${e.getFullYear()}-${String(e.getMonth() + 1).padStart(2, "0")}`;
+        }
+        function E(t) {
+          let e = {
+              total: t.length,
+              male: 0,
+              female: 0,
+              other: 0,
+              ageGroups: {},
+              monthlyTrend: [],
+              statusBreakdown: {},
+            },
+            i = new Map(),
+            s = new Map();
+          for (let n of t) {
+            let o = (n.gender || "").toLowerCase();
+            o === "m" || o === "male"
+              ? e.male++
+              : o === "f" || o === "female"
+                ? e.female++
+                : e.other++;
+            let a = v(k(n.date_of_birth));
+            e.ageGroups[a] = (e.ageGroups[a] || 0) + 1;
+            let l = L(n.created_at || n.registration_date || "");
+            i.set(l, (i.get(l) || 0) + 1);
+            let u = n.status || "unknown";
+            s.set(u, (s.get(u) || 0) + 1);
+          }
+          return (
+            (e.monthlyTrend = [...i.entries()]
+              .sort(([n], [o]) => n.localeCompare(o))
+              .slice(-12)
+              .map(([n, o]) => ({ month: n, count: o }))),
+            (e.statusBreakdown = Object.fromEntries(s)),
+            e
+          );
+        }
+        function w(t, e, i, s, n) {
+          let o = s > 0 ? (i / s) * 100 : 0,
+            a = document.createElement("div");
+          ((a.style.cssText =
+            "display:flex;align-items:center;gap:8px;margin-bottom:6px"),
+            (a.innerHTML = `
+    <span style="width:56px;font-size:10px;color:#475569;text-align:right;flex-shrink:0">${e}</span>
+    <div style="flex:1;height:14px;background:#0d0f16;border-radius:3px;overflow:hidden">
+      <div style="width:${o.toFixed(1)}%;height:100%;background:${n};border-radius:3px;transition:width 0.4s ease"></div>
+    </div>
+    <span style="width:36px;font-size:10px;color:#94a3b8;text-align:right;flex-shrink:0">${i.toLocaleString()}</span>
+  `),
+            t.appendChild(a));
+        }
+        function M(t, e) {
+          if (e.length === 0) {
+            t.innerHTML =
+              '<span style="color:#2d3652;font-size:10px">No trend data</span>';
+            return;
+          }
+          let i = Math.max(...e.map((x) => x.count), 1),
+            s = 480,
+            n = 80,
+            o = 8,
+            a = e.map((x, f) => {
+              let m = o + (f / Math.max(e.length - 1, 1)) * (s - o * 2),
+                r = n - o - (x.count / i) * (n - o * 2);
+              return `${m.toFixed(1)},${r.toFixed(1)}`;
+            }),
+            l = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+          (l.setAttribute("viewBox", `0 0 ${s} ${n}`),
+            (l.style.cssText = "width:100%;height:80px"));
+          let u = document.createElementNS(
+              "http://www.w3.org/2000/svg",
+              "path",
+            ),
+            b = parseFloat(a[0].split(",")[0]),
+            g = parseFloat(a[a.length - 1].split(",")[0]);
+          (u.setAttribute(
+            "d",
+            `M${b},${n - o} L${a.join(" L")} L${g},${n - o} Z`,
+          ),
+            u.setAttribute("fill", "#f59e0b22"),
+            l.appendChild(u));
+          let p = document.createElementNS(
+            "http://www.w3.org/2000/svg",
+            "polyline",
+          );
+          (p.setAttribute("points", a.join(" ")),
+            p.setAttribute("fill", "none"),
+            p.setAttribute("stroke", "#f59e0b"),
+            p.setAttribute("stroke-width", "1.5"),
+            p.setAttribute("stroke-linejoin", "round"),
+            l.appendChild(p),
+            e.forEach((x, f) => {
+              if (f % Math.ceil(e.length / 6) !== 0 && f !== e.length - 1)
+                return;
+              let m = o + (f / Math.max(e.length - 1, 1)) * (s - o * 2),
+                r = document.createElementNS(
+                  "http://www.w3.org/2000/svg",
+                  "text",
+                );
+              (r.setAttribute("x", m.toFixed(1)),
+                r.setAttribute("y", `${n}`),
+                r.setAttribute("text-anchor", "middle"),
+                r.setAttribute("fill", "#2d3652"),
+                r.setAttribute("font-size", "9"),
+                r.setAttribute("font-family", "monospace"),
+                (r.textContent = x.month.slice(5)),
+                l.appendChild(r));
+            }),
+            t.appendChild(l));
+        }
+        function S(t) {
+          let e = document.getElementById("app");
+          e.innerHTML = "";
+          let i = document.createElement("div");
+          ((i.style.cssText =
+            "display:flex;align-items:center;justify-content:space-between;margin-bottom:16px"),
+            (i.innerHTML = `
+    <div>
+      <h1 style="font-size:14px;font-weight:600;color:#e2e8f0">Patient Statistics</h1>
+      <p style="font-size:10px;color:#475569;font-family:monospace;margin-top:2px">openldr_external.patients \xB7 ${t.total.toLocaleString()} total records</p>
+    </div>
+  `),
+            (d = document.createElement("button")),
+            (d.textContent = "\u21BA Refresh"),
+            (d.style.cssText =
+              "background:#1e2232;border:1px solid #2d3652;color:#94a3b8;font-size:10px;font-family:monospace;padding:4px 10px;border-radius:6px;cursor:pointer"),
+            (d.onclick = () => h()),
+            i.appendChild(d),
+            e.appendChild(i));
+          let s = document.createElement("div");
+          s.style.cssText =
+            "display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:16px";
+          let n = [
+            {
+              label: "Total Patients",
+              value: t.total.toLocaleString(),
+              colour: "#f59e0b",
+            },
+            {
+              label: "Male",
+              value: t.male.toLocaleString(),
+              colour: "#2dd4bf",
+            },
+            {
+              label: "Female",
+              value: t.female.toLocaleString(),
+              colour: "#a78bfa",
+            },
+            {
+              label: "Other / Unknown",
+              value: t.other.toLocaleString(),
+              colour: "#475569",
+            },
+          ];
+          for (let r of n) {
+            let c = document.createElement("div");
+            ((c.style.cssText =
+              "background:#0d0f16;border:1px solid #1e2232;border-radius:8px;padding:10px"),
+              (c.innerHTML = `
+      <p style="font-size:9px;color:#475569;font-family:monospace;margin-bottom:4px">${r.label}</p>
+      <p style="font-size:18px;font-weight:700;color:${r.colour};font-family:monospace">${r.value}</p>
+    `),
+              s.appendChild(c));
+          }
+          e.appendChild(s);
+          let o = document.createElement("div");
+          o.style.cssText =
+            "display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px";
+          let a = document.createElement("div");
+          ((a.style.cssText =
+            "background:#0d0f16;border:1px solid #1e2232;border-radius:8px;padding:12px"),
+            (a.innerHTML =
+              '<p style="font-size:9px;color:#475569;font-family:monospace;margin-bottom:10px">AGE DISTRIBUTION</p>'));
+          let l = [
+              "0\u20134",
+              "5\u201317",
+              "18\u201334",
+              "35\u201349",
+              "50\u201364",
+              "65+",
+              "Unknown",
+            ],
+            u = Math.max(...l.map((r) => t.ageGroups[r] || 0), 1),
+            b = [
+              "#34d399",
+              "#2dd4bf",
+              "#60a5fa",
+              "#a78bfa",
+              "#f59e0b",
+              "#f87171",
+              "#475569",
+            ];
+          (l.forEach((r, c) => w(a, r, t.ageGroups[r] || 0, u, b[c])),
+            o.appendChild(a));
+          let g = document.createElement("div");
+          ((g.style.cssText =
+            "background:#0d0f16;border:1px solid #1e2232;border-radius:8px;padding:12px"),
+            (g.innerHTML =
+              '<p style="font-size:9px;color:#475569;font-family:monospace;margin-bottom:10px">STATUS BREAKDOWN</p>'));
+          let p = Object.entries(t.statusBreakdown).sort(
+              ([, r], [, c]) => c - r,
+            ),
+            x = p[0]?.[1] || 1,
+            f = [
+              "#34d399",
+              "#f59e0b",
+              "#f87171",
+              "#a78bfa",
+              "#60a5fa",
+              "#2dd4bf",
+            ];
+          (p.forEach(([r, c], T) => w(g, r, c, x, f[T % f.length])),
+            p.length === 0 &&
+              (g.innerHTML +=
+                '<p style="font-size:10px;color:#2d3652">No status data</p>'),
+            o.appendChild(g),
+            e.appendChild(o));
+          let m = document.createElement("div");
+          ((m.style.cssText =
+            "background:#0d0f16;border:1px solid #1e2232;border-radius:8px;padding:12px"),
+            (m.innerHTML =
+              '<p style="font-size:9px;color:#475569;font-family:monospace;margin-bottom:8px">REGISTRATION TREND (last 12 months)</p>'),
+            M(m, t.monthlyTrend),
+            e.appendChild(m));
+        }
+        function C() {
+          let t = document.getElementById("app");
+          t.innerHTML = `
+    <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:200px;gap:12px">
+      <div style="width:24px;height:24px;border:2px solid #1e2232;border-top-color:#f59e0b;border-radius:50%;animation:spin 0.8s linear infinite"></div>
+      <p style="font-size:11px;color:#475569;font-family:monospace">Loading patient data\u2026</p>
+    </div>
+  `;
+        }
+        function $(t) {
+          let e = document.getElementById("app");
+          e.innerHTML = `
+    <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:200px;gap:10px">
+      <p style="font-size:20px">\u26A0\uFE0F</p>
+      <p style="font-size:12px;color:#f87171;font-family:monospace">Failed to load data</p>
+      <p style="font-size:10px;color:#475569;font-family:monospace;max-width:320px;text-align:center">${t}</p>
+      <button onclick="loadData()" style="margin-top:8px;background:#1e2232;border:1px solid #2d3652;color:#94a3b8;font-size:10px;font-family:monospace;padding:4px 12px;border-radius:6px;cursor:pointer">\u21BA Retry</button>
+    </div>
+  `;
+        }
+        async function h() {
+          if (!y) {
+            ((y = !0),
+              d &&
+                ((d.disabled = !0), (d.textContent = "\u21BA Loading\u2026")),
+              C());
+            try {
+              let t = [],
+                e = 1,
+                i = 500;
+              for (; t.length < 5e3; ) {
+                let n = await openldr.data.query("external", "patients", {
+                  page: e,
+                  limit: i,
+                  sort: { field: "created_at", direction: "desc" },
+                });
+                if (
+                  ((t = [...t, ...n.data]),
+                  n.data.length < i || t.length >= n.total)
+                )
+                  break;
+                e++;
+              }
+              (openldr.ui.statusBar.setText(
+                `\u{1F3E5} ${t.length.toLocaleString()} patients`,
+                10,
+              ),
+                openldr.ui.showNotification(
+                  `Loaded ${t.length.toLocaleString()} patients`,
+                  "success",
+                ));
+              let s = E(t);
+              (S(s),
+                await openldr.storage.set(
+                  "lastLoaded",
+                  new Date().toISOString(),
+                ));
+            } catch (t) {
+              let e = t instanceof Error ? t.message : String(t);
+              (openldr.ui.showNotification(
+                `Patient stats error: ${e}`,
+                "error",
+              ),
+                $(e));
+            } finally {
+              ((y = !1),
+                d && ((d.disabled = !1), (d.textContent = "\u21BA Refresh")));
+            }
+          }
+        }
+        openldr.ui.registerCommand(
+          "patients.refresh",
+          "Patient Stats: Refresh Data",
+          () => h(),
+        );
+        openldr.events.on("data.refresh", () => h());
+        h();
+      })();
+    </script>
+  </body>
+</html>

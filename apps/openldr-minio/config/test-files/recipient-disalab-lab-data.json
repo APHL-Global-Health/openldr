@@ -1,0 +1,801 @@
+{
+  "LabNumber": "FAKE0138895",
+  "InnerLabNumber": "2019017",
+  "ReferenceNumber": null,
+  "NID": null,
+  "Facility": {
+    "Code": "HHAAL",
+    "FacilityName": "Katumbi",
+    "Region": "110853-9",
+    "District": "Dispensary",
+    "PostalAddress": "Uvinza",
+    "Street": "Kigoma"
+  },
+  "WardClinic": null,
+  "FolderNo": "2019/017",
+  "LastName": "HAMISI",
+  "MiddleName": null,
+  "FirstName": "ALBENTINA",
+  "Sex": "F",
+  "Address": null,
+  "Therapy": null,
+  "Notes": null,
+  "ClinicalDiagnosis": "DD",
+  "Specimen": "PUSR",
+  "Condition": null,
+  "TakenDateTime": "2018-12-26T00:00:00.000Z",
+  "TakenBy": "REUBEN MASALU",
+  "CollectedDateTime": null,
+  "CollectedBy": "AGUSTINO",
+  "ReceivedInLabDateTime": "2019-01-06T21:08:10.000Z",
+  "ReceivedInLabBy": "Salum Nyanga",
+  "Priority": "R",
+  "DoctorCode": null,
+  "Doctor": null,
+  "Receipt": null,
+  "Amount": null,
+  "PaidBy": null,
+  "DobAge": null,
+  "TestOrders": [
+    {
+      "DATESTAMP": "2015-04-13T15:15:15.703Z",
+      "CODE": "MRCSW",
+      "DESCRIPTION": "MICROBIOLOGY : RECTAL SWAB",
+      "ABBREV": "RECTAL SWA",
+      "SECTION": "M",
+      "PARAMETERS": [
+        "WETP", "WWBC", "WERY", "MUCUS", "OVA", "OVA", "CYSTS", "CYSTS",
+        "PARAS", "PARAS", "LINE0", "GRAMS", "GRWC", "STGRN", "BACT", "BACT",
+        "BACT", "BACT", "LINE0", "MZNS", "OOCYS", "LINE0", "SCULT", "ORGS",
+        "ORGSV", "ORGSW", "ORGSX", "ORGSY", "EEC", "REM", "REM", "REM"
+      ],
+      "_CODE": "MRCSW",
+      "_DESCRIPTION": "MICROBIOLOGY : RECTAL SWAB",
+      "_ABBREVIATION": "RECTAL SWA",
+      "_WORKAREA_GROUP": " "
+    },
+    {
+      "DATESTAMP": "2018-11-09T19:32:47.257Z",
+      "CODE": "MSENS",
+      "DESCRIPTION": "Microbiology Sensitivity",
+      "ABBREV": "",
+      "SECTION": "M",
+      "PARAMETERS": [
+        "ORGS", "ORGSV", "ORGS", "ORGSV", "ORGS", "AMC", "AMIK", "AMP",
+        "AUGUM", "AZYT", "CARBE", "CEF", "CEFAZ", "CEFEP", "CEFOX", "CEFTA",
+        "CEFUR", "CEPHA", "CHLOR", "CIPRO", "CLIND", "COTRI", "CTX", "DOXY",
+        "ERYTH", "GENTA", "IMIP", "MEM", "MET", "NALID", "NITRO", "NORF",
+        "OXACI", "PIPER", "SXT", "TETRA", "TOBRA", "VANCO", "PEN"
+      ],
+      "_CODE": "MSENS",
+      "_DESCRIPTION": "Microbiology Sensitivity",
+      "_ABBREVIATION": "<",
+      "_WORKAREA_GROUP": " "
+    },
+    {
+      "DATESTAMP": "2016-11-21T12:01:22.767Z",
+      "CODE": "MICBM",
+      "DESCRIPTION": "Micro Biochemical Tests",
+      "ABBREV": "",
+      "SECTION": "     ",
+      "PARAMETERS": [
+        "OXID", "COAG", "INDOL", "CATAL", "BACIT", "OPTOC", "PYR", "BETLA",
+        "UREAS", "SATEL", "CAMPT", "BILES", "XVDIS", "BILSO", "CITRA", "STRI",
+        "ESBL", "MRSA", "MCOM", "MCOM", "MCOM", "MCOM", "MTXT", "MTXT",
+        "MTXT", "MTXT"
+      ],
+      "_CODE": "MICBM",
+      "_DESCRIPTION": "Micro Biochemical Tests",
+      "_ABBREVIATION": "",
+      "_WORKAREA_GROUP": " "
+    }
+  ],
+  "RegisteredDatetime": "2019-01-07T08:22:23.000Z",
+  "TestResults": [
+    {
+      "DATESTAMP": "2019-01-09T09:13:58.257Z",
+      "LABNO": "FAKE0138895",
+      "TESTCODE": "MICBM",
+      "TESTINDEX": 3,
+      "ORDER": {
+        "CODE": "MICBM",
+        "ORDERS": [
+          {
+            "Type": 3,
+            "Code": "OXID",
+            "Value": "POS",
+            "ResultType": 3,
+            "Description": "Oxidase",
+            "IsResulted": true
+          },
+          {
+            "Type": 3,
+            "Code": "COAG",
+            "Value": "",
+            "ResultType": 3,
+            "Description": "Coagulase",
+            "IsResulted": false
+          },
+          {
+            "Type": 3,
+            "Code": "INDOL",
+            "Value": "POS",
+            "ResultType": 3,
+            "Description": "Indole",
+            "IsResulted": true
+          },
+          {
+            "Type": 3,
+            "Code": "CATAL",
+            "Value": "",
+            "ResultType": 3,
+            "Description": "Catalase",
+            "IsResulted": false
+          },
+          {
+            "Type": 3,
+            "Code": "BACIT",
+            "Value": "",
+            "ResultType": 3,
+            "Description": "Bacitracin",
+            "IsResulted": false
+          },
+          {
+            "Type": 3,
+            "Code": "OPTOC",
+            "Value": "",
+            "ResultType": 3,
+            "Description": "Optochin",
+            "IsResulted": false
+          },
+          {
+            "Type": 3,
+            "Code": "PYR",
+            "Value": "",
+            "ResultType": 3,
+            "Description": "PYR",
+            "IsResulted": false
+          },
+          {
+            "Type": 3,
+            "Code": "BETLA",
+            "Value": "",
+            "ResultType": 3,
+            "Description": "Beta Lactamase",
+            "IsResulted": false
+          },
+          {
+            "Type": 3,
+            "Code": "UREAS",
+            "Value": "",
+            "ResultType": 3,
+            "Description": "Urease",
+            "IsResulted": false
+          },
+          {
+            "Type": 3,
+            "Code": "SATEL",
+            "Value": "",
+            "ResultType": 3,
+            "Description": "Satellitism",
+            "IsResulted": false
+          },
+          {
+            "Type": 3,
+            "Code": "CAMPT",
+            "Value": "",
+            "ResultType": 3,
+            "Description": "CAMP Test",
+            "IsResulted": false
+          },
+          {
+            "Type": 3,
+            "Code": "BILES",
+            "Value": "",
+            "ResultType": 3,
+            "Description": "Bile Esculin",
+            "IsResulted": false
+          },
+          {
+            "Type": 3,
+            "Code": "XVDIS",
+            "Value": "",
+            "ResultType": 3,
+            "Description": "XV Disc",
+            "IsResulted": false
+          },
+          {
+            "Type": 3,
+            "Code": "BILSO",
+            "Value": "",
+            "ResultType": 3,
+            "Description": "Bile Solubility",
+            "IsResulted": false
+          },
+          {
+            "Type": 3,
+            "Code": "CITRA",
+            "Value": "",
+            "ResultType": 3,
+            "Description": "Citrate utilization",
+            "IsResulted": false
+          },
+          {
+            "Type": 3,
+            "Code": "STRI",
+            "Value": "POS",
+            "ResultType": 3,
+            "Description": "String Test",
+            "IsResulted": true
+          },
+          {
+            "Type": 3,
+            "Code": "ESBL",
+            "Value": "",
+            "ResultType": 3,
+            "Description": "ESBL",
+            "IsResulted": false
+          },
+          {
+            "Type": 3,
+            "Code": "MRSA",
+            "Value": "",
+            "ResultType": 3,
+            "Description": "MRSA Screening",
+            "IsResulted": false
+          },
+          {
+            "Type": 3,
+            "Code": "MCOM",
+            "Value": "",
+            "ResultType": 3,
+            "Description": "ment",
+            "IsResulted": false
+          },
+          {
+            "Type": 3,
+            "Code": "MCOM",
+            "Value": "",
+            "ResultType": 3,
+            "Description": "ment",
+            "IsResulted": false
+          },
+          {
+            "Type": 3,
+            "Code": "MCOM",
+            "Value": "",
+            "ResultType": 3,
+            "Description": "ment",
+            "IsResulted": false
+          },
+          {
+            "Type": 3,
+            "Code": "MCOM",
+            "Value": "",
+            "ResultType": 3,
+            "Description": "ment",
+            "IsResulted": false
+          },
+          {
+            "Type": 5,
+            "Code": "MTXT",
+            "Value": "F",
+            "ResultType": 5,
+            "Description": "arks",
+            "IsResulted": true
+          },
+          {
+            "Type": 5,
+            "Code": "MTXT",
+            "Value": "F",
+            "ResultType": 5,
+            "Description": "arks",
+            "IsResulted": true
+          },
+          {
+            "Type": 5,
+            "Code": "MTXT",
+            "Value": "F",
+            "ResultType": 5,
+            "Description": "arks",
+            "IsResulted": true
+          },
+          {
+            "Type": 5,
+            "Code": "MTXT",
+            "Value": "F",
+            "ResultType": 5,
+            "Description": "arks",
+            "IsResulted": true
+          }
+        ]
+      }
+    },
+    {
+      "DATESTAMP": "2019-01-09T09:13:58.257Z",
+      "LABNO": "FAKE0138895",
+      "TESTCODE": "MRCSW",
+      "TESTINDEX": 1,
+      "ORDER": {
+        "CODE": "MRCSW",
+        "ORDERS": [
+          {
+            "Type": 9,
+            "Code": "WETP",
+            "Value": "",
+            "ResultType": 9,
+            "Description": " Prep for Ova, Cysts, Para",
+            "IsResulted": false
+          },
+          {
+            "Type": 3,
+            "Code": "WWBC",
+            "Value": "",
+            "ResultType": 3,
+            "Description": "White Blood cells",
+            "IsResulted": false
+          },
+          {
+            "Type": 3,
+            "Code": "WERY",
+            "Value": "",
+            "ResultType": 3,
+            "Description": "Red Blood Cells",
+            "IsResulted": false
+          },
+          {
+            "Type": 3,
+            "Code": "MUCUS",
+            "Value": "",
+            "ResultType": 3,
+            "Description": "us Threads",
+            "IsResulted": false
+          },
+          {
+            "Type": 3,
+            "Code": "OVA",
+            "Value": "",
+            "ResultType": 3,
+            "Description": "Ova",
+            "IsResulted": false
+          },
+          {
+            "Type": 3,
+            "Code": "OVA",
+            "Value": "",
+            "ResultType": 3,
+            "Description": "Ova",
+            "IsResulted": false
+          },
+          {
+            "Type": 3,
+            "Code": "CYSTS",
+            "Value": "",
+            "ResultType": 3,
+            "Description": "ts",
+            "IsResulted": false
+          },
+          {
+            "Type": 3,
+            "Code": "CYSTS",
+            "Value": "",
+            "ResultType": 3,
+            "Description": "ts",
+            "IsResulted": false
+          },
+          {
+            "Type": 3,
+            "Code": "PARAS",
+            "Value": "",
+            "ResultType": 3,
+            "Description": "asites",
+            "IsResulted": false
+          },
+          {
+            "Type": 3,
+            "Code": "PARAS",
+            "Value": "",
+            "ResultType": 3,
+            "Description": "asites",
+            "IsResulted": false
+          },
+          {
+            "Type": 9,
+            "Code": "LINE0",
+            "Value": "",
+            "ResultType": 9,
+            "Description": "",
+            "IsResulted": false
+          },
+          {
+            "Type": 9,
+            "Code": "GRAMS",
+            "Value": "",
+            "ResultType": 9,
+            "Description": "GRAM STAIN",
+            "IsResulted": false
+          },
+          {
+            "Type": 3,
+            "Code": "GRWC",
+            "Value": "",
+            "ResultType": 3,
+            "Description": "White Blood cells",
+            "IsResulted": false
+          },
+          {
+            "Type": 3,
+            "Code": "STGRN",
+            "Value": "",
+            "ResultType": 3,
+            "Description": "m Negative Organisms seen",
+            "IsResulted": false
+          },
+          {
+            "Type": 3,
+            "Code": "BACT",
+            "Value": "",
+            "ResultType": 3,
+            "Description": "0rganisms Seen",
+            "IsResulted": false
+          },
+          {
+            "Type": 3,
+            "Code": "BACT",
+            "Value": "",
+            "ResultType": 3,
+            "Description": "0rganisms Seen",
+            "IsResulted": false
+          },
+          {
+            "Type": 3,
+            "Code": "BACT",
+            "Value": "",
+            "ResultType": 3,
+            "Description": "0rganisms Seen",
+            "IsResulted": false
+          },
+          {
+            "Type": 3,
+            "Code": "BACT",
+            "Value": "",
+            "ResultType": 3,
+            "Description": "0rganisms Seen",
+            "IsResulted": false
+          },
+          {
+            "Type": 9,
+            "Code": "LINE0",
+            "Value": "",
+            "ResultType": 9,
+            "Description": "",
+            "IsResulted": false
+          },
+          {
+            "Type": 9,
+            "Code": "MZNS",
+            "Value": "",
+            "ResultType": 9,
+            "Description": "IFIED ZIELH-NEELSEN STAIN",
+            "IsResulted": false
+          },
+          {
+            "Type": 3,
+            "Code": "OOCYS",
+            "Value": "",
+            "ResultType": 3,
+            "Description": "ysts",
+            "IsResulted": false
+          },
+          {
+            "Type": 9,
+            "Code": "LINE0",
+            "Value": "",
+            "ResultType": 9,
+            "Description": "",
+            "IsResulted": false
+          },
+          {
+            "Type": 9,
+            "Code": "SCULT",
+            "Value": "",
+            "ResultType": 9,
+            "Description": "TURE RESULT",
+            "IsResulted": false
+          },
+          {
+            "Type": 3,
+            "Code": "ORGS",
+            "Value": "VIBCO",
+            "ResultType": 3,
+            "Description": "Pathogen Identified",
+            "IsResulted": true
+          },
+          {
+            "Type": 3,
+            "Code": "ORGSV",
+            "Value": "",
+            "ResultType": 3,
+            "Description": "Pathogen Identified",
+            "IsResulted": false
+          },
+          {
+            "Type": 3,
+            "Code": "ORGSW",
+            "Value": "",
+            "ResultType": 3,
+            "Description": "Pathogen Identified",
+            "IsResulted": false
+          },
+          {
+            "Type": 3,
+            "Code": "ORGSX",
+            "Value": "",
+            "ResultType": 3,
+            "Description": "Pathogen Identified",
+            "IsResulted": false
+          },
+          {
+            "Type": 3,
+            "Code": "ORGSY",
+            "Value": "",
+            "ResultType": 3,
+            "Description": "Organism",
+            "IsResulted": false
+          },
+          {
+            "Type": 3,
+            "Code": "EEC",
+            "Value": "",
+            "ResultType": 3,
+            "Description": "eropathogenic E.coli",
+            "IsResulted": false
+          },
+          {
+            "Type": 5,
+            "Code": "REM",
+            "Value": "F",
+            "ResultType": 5,
+            "Description": "arks",
+            "IsResulted": true
+          },
+          {
+            "Type": 5,
+            "Code": "REM",
+            "Value": "F",
+            "ResultType": 5,
+            "Description": "arks",
+            "IsResulted": true
+          },
+          {
+            "Type": 5,
+            "Code": "REM",
+            "Value": "F",
+            "ResultType": 5,
+            "Description": "arks",
+            "IsResulted": true
+          }
+        ]
+      }
+    },
+    {
+      "DATESTAMP": "2019-01-09T09:13:58.257Z",
+      "LABNO": "FAKE0138895",
+      "TESTCODE": "MSENS",
+      "TESTINDEX": 2,
+      "ORDER": {
+        "CODE": "MSENS",
+        "ORDERS": [
+          {
+            "Type": 3,
+            "Code": "ORGS",
+            "Value": "VIBCO",
+            "ResultType": 3,
+            "Description": "Pathogen Identified",
+            "IsResulted": true
+          },
+          {
+            "Type": 3,
+            "Code": "ORGS",
+            "Value": "",
+            "ResultType": 3,
+            "Description": "Pathogen Identified",
+            "IsResulted": false
+          },
+          {
+            "Type": 3,
+            "Code": "ORGS",
+            "Value": "",
+            "ResultType": 3,
+            "Description": "Pathogen Identified",
+            "IsResulted": false
+          },
+          {
+            "Type": 4,
+            "Code": "CIPRO",
+            "Value": "S",
+            "ResultType": 4,
+            "Description": "Ciprofloxacin",
+            "IsResulted": true
+          },
+          {
+            "Type": 4,
+            "Code": "OXACI",
+            "Value": "",
+            "ResultType": 4,
+            "Description": "Oxacillin",
+            "IsResulted": false
+          },
+          {
+            "Type": 4,
+            "Code": "COTRI",
+            "Value": "R",
+            "ResultType": 4,
+            "Description": "Cotrimoxazole",
+            "IsResulted": true
+          },
+          {
+            "Type": 4,
+            "Code": "CTX",
+            "Value": "",
+            "ResultType": 4,
+            "Description": "Cefotaxime",
+            "IsResulted": false
+          },
+          {
+            "Type": 4,
+            "Code": "NALID",
+            "Value": "",
+            "ResultType": 4,
+            "Description": "Nalidixic Acid",
+            "IsResulted": false
+          },
+          {
+            "Type": 4,
+            "Code": "AUGUM",
+            "Value": "",
+            "ResultType": 4,
+            "Description": "Augumentin",
+            "IsResulted": false
+          },
+          {
+            "Type": 4,
+            "Code": "AMIK",
+            "Value": "",
+            "ResultType": 4,
+            "Description": "Amikacin",
+            "IsResulted": false
+          },
+          {
+            "Type": 4,
+            "Code": "GENTA",
+            "Value": "",
+            "ResultType": 4,
+            "Description": "Gentamicin",
+            "IsResulted": false
+          },
+          {
+            "Type": 4,
+            "Code": "AMP",
+            "Value": "",
+            "ResultType": 4,
+            "Description": "Ampicillin",
+            "IsResulted": false
+          },
+          {
+            "Type": 4,
+            "Code": "MET",
+            "Value": "",
+            "ResultType": 4,
+            "Description": "Methicillin",
+            "IsResulted": false
+          },
+          {
+            "Type": 4,
+            "Code": "CEF",
+            "Value": "S",
+            "ResultType": 4,
+            "Description": "Ceftriaxone",
+            "IsResulted": true
+          },
+          {
+            "Type": 4,
+            "Code": "ERYTH",
+            "Value": "",
+            "ResultType": 4,
+            "Description": "Erythromycin",
+            "IsResulted": false
+          },
+          {
+            "Type": 4,
+            "Code": "AZYT",
+            "Value": "",
+            "ResultType": 4,
+            "Description": "Azythromycin",
+            "IsResulted": false
+          },
+          {
+            "Type": 4,
+            "Code": "TETRA",
+            "Value": "S",
+            "ResultType": 4,
+            "Description": "Tetracycline",
+            "IsResulted": true
+          },
+          {
+            "Type": 4,
+            "Code": "CHLOR",
+            "Value": "S",
+            "ResultType": 4,
+            "Description": "Chloramphenicol",
+            "IsResulted": true
+          },
+          {
+            "Type": 4,
+            "Code": "CARBE",
+            "Value": "",
+            "ResultType": 4,
+            "Description": "Carbenicillin",
+            "IsResulted": false
+          },
+          {
+            "Type": 4,
+            "Code": "CLIND",
+            "Value": "",
+            "ResultType": 4,
+            "Description": "Clindamycin",
+            "IsResulted": false
+          },
+          {
+            "Type": 4,
+            "Code": "NORF",
+            "Value": "",
+            "ResultType": 4,
+            "Description": "Norfloxacin",
+            "IsResulted": false
+          },
+          {
+            "Type": 4,
+            "Code": "NITRO",
+            "Value": "",
+            "ResultType": 4,
+            "Description": "Nitrofurantoin",
+            "IsResulted": false
+          },
+          {
+            "Type": 4,
+            "Code": "PIPER",
+            "Value": "",
+            "ResultType": 4,
+            "Description": "Piperacillin",
+            "IsResulted": false
+          },
+          {
+            "Type": 4,
+            "Code": "CEFTA",
+            "Value": "",
+            "ResultType": 4,
+            "Description": "Ceftazidime",
+            "IsResulted": false
+          },
+          {
+            "Type": 4,
+            "Code": "TOBRA",
+            "Value": "",
+            "ResultType": 4,
+            "Description": "Tobramycin",
+            "IsResulted": false
+          },
+          {
+            "Type": 4,
+            "Code": "CEPHA",
+            "Value": "",
+            "ResultType": 4,
+            "Description": "Cephalothin",
+            "IsResulted": false
+          }
+        ]
+      }
+    }
+  ]
+}

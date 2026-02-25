@@ -1,0 +1,483 @@
+load_module modules/ngx_http_js_module.so;
+
+worker_processes  auto;
+
+events {
+    worker_connections  1024;
+}
+
+http {
+    js_import auth from appdata/auth.js;
+
+    limit_req_zone $binary_remote_addr zone=limiter-middleware:10m rate=50r/s;
+    limit_req_status 429;
+
+    resolver 127.0.0.11 valid=10s ipv6=off;
+
+    include /etc/nginx/conf.d/*;
+    include /etc/nginx/sites-enabled/*;
+
+    server {
+        listen 80;
+        server_name _;
+
+        return 301 https://$host$request_uri;
+    }
+
+    server {
+        listen 443 ssl;
+        server_name _;
+
+        # Allow special characters in headers
+        ignore_invalid_headers off;
+        # Allow any size file to be uploaded.
+        # Set to a value such as 1000m; to restrict file size to a specific value
+        client_max_body_size 0;
+        # Disable buffering
+        proxy_buffering off;
+        proxy_request_buffering off;
+
+        ssl_certificate /etc/nginx/certs/domain.crt;
+        ssl_certificate_key /etc/nginx/certs/domain.key;
+
+        # These will be substituted at container startup
+        set $keycloak_hostname "${KEYCLOAK_HOSTNAME}:8443";
+        set $openldr_entity_services "${ENTITY_SERVICES_HOSTNAME}:${ENTITY_SERVICES_PORT}";
+        set $openldr_data_processing "${DATA_PROCESSING_HOSTNAME}:${DATA_PROCESSING_PORT}";
+        set $openldr_external_database "${EXTERNAL_DATABASE_HOSTNAME}:${EXTERNAL_DATABASE_PORT}";
+        set $openldr_studio "${STUDIO_HOSTNAME}:${STUDIO_PORT}";
+        set $openldr_web "${WEB_HOSTNAME}:${WEB_PORT}";
+        set $openldr_ai "${AI_HOSTNAME}:${AI_PORT}";
+
+        set $openldr_minio "${MINIO_HOSTNAME}:9000";
+        set $openldr_minio_console "${MINIO_HOSTNAME}:9001";
+        set $openldr_postgres_console "openldr-pgadmin:80";
+        set $openldr_opensearch "${OPENSEARCH_HOSTNAME}:9200";
+        set $openldr_opensearch_dashboard "${OPENSEARCH_DASHBORD_HOSTNAME}:5601";
+        set $openldr_kafka "${KAFKA_HOSTNAME}:9092";
+        set $openldr_kafka_connect "${KAFKA_CONNECT_HOSTNAME}:8083";
+        set $openldr_kafka_conduktor_console "${KAFKA_CONDUKTOR_HOSTNAME}:8080";
+
+        set $keycloak_base_url "${KEYCLOAK_BASE_URL}";
+        set $keycloak_realm "${KEYCLOAK_REALM}";
+        set $keycloak_client_id "${KEYCLOAK_CLIENT_ID}";
+        set $keycloak_client_secret "${KEYCLOAK_CLIENT_SECRET}";
+        
+
+
+        location = /auth-middleware {
+            internal;
+            js_content auth.introspect;
+        }
+
+        location /ai/ {
+            rewrite ^/ai/(.*)$ /$1 break;
+
+            proxy_pass http://$openldr_ai;
+            proxy_http_version 1.1;
+
+            proxy_set_header   Host              $host;
+            proxy_set_header   X-Real-IP         $remote_addr;
+            proxy_set_header   X-Forwarded-For   $proxy_add_x_forwarded_for;
+            proxy_set_header   X-Forwarded-Proto $scheme;
+
+            # ---- SSE / Streaming required settings ----
+            proxy_set_header   Connection        '';
+            proxy_buffering    off;              # CRITICAL for SSE - disables nginx buffering
+            proxy_cache        off;
+            proxy_read_timeout 300s;             # Long timeout for model inference
+            chunked_transfer_encoding on;
+        }
+
+        location = /ai {
+            return 301 /ai/;
+        }
+
+        location /keycloak/ {
+            resolver 127.0.0.11 valid=10s ipv6=off;
+            rewrite ^/keycloak/(.*)$ /keycloak/$1 break;
+            proxy_pass https://$keycloak_hostname;
+
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+            proxy_set_header X-Forwarded-Host $host;
+            proxy_set_header X-Forwarded-Port $server_port;
+        }
+
+        location = /keycloak {
+            return 301 /keycloak/;
+        }
+
+        location /minio/ {
+            resolver 127.0.0.11 valid=10s ipv6=off;
+            rewrite ^/minio/(.*)$ /$1 break;
+            proxy_pass http://$openldr_minio;
+            
+            proxy_set_header Host $http_host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+            proxy_set_header Upgrade $http_upgrade;
+            proxy_set_header Connection "Upgrade";
+            proxy_read_timeout 900;
+        }
+
+        location = /minio {
+            return 301 /minio/;
+        }
+
+        location /minio-console/ {
+            resolver 127.0.0.11 valid=10s ipv6=off;
+            rewrite ^/minio-console/(.*)$ /$1 break;
+            
+            proxy_pass http://$openldr_minio_console;
+            
+            # Essential headers for MinIO console
+            proxy_set_header Host $http_host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+            proxy_set_header X-Forwarded-Host $host;
+            proxy_set_header X-Forwarded-Port $server_port;
+            proxy_http_version 1.1;
+            proxy_set_header Upgrade $http_upgrade;
+            proxy_set_header Connection "upgrade";
+
+            # Timeouts
+            proxy_connect_timeout 300;
+            proxy_send_timeout 300;
+            proxy_read_timeout 300;
+            
+            # Disable chunked transfer encoding
+            chunked_transfer_encoding off;
+        }
+
+        location = /minio-console {
+            return 301 /minio-console/;
+        }
+
+        location /opensearch/ {
+            resolver 127.0.0.11 valid=10s ipv6=off;
+            rewrite ^/opensearch/(.*)$ /$1 break;
+            proxy_pass http://$openldr_opensearch;
+            
+            proxy_set_header Host $http_host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+            proxy_set_header Upgrade $http_upgrade;
+            proxy_set_header Connection "Upgrade";
+            proxy_read_timeout 900;
+        }
+
+        location = /opensearch {
+            return 301 /opensearch/;
+        }
+
+        location /opensearch-dashboard/ {
+            resolver 127.0.0.11 valid=10s ipv6=off;
+            rewrite ^/opensearch-dashboard/(.*)$ /$1 break;
+            proxy_pass http://$openldr_opensearch_dashboard;
+            
+            proxy_set_header Host $http_host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+            proxy_set_header Upgrade $http_upgrade;
+            proxy_set_header Connection "Upgrade";
+            proxy_read_timeout 900;
+        }
+
+        location = /opensearch-dashboard {
+            return 301 /opensearch-dashboard/;
+        }
+
+        location /kafka/ {
+            resolver 127.0.0.11 valid=10s ipv6=off;
+            rewrite ^/kafka/(.*)$ /$1 break;
+            proxy_pass http://$openldr_kafka;
+            
+            proxy_set_header Host $http_host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+            proxy_set_header Upgrade $http_upgrade;
+            proxy_set_header Connection "Upgrade";
+            proxy_read_timeout 900;
+        }
+
+        location = /kafka {
+            return 301 /kafka/;
+        }
+
+        location /kafka-connect/ {
+            resolver 127.0.0.11 valid=10s ipv6=off;
+            rewrite ^/kafka-connect/(.*)$ /$1 break;
+            proxy_pass http://$openldr_kafka_connect;
+            
+            proxy_set_header Host $http_host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+            proxy_set_header Upgrade $http_upgrade;
+            proxy_set_header Connection "Upgrade";
+            proxy_read_timeout 900;
+        }
+
+        location = /kafka-connect {
+            return 301 /kafka-connect/;
+        }
+
+        location /kafka-console/ {
+            resolver 127.0.0.11 valid=10s ipv6=off;
+            
+            # Strip /kafka-console prefix for backend
+            rewrite ^/kafka-console/(.*)$ /$1 break;
+            proxy_pass http://$openldr_kafka_conduktor_console;
+            
+            proxy_set_header Host $http_host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+            proxy_set_header Accept-Encoding "";
+            
+            # WebSocket support
+            proxy_set_header Upgrade $http_upgrade;
+            proxy_set_header Connection "Upgrade";
+            proxy_read_timeout 900;
+            
+            # Disable compression so sub_filter works
+            gzip off;
+            
+            # Apply sub_filter to HTML and JavaScript
+            sub_filter "window.basePath = '/'" "window.basePath = '/kafka-console'";
+            sub_filter 'href="//"' 'href="/kafka-console/"';
+            sub_filter 'src="./assets/' 'src="/kafka-console/assets/';
+            sub_filter 'href="./assets/' 'href="/kafka-console/assets/';
+            sub_filter 'href="./favicon.ico"' 'href="/kafka-console/favicon.ico"';
+            
+            # Catch JavaScript redirects
+            sub_filter 'window.location="/"' 'window.location="/kafka-console/"';
+            sub_filter "window.location='/'" "window.location='/kafka-console/'";
+            sub_filter 'window.location.href="/"' 'window.location.href="/kafka-console/"';
+            sub_filter "window.location.href='/'" "window.location.href='/kafka-console/'";
+            sub_filter '.navigate("/)' '.navigate("/kafka-console/)';
+            sub_filter ".navigate('/)" ".navigate('/kafka-console/)";
+            
+            sub_filter_once off;
+            sub_filter_types text/html application/javascript;
+            
+            proxy_buffering on;
+            
+            # Rewrite redirect responses from / to /kafka-console/
+            proxy_redirect / /kafka-console/;
+            proxy_redirect ~^/(.*) /kafka-console/$1;
+        }
+
+        location = /kafka-console {
+            return 301 /kafka-console/;
+        }
+
+        location /postgres-console/ {
+            resolver 127.0.0.11 valid=10s ipv6=off;
+            rewrite ^/postgres-console/(.*)$ /postgres-console/$1 break;
+            
+            proxy_pass http://$openldr_postgres_console;
+                        
+            proxy_set_header X-Script-Name /postgres-console;
+            proxy_set_header X-Scheme $scheme;
+            proxy_set_header Host $host;
+            proxy_redirect off;
+        }
+
+        location = /postgres-console {
+            return 301 /postgres-console/;
+        }
+
+        # Health endpoint - no auth required
+        location = /entity-services/health {
+            resolver 127.0.0.11 valid=10s ipv6=off;
+            rewrite ^/entity-services/(.*)$ /$1 break;
+            proxy_pass http://$openldr_entity_services;
+
+            limit_req zone=limiter-middleware burst=50 nodelay;
+            
+            proxy_set_header Host $http_host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+            proxy_read_timeout 900;
+        }
+
+        location /entity-services/ {
+            resolver 127.0.0.11 valid=10s ipv6=off;
+            rewrite ^/entity-services/(.*)$ /$1 break;
+            proxy_pass http://$openldr_entity_services;
+            
+            auth_request /auth-middleware;
+            limit_req zone=limiter-middleware burst=50 nodelay;
+            
+            auth_request_set $auth_user $upstream_http_x_auth_user;
+            auth_request_set $auth_email $upstream_http_x_auth_email;
+            auth_request_set $auth_roles $upstream_http_x_auth_roles;
+            
+            proxy_set_header X-Auth-User $auth_user;
+            proxy_set_header X-Auth-Email $auth_email;
+            proxy_set_header X-Auth-Roles $auth_roles;
+            proxy_set_header Host $http_host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+            proxy_set_header Upgrade $http_upgrade;
+            proxy_set_header Connection "Upgrade";
+            proxy_read_timeout 900;
+        }
+
+        location = /entity-services {
+            return 301 /entity-services/;
+        }
+
+        # Health endpoint - no auth required
+        location = /data-processing/health {
+            resolver 127.0.0.11 valid=10s ipv6=off;
+            rewrite ^/data-processing/(.*)$ /$1 break;
+            proxy_pass http://$openldr_data_processing;
+
+            limit_req zone=limiter-middleware burst=50 nodelay;
+            
+            proxy_set_header Host $http_host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+            proxy_read_timeout 900;
+        }
+
+        location /data-processing/ {
+            resolver 127.0.0.11 valid=10s ipv6=off;
+            rewrite ^/data-processing/(.*)$ /$1 break;
+            proxy_pass http://$openldr_data_processing;
+            
+            auth_request /auth-middleware;
+            limit_req zone=limiter-middleware burst=50 nodelay;
+            
+            auth_request_set $auth_user $upstream_http_x_auth_user;
+            auth_request_set $auth_email $upstream_http_x_auth_email;
+            auth_request_set $auth_roles $upstream_http_x_auth_roles;
+            
+            proxy_set_header X-Auth-User $auth_user;
+            proxy_set_header X-Auth-Email $auth_email;
+            proxy_set_header X-Auth-Roles $auth_roles;
+            proxy_set_header Host $http_host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+            proxy_set_header Upgrade $http_upgrade;
+            proxy_set_header Connection "Upgrade";
+            proxy_read_timeout 900;
+        }
+
+        location = /data-processing {
+            return 301 /data-processing/;
+        }
+
+        # Health endpoint - no auth required
+        location = /external-database/health {
+            resolver 127.0.0.11 valid=10s ipv6=off;
+            rewrite ^/external-database/(.*)$ /$1 break;
+            proxy_pass http://$openldr_external_database;
+
+            limit_req zone=limiter-middleware burst=50 nodelay;
+            
+            proxy_set_header Host $http_host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+            proxy_read_timeout 900;
+        }
+
+        location /external-database/ {
+            resolver 127.0.0.11 valid=10s ipv6=off;
+            rewrite ^/external-database/(.*)$ /$1 break;
+            proxy_pass http://$openldr_external_database;
+            
+            auth_request /auth-middleware;
+            limit_req zone=limiter-middleware burst=50 nodelay;
+            
+            auth_request_set $auth_user $upstream_http_x_auth_user;
+            auth_request_set $auth_email $upstream_http_x_auth_email;
+            auth_request_set $auth_roles $upstream_http_x_auth_roles;
+            
+            proxy_set_header X-Auth-User $auth_user;
+            proxy_set_header X-Auth-Email $auth_email;
+            proxy_set_header X-Auth-Roles $auth_roles;
+            proxy_set_header Host $http_host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+            proxy_set_header Upgrade $http_upgrade;
+            proxy_set_header Connection "Upgrade";
+            proxy_read_timeout 900;
+        }
+
+        location = /external-database {
+            return 301 /external-database/;
+        }
+
+        location /studio {
+            resolver 127.0.0.11 valid=10s ipv6=off;
+            rewrite ^/studio/(.*)$ /studio/$1 break;
+            proxy_pass http://$openldr_studio;
+
+            client_max_body_size 100m;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+            proxy_set_header Upgrade $http_upgrade;
+            proxy_set_header Connection "Upgrade";
+            proxy_read_timeout 900;
+        }
+
+        location = /studio {
+            return 301 /studio/;
+        }
+
+        location /web {
+            resolver 127.0.0.11 valid=10s ipv6=off;
+            rewrite ^/web/(.*)$ /web/$1 break;
+            proxy_pass http://$openldr_web;
+
+            client_max_body_size 100m;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+            proxy_set_header Upgrade $http_upgrade;
+            proxy_set_header Connection "Upgrade";
+            proxy_read_timeout 900;
+        }
+
+        location = /web {
+            return 301 /web/;
+        }
+
+        error_page 401 = @error401;
+        location @error401 {
+            default_type application/json;
+            return 401 '{"error": "Unauthorized", "message": "Invalid or missing token"}';            
+        }
+
+        error_page 429 = @error429;
+        location @error429 {
+            default_type application/json;
+            return 429 '{"error": "Rate Limited", "message": "Too Many Requests"}';            
+        }
+
+    }
+}
+
+stream {
+	include /etc/nginx/streams-enabled/*;
+}

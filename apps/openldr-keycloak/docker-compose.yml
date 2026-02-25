@@ -1,16 +1,15 @@
 services:
-  keycloak:
+  openldr-keycloak:
     image: quay.io/keycloak/keycloak:26.0
     container_name: openldr-keycloak
     hostname: openldr-keycloak
     restart: unless-stopped
     environment:
-      KC_DB: mysql
-      KC_DB_URL_HOST: openldr-db-mysql
+      KC_DB: postgres
+      KC_DB_URL_HOST: openldr-postgres
       KC_DB_URL_DATABASE: keycloak
-      KC_DB_USERNAME: ${KEYCLOAK_ADMIN_USER}
-      KC_DB_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
-      # KC_HOSTNAME: ${KEYCLOAK_HOSTNAME} # Important: This must match the container name so that the keycloak service can be accessed from the other microservices
+      KC_DB_USERNAME: postgres
+      KC_DB_PASSWORD: postgres
       KC_BOOTSTRAP_ADMIN_USERNAME: ${KEYCLOAK_ADMIN_USER}
       KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
       KC_HOSTNAME_STRICT: false
@@ -28,29 +27,22 @@ services:
       QUARKUS_TRANSACTION_MANAGER_ENABLE_RECOVERY: true
       KC_HTTPS_CERTIFICATE_FILE: /opt/keycloak/conf/server.crt
       KC_HTTPS_CERTIFICATE_KEY_FILE: /opt/keycloak/conf/server.key
-    command: start-dev
-    ports:
-      - "${KEYCLOAK_PORT}:8080"
+    # command: start-dev
+    command: start
+    # ports:
+    #   - "8080:8080"
     volumes:
       - ../../packages/openldr-core/certs/domain.crt:/opt/keycloak/conf/server.crt
       - ../../packages/openldr-core/certs/domain.key:/opt/keycloak/conf/server.key
       - ./realm-config:/opt/keycloak/data/import
-      - ./themes/openldr/:/opt/keycloak/themes/openldr/
+      # - ./themes/openldr/:/opt/keycloak/themes/openldr/
     networks:
       - openldr-network
-    deploy:
-      resources:
-        limits:
-          cpus: ${CPU_LIMIT}
-          memory: ${MEMORY_LIMIT}
-        reservations:
-          memory: ${MEMORY_RESERVATIONS}
-    memswap_limit: ${MEMSWAP_LIMIT}
     healthcheck:
       test:
         [
           "CMD-SHELL",
-          "exec 3<>/dev/tcp/127.0.0.1/${KEYCLOAK_PORT:-8080};echo -e 'GET /health/ready HTTP/1.1\r\nhost: http://localhost\r\nConnection: close\r\n\r\n' >&3;if [ $? -eq 0 ]; then echo 'Healthcheck Successful';exit 0;else echo 'Healthcheck Failed';exit 1;fi;",
+          "exec 3<>/dev/tcp/127.0.0.1/8080;echo -e 'GET /health/ready HTTP/1.1\r\nhost: http://localhost\r\nConnection: close\r\n\r\n' >&3;if [ $? -eq 0 ]; then echo 'Healthcheck Successful';exit 0;else echo 'Healthcheck Failed';exit 1;fi;",
         ]
       interval: 30s
       timeout: 10s
@@ -59,5 +51,4 @@ services:
 
 networks:
   openldr-network:
-    name: openldr-network
-    external: true
+    driver: bridge

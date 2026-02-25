@@ -1,0 +1,17 @@
+{
+  "name": "openldr-ext-lab-results",
+  "version": "1.0.0",
+  "description": "Lab results browser with filters and summary for OpenLDR",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "vite build",
+    "dev":   "vite",
+    "pack":  "node pack.mjs"
+  },
+  "devDependencies": {
+    "vite":       "^5.2.0",
+    "typescript": "^5.4.0",
+    "adm-zip":    "^0.5.10"
+  }
+}

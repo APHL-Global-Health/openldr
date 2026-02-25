@@ -6,7 +6,7 @@
  * Configuration - hardcoded for security context compatibility
  */
 const CONFIG = {
-  apiUrl: 'http://openldr-lab-data-api:3009'
+  apiUrl: 'http://openldr-external-database:3009'
 };
 
 /**
@@ -170,7 +170,7 @@ async function process(messageContent) {
     // Store patient if we have request data
     if (messageContent.requests?.RequestID) {
       const patientData = extractPatient(messageContent);
-      const patientResponse = await apiCall('/api/patients', 'POST', patientData);
+      const patientResponse = await apiCall('/api/v1/patients', 'POST', patientData);
       if (patientResponse.success && patientResponse.data && patientResponse.data.data) {
         result.record_ids.patients.push(patientResponse.data.data.patients_id);
       }
@@ -180,7 +180,7 @@ async function process(messageContent) {
     // Store request if we have request data
     if (messageContent.requests?.RequestID) {
       const requestData = extractRequest(messageContent);
-      const requestResponse = await apiCall('/api/requests', 'POST', requestData);
+      const requestResponse = await apiCall('/api/v1/requests', 'POST', requestData);
       if (requestResponse.success && requestResponse.data && requestResponse.data.data) {
         result.record_ids.requests.push(requestResponse.data.data.lab_requests_id);
         labRequestsId = requestResponse.data.data.lab_requests_id;
@@ -192,7 +192,7 @@ async function process(messageContent) {
     if (messageContent.labresults && Array.isArray(messageContent.labresults) && labRequestsId) {
       for (const resultItem of messageContent.labresults) {
         const resultData = extractResult(resultItem, labRequestsId);
-        const resultResponse = await apiCall('/api/results', 'POST', resultData);
+        const resultResponse = await apiCall('/api/v1/results', 'POST', resultData);
         if (resultResponse.success && resultResponse.data && resultResponse.data.data) {
           result.record_ids.results.push(resultResponse.data.data.lab_results_id);
         }

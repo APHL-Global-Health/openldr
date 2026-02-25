@@ -1,0 +1,20 @@
+{
+  "id":               "openldr-patients",
+  "name":             "Patient Statistics",
+  "version":          "1.0.0",
+  "description":      "Patient demographics dashboard — counts, gender split, age distribution and registration trends from openldr_external.patients.",
+  "kind":             "iframe",
+  "slot":             "main",
+  "author":           "OpenLDR Community",
+  "icon":             "🏥",
+  "permissions":      ["data.patients"],
+  "activationEvents": ["onView:openldr-patients"],
+  "contributes": {
+    "commands": [
+      { "id": "patients.refresh", "title": "Patient Stats: Refresh Data" }
+    ],
+    "views": [
+      { "id": "openldr-patients", "slot": "main", "title": "Patient Statistics" }
+    ]
+  }
+}

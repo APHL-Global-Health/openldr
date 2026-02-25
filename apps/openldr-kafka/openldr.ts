@@ -48,17 +48,17 @@ const createOpenSearchSinkConnector = async () => {
   } else {
     console.error(
       "Failed to create OpenSearch sink connector. Response:",
-      text
+      text,
     );
   }
 
   // Verify connector status
   await new Promise((resolve) => setTimeout(resolve, 5000));
   const statusRes = await fetch(
-    `${kafkaConnectUrl}/connectors/opensearch-sink/status`
+    `${kafkaConnectUrl}/connectors/opensearch-sink/status`,
   );
   const statusText = await statusRes.text();
-  // logMessage("INFO", `Connector status: ${statusText}`);
+  console.log("INFO", `Connector status: ${statusText}`);
 };
 
 const setup = async (dir: string) => {
@@ -82,7 +82,7 @@ const start = async (dir: string) => {
     await services.waitForContainerHealth(
       process.env.KAFKA_CONNECT_HOSTNAME || "openldr-kafka-connect",
       120000,
-      docker
+      docker,
     );
 
     await createOpenSearchSinkConnector();

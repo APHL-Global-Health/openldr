@@ -1,5 +1,12 @@
 {
   "extends": "../../packages/typescript-config/openldr.json",
+  "compilerOptions": {
+    /* Shadcn requirements */
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"]
+    }
+  },
   "exclude": ["node_modules", "dist"],
-  "include": ["src", "openldr.ts"]
+  "include": ["openldr.ts"]
 }

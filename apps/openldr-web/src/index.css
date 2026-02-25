@@ -1,0 +1,79 @@
+@import "tailwindcss";
+
+@theme {
+  --color-bg:       #06080d;
+  --color-bg2:      #0a0d14;
+  --color-surface:  #0e1118;
+  --color-border:   #1a1f2e;
+  --color-border2:  #242b3d;
+  --color-muted:    #3d4a63;
+  --color-dim:      #7a8aaa;
+  --color-bright:   #c8d4ec;
+  --color-white:    #eef2fc;
+  --color-amber:    #f5a623;
+  --color-amber2:   #ffcc6b;
+  --color-teal:     #2cd4c0;
+  --color-teal2:    #7ee8de;
+  --color-red:      #f07070;
+  --color-green:    #4ade80;
+  --color-purple:   #a78bfa;
+
+  --font-sans:    'DM Sans', sans-serif;
+  --font-mono:    'JetBrains Mono', monospace;
+  --font-display: 'Syne', sans-serif;
+
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 14px;
+}
+
+@layer base {
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0 }
+  html { scroll-behavior: smooth; -webkit-font-smoothing: antialiased }
+  body {
+    font-family: var(--font-sans);
+    background: var(--color-bg);
+    color: var(--color-dim);
+    font-size: 14px;
+    line-height: 1.7;
+    overflow-x: hidden;
+  }
+  ::selection { background: var(--color-amber); color: #000 }
+  ::-webkit-scrollbar { width: 6px }
+  ::-webkit-scrollbar-track { background: var(--color-bg) }
+  ::-webkit-scrollbar-thumb { background: var(--color-border2); border-radius: 3px }
+}
+
+@layer utilities {
+  .font-display { font-family: var(--font-display) }
+  .font-mono    { font-family: var(--font-mono) }
+
+  .text-gradient-amber {
+    background: linear-gradient(135deg, var(--color-amber), var(--color-amber2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .text-gradient-teal {
+    background: linear-gradient(135deg, var(--color-teal), var(--color-teal2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .grid-bg {
+    background-image:
+      linear-gradient(rgba(245,166,35,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(245,166,35,0.04) 1px, transparent 1px);
+    background-size: 48px 48px;
+  }
+
+  .glow-amber { box-shadow: 0 0 40px rgba(245,166,35,0.15) }
+  .glow-teal  { box-shadow: 0 0 40px rgba(44,212,192,0.15) }
+
+  .card-surface {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+  }
+}

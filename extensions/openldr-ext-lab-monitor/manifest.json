@@ -1,0 +1,30 @@
+{
+  "id":               "openldr-lab-monitor",
+  "name":             "Lab Surveillance Monitor",
+  "version":          "1.0.0",
+  "description":      "Background worker that monitors lab_requests for overdue pending requests and tracks abnormal result rates. Fires alerts and emits events other extensions can react to. No UI — runs silently in the background.",
+  "kind":             "worker",
+  "author":           "OpenLDR Community",
+  "icon":             "🔬",
+  "permissions":      [
+    "data.labRequests",
+    "data.labResults",
+    "ui.notifications",
+    "ui.statusBar",
+    "ui.commands",
+    "events.emit",
+    "events.subscribe",
+    "storage.read",
+    "storage.write"
+  ],
+  "activationEvents": ["onStartup"],
+  "contributes": {
+    "commands": [
+      { "id": "labMonitor.runCheck",       "title": "Lab Monitor: Run surveillance check now" },
+      { "id": "labMonitor.showSummary",    "title": "Lab Monitor: Show last summary" },
+      { "id": "labMonitor.clearAlerts",    "title": "Lab Monitor: Clear all alerts" },
+      { "id": "labMonitor.togglePause",    "title": "Lab Monitor: Pause / Resume monitoring" }
+    ],
+    "views": []
+  }
+}

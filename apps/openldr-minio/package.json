@@ -1,25 +1,30 @@
 {
   "name": "@openldr/minio",
   "private": true,
-  "version": "1.2.0",
+  "version": "0.0.0",
+  "type": "module",
   "scripts": {
-    "copy:env": "cpy ../../.env.infrastructure . --rename=.env",
+    "copy:env": "tsx ../../environments/merge-env.ts ../../environments/.env.base ../../environments/.env.openldr-minio .env",
     "docker:build": "npm run setup:services && npm run copy:env && tsx ./docker-compose.ts pull",
-    "docker:start": "npm run copy:env && tsx ./docker-compose.ts up -d && npm run start:services",
+    "docker:start": "npm run copy:env && tsx ./docker-compose.ts up -d --force-recreate && npm run start:services",
     "docker:stop": "npm run copy:env && tsx ./docker-compose.ts stop && npm run stop:services",
-    "docker:reset": "tsx ./docker-compose.ts down --rmi all -v --remove-orphans && npm run stop:services && rimraf ./.env",
+    "docker:reset": "npm run copy:env && tsx ./docker-compose.ts down --rmi all -v --remove-orphans && npm run stop:services && rimraf ./.env",
     "setup:services": "tsx openldr.ts setup",
     "reset:services": "tsx openldr.ts reset",
     "stop:services": "tsx openldr.ts stop",
     "start:services": "tsx openldr.ts start"
   },
   "dependencies": {
-    "@openldr/kafka": "*",
-    "@repo/openldr-core":"*"    
+    "tsx": "^4.21.0"
   },
   "devDependencies": {
-    "@types/node": "^24.2.0",
+    "@openldr/kafka": "*",
+    "@repo/openldr-core":"*",
     "@repo/eslint-config": "*",
-    "@repo/typescript-config": "*"
+    "@repo/typescript-config": "*",
+    "@types/node": "^24.2.0",
+    "eslint": "^9.39.2",
+    "typescript": "^5.8.3",
+    "typescript-eslint": "^8.56.0"
   }
 }

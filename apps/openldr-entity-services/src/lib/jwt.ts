@@ -1,14 +1,5 @@
-import { Request } from "express";
-
-export interface DecodedToken {
-  client_id: string;
-  sub: string;
-  azp: string;
-  preferred_username?: string;
-  email?: string;
-  exp: number;
-  iat: number;
-}
+import { type Request } from "express";
+import { type DecodedToken } from "../types";
 
 export function extractClientIdFromToken(req: Request): string | null {
   try {
@@ -28,7 +19,7 @@ export function extractClientIdFromToken(req: Request): string | null {
 
     // Decode payload (second part)
     const payload = JSON.parse(
-      Buffer.from(parts[1], "base64").toString("utf-8")
+      Buffer.from(parts[1], "base64").toString("utf-8"),
     );
 
     // Extract client_id (prefer client_id, fallback to azp or sub)
@@ -55,7 +46,7 @@ export function decodeToken(req: Request): DecodedToken | null {
     }
 
     const payload = JSON.parse(
-      Buffer.from(parts[1], "base64").toString("utf-8")
+      Buffer.from(parts[1], "base64").toString("utf-8"),
     );
 
     return payload as DecodedToken;

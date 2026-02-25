@@ -1,0 +1,23 @@
+const _p=new Map(),_evL=new Map();let _seq=0;
+const _EID='__EXT_ID__',_API='__API_BASE__',_TOK='__TOKEN__';
+function _fire(e,a=[]){window.parent.postMessage({_event:e,_args:a,_extId:_EID,_fromIframe:true},'*')}
+async function _apiPost(path,body){const r=await fetch(_API+path,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+_TOK,'X-Extension-Id':_EID},body:JSON.stringify(body)});if(!r.ok){const e=await r.json().catch(()=>({}));throw new Error(e.error||'HTTP '+r.status)}return r.json()}
+window.addEventListener('message',e=>{const m=e.data;if(!m)return;if(m._reqId&&_p.has(m._reqId)){const{res,rej}=_p.get(m._reqId);_p.delete(m._reqId);m._error?rej(new Error(m._error)):res(m._result);return}if(m._appEvent&&typeof window._onAppEvent==='function')window._onAppEvent(m._appEvent,m._payload)});
+window.openldr={
+  extensionId:_EID,
+  data:{query:(schema,table,params={})=>_apiPost('/api/v1/query/engine',{schema,table,params})},
+  events:{
+    on:(ev,h)=>{if(!_evL.has(ev))_evL.set(ev,[]);_evL.get(ev).push(h);_fire('events.subscribe',[ev])},
+    emit:(ev,p)=>_fire('events.emit',[ev,p])
+  },
+  ui:{
+    showNotification:(msg,t='info')=>_fire('ui.notification',[msg,t]),
+    statusBar:{setText:(t,p=0)=>_fire('ui.statusBar.setText',[t,p])},
+    registerCommand:(id,title,h)=>{_fire('ui.command.register',[id,title]);window['__cmd_'+id]=h}
+  },
+  storage:{
+    get:k=>_apiPost('/api/v1/query/engine/storage/get',{key:k}).then(r=>r.value),
+    set:(k,v)=>_apiPost('/api/v1/query/engine/storage/set',{key:k,value:v}),
+    delete:k=>_apiPost('/api/v1/query/engine/storage/delete',{key:k})
+  }
+};

@@ -1,8 +1,12 @@
 {
-  "name": "openldr-microservices-v1.2.0",
+  "name": "openldr-v2",
   "private": true,
   "scripts": {
     "init": "tsx ./apps/openldr-setup/openldr.ts init",
+    "setup:services": "turbo run setup:services",
+    "reset:services": "turbo run reset:services",
+    "stop:services": "turbo run stop:services",
+    "start:services": "turbo run start:services",
     "docker:build:parallel": "turbo run docker:build --parallel --force",
     "docker:build:force": "turbo run docker:build --force",
     "docker:build": "turbo run docker:build",
@@ -10,48 +14,27 @@
     "docker:stop": "turbo run docker:stop --force",
     "docker:reset": "turbo run docker:reset --force",
     "build": "turbo run build",
-    "setup:services": "turbo run setup:services",
-    "reset:services": "turbo run reset:services",
-    "stop:services": "turbo run stop:services",
-    "start:services": "turbo run start:services",
-    "start:@openldr/data-processing": "turbo run start --filter=@openldr/data-processin --parallel --force",
-    "start:@openldr/entity-services": "turbo run start --filter=@openldr/entity-services --parallel --force",
-    "start:@openldr/external-storage": "turbo run start --filter=@openldr/external-storage --parallel --force",
-    "start:@openldr/internal-database": "turbo run start --filter=@openldr/internal-database --parallel --force",
-    "start:@openldr/lab-data-api": "turbo run start --filter=@openldr/lab-data-api --parallel --force",
-    "start:@openldr/mapper": "turbo run start --filter=@openldr/mapper --parallel --force",
-    "start:@openldr/plugins": "turbo run start --filter=@openldr/plugins --parallel --force",
-    "start:@openldr/terminology-mapping": "turbo run start --filter=@openldr/terminology-mapping --parallel --force",
-    "start:@openldr/validation": "turbo run start --filter=@openldr/validation --parallel --force",
-    "start:@openldr/web": "turbo run start --filter=@openldr/web --parallel --force",
-    "build:studio": "turbo run build --filter=@openldr/studio --parallel",
-    "lint:studio": "turbo run lint --filter=@openldr/studio --parallel",
-    "tests": "npx mocha \"./tests/**/*.spec.js\"",
-    "clean": "rimraf \"apps/**/node_modules\" \"apps/**/package-lock.json\" \"packages/**/node_modules\" \"packages/**/package-lock.json\" \"package-lock.json\" \"node_modules\"",
     "dev": "turbo run dev",
     "lint": "turbo run lint",
-    "check-types": "turbo run check-types",
-    "format": "prettier --write \"**/*.{ts,tsx,md}\""
+    "format": "prettier --write \"**/*.{ts,tsx,md}\"",
+    "check-types": "turbo run check-types"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "turbo": "^2.8.3"
   },
   "devDependencies": {
     "@repo/eslint-config": "*",
-    "@repo/typescript-config": "*",
-    "@types/uuid": "^10.0.0",
-    "chai": "^6.2.0",
-    "cpy-cli": "^6.0.0",
-    "prettier": "^3.6.0",
-    "prettier-plugin-tailwindcss": "^0.6.11",
-    "turbo": "^2.7.4"
+    "@repo/typescript-config": "*"
   },
   "engines": {
     "node": ">=18"
   },
-  "packageManager": "npm@11.5.1",
+  "packageManager": "npm@11.3.0",
   "workspaces": [
     "apps/*",
     "packages/*"
-  ],
-  "dependencies": {
-    "archiver": "^7.0.1"
-  }
+  ]
 }

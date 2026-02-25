@@ -1,8 +1,8 @@
 {
   "realm": "${KEYCLOAK_REALM}",
   "enabled": true,
-  "displayName": "OpenLDR Realm",
-  "displayNameHtml": "<div class=\"kc-logo-text\"><span>OpenLDR</span></div>",
+  "displayName": "OPENLDR Realm",
+  "displayNameHtml": "<div class=\"kc-logo-text\"><span>OPENLDR</span></div>",
   "sslRequired": "external",
   "registrationAllowed": false,
   "loginWithEmailAllowed": true,
@@ -10,15 +10,6 @@
   "resetPasswordAllowed": true,
   "editUsernameAllowed": false,
   "bruteForceProtected": true,
-
-  "loginTheme": "openldr",
-  "accountTheme": "keycloak.v2",
-  "adminTheme": "keycloak.v2",
-  "emailTheme": "keycloak",
-  "internationalizationEnabled": true,
-  "supportedLocales": ["en", "es", "fr", "de"],
-  "defaultLocale": "en",
-
   "roles": {
     "realm": [
       {

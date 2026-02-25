@@ -1,0 +1,21 @@
+{
+  "id":               "openldr-lab-results",
+  "name":             "Lab Results Browser",
+  "version":          "1.0.0",
+  "description":      "Browse, filter and summarise laboratory results from openldr_external.lab_results. Supports pagination, status filtering, and per-test-type statistics.",
+  "kind":             "iframe",
+  "slot":             "main",
+  "author":           "OpenLDR Community",
+  "icon":             "🧪",
+  "permissions":      ["data.labResults", "data.labRequests"],
+  "activationEvents": ["onView:openldr-lab-results"],
+  "contributes": {
+    "commands": [
+      { "id": "labResults.refresh", "title": "Lab Results: Refresh" },
+      { "id": "labResults.exportCsv", "title": "Lab Results: Export current view as CSV" }
+    ],
+    "views": [
+      { "id": "openldr-lab-results", "slot": "main", "title": "Lab Results" }
+    ]
+  }
+}

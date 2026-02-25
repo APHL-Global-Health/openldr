@@ -4,9 +4,9 @@ services:
     hostname: openldr-kafka-zoo1
     container_name: openldr-kafka-zoo1
     restart: unless-stopped
-    ports:
-      # Zookeeper client port (2181) - Internal port for Kafka cluster coordination
-      - "2181:2181"
+    # ports:
+    #   # Zookeeper client port (2181) - Internal port for Kafka cluster coordination
+    #   - "2181:2181"
     environment:
       ZOOKEEPER_CLIENT_PORT: 2181
       ZOOKEEPER_SERVER_ID: 1
@@ -29,11 +29,11 @@ services:
     hostname: openldr-kafka1
     container_name: openldr-kafka1
     restart: unless-stopped
-    ports:
-      - "${KAFKA_EXTERNAL_PORT}:9092" # Map external port to Kafka's external listener
-      - "${KAFKA_DOCKER_PORT}:29092" # Map docker port to Kafka's docker listener
-      - "19092:19092" # Expose internal port (optional, for debugging)
-      - "9999:9999" # Kafka metrics port (9999) - Internal port for Kafka metrics collection
+    # ports:
+    #   - "${KAFKA_EXTERNAL_PORT}:9092" # Map external port to Kafka's external listener
+    #   - "${KAFKA_DOCKER_PORT}:29092" # Map docker port to Kafka's docker listener
+    #   - "19092:19092" # Expose internal port (optional, for debugging)
+    #   - "9999:9999" # Kafka metrics port (9999) - Internal port for Kafka metrics collection
     environment:
       KAFKA_ADVERTISED_LISTENERS: INTERNAL://openldr-kafka1:19092,EXTERNAL://${DOCKER_HOST_IP:-127.0.0.1}:${KAFKA_EXTERNAL_PORT},DOCKER://localhost:${KAFKA_DOCKER_PORT}
       # KAFKA_ADVERTISED_LISTENERS: INTERNAL://openldr-kafka1:19092,EXTERNAL://${DOCKER_HOST_IP}:${KAFKA_EXTERNAL_PORT},DOCKER://host.docker.internal:${KAFKA_DOCKER_PORT}
@@ -80,8 +80,8 @@ services:
     hostname: openldr-kafka-connect
     container_name: openldr-kafka-connect
     restart: unless-stopped
-    ports:
-      - "${KAFKA_CONNECT_PORT}:8083"
+    # ports:
+    #   - "${KAFKA_CONNECT_PORT}:8083"
     deploy:
       resources:
         limits:
@@ -138,8 +138,8 @@ services:
     hostname: openldr-kafka-conduktor-console
     container_name: openldr-kafka-conduktor-console
     restart: unless-stopped
-    ports:
-      - "${KAFKA_CONDUKTOR_PORT}:8080"
+    # ports:
+    #   - "${KAFKA_CONDUKTOR_PORT}:8080"
     deploy:
       resources:
         limits:
@@ -160,7 +160,9 @@ services:
       CDK_CLUSTERS_0_BOOTSTRAPSERVERS: "PLAINTEXT://openldr-kafka1:19092"
       CDK_CLUSTERS_0_KAFKACONNECTS_0_URL: "http://openldr-kafka-connect:8083"
       CDK_CLUSTERS_0_KAFKACONNECTS_0_NAME: "full stack kafka connect"
-      CDK_PLATFORM_EXTERNAL_URL: "https://${HOST_IP}/kafka-console"
+      # These are the critical settings for subpath
+      # CDK_PLATFORM_EXTERNAL_URL: "https://${HOST_IP}/kafka-console/"
+      # SERVER_SERVLET_CONTEXT_PATH: "/kafka-console"
     networks:
       - openldr-network
 
@@ -173,5 +175,4 @@ volumes:
 
 networks:
   openldr-network:
-    name: openldr-network
-    external: true
+    driver: bridge
