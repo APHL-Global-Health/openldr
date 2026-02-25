@@ -15,7 +15,6 @@
   "dependencies": {
     "@aws-sdk/client-s3": "^3.995.0",
     "@aws-sdk/lib-storage": "^3.995.0",
-    "@modelcontextprotocol/inspector": "^0.13.0",
     "@opensearch-project/opensearch": "^3.5.1",
     "adm-zip": "^0.5.16",
     "axios": "^1.13.5",
@@ -27,14 +26,15 @@
     "express-rate-limit": "^8.2.1",
     "helmet": "^8.1.0",
     "jsonschema": "^1.5.0",
-    "minio": "^8.0.6",
+    "minio": "*",
     "morgan": "^1.10.1",
     "multer": "^2.0.2",
     "pg": "^8.18.0",
     "pg-pool": "^3.11.0",
     "pino": "^10.3.1",
     "semver": "^6.3.1",
-    "unzipper": "^0.12.3"
+    "unzipper": "^0.12.3",
+    "uuid": "^13.0.0"
   },
   "devDependencies": {
     "@openldr/extensions": "*",

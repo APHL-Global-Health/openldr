@@ -21,7 +21,6 @@
     
   },
   "dependencies": {
-    "@modelcontextprotocol/inspector": "^0.13.0",
-    "minio": "^8.0.6"
+    "minio": "*"
   }
 }
