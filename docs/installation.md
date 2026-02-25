@@ -28,7 +28,13 @@ git clone https://github.com/APHL-Global-Health/openldr.git
 cd openldr
 ```
 
-### 2. Run the Initialization Script
+### 2. Install dependences
+
+```bash
+npm install
+```
+
+### 3. Run the Initialization Script
 
 The initialization script will configure all necessary environment files and prepare the services for deployment.
 
@@ -38,7 +44,7 @@ npm run init
 
 > **Important**: If you've previously run the initialization script and need to reconfigure, delete all `.env` files from the root directory before running the script again.
 
-### 3. Configure Your Deployment
+### 4. Configure Your Deployment
 
 During the initialization process, you'll be prompted to select an IP address. Choose the appropriate option based on your deployment scenario:
 
