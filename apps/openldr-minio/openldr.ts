@@ -751,8 +751,6 @@ const start = async (dir: string) => {
 
     const env = path.resolve(
       dir,
-      "..",
-      "..",
       ".env"
     );
     if (!(await services.fileExists(env))) {
