@@ -19,10 +19,9 @@ services:
   openldr-nginx-ui:
     stdin_open: true
     tty: true
-    image: nginx:latest
-    # build:
-    #   context: .
-    #   dockerfile: Dockerfile
+    build:
+      context: .
+      dockerfile: Dockerfile
     container_name: openldr-nginx-ui
     restart: unless-stopped
     env_file:
@@ -34,7 +33,7 @@ services:
     networks:
       - openldr-network
     ports:
-      # - "${GATEWAY_HTTP_PORT}:9000"
+      - "${GATEWAY_HTTP_PORT}:9000"
       # - "9081:9081"
       - "${GATEWAY_HTTPS_PORT}:443"
 
