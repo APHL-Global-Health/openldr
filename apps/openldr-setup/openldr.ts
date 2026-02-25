@@ -68,6 +68,37 @@ async function init() {
       process.stdin.setRawMode(true);
     }
 
+    const DEFAULT_HTTP_PORT = 8090;
+    const DEFAULT_HTTPS_PORT = 443;
+
+    const { httpPort } = await prompts
+      .input({
+        message: "Default HTTP port for openldr-gateway",
+        default: DEFAULT_HTTP_PORT.toString(),
+        validate: (input: string) => {
+          const value = parseInt(input, 10);
+          return isNaN(value) || value < 1
+            ? "Please enter a number greater than 0"
+            : true;
+        },
+      })
+      .then((answer) => ({ httpPort: parseInt(answer, 10) }));
+
+      const { httpsPort } = await prompts
+      .input({
+        message: "Default HTTPS port for openldr-gateway",
+        default: DEFAULT_HTTPS_PORT.toString(),
+        validate: (input: string) => {
+          const value = parseInt(input, 10);
+          return isNaN(value) || value < 1
+            ? "Please enter a number greater than 0"
+            : true;
+        },
+      })
+      .then((answer) => ({ httpsPort: parseInt(answer, 10) }));
+
+
+
     // Get system information
     const systemInfo = await services.getSystemInfo();
 
@@ -101,13 +132,15 @@ async function init() {
     //Update base environments
     const env_base = path.join(env_path, ".env.base");
     await updateEnvFile(env_base, "HOST_IP", hostIp);
+    await updateEnvFile(env_base, "GATEWAY_HTTP_PORT", httpPort.toString());
+    await updateEnvFile(env_base, "GATEWAY_HTTPS_PORT", httpsPort.toString());
 
     //Update ai environments
     const env_ai = path.join(env_path, ".env.openldr-ai");
     await updateEnvFile(
       env_ai,
       "AI_CORS_ORIGINS",
-      `https://${hostIp},https://${hostIp}:3000,http://${hostIp},http://${hostIp}:3000,https://${hostIp}/studio,https://${hostIp}/studio`,
+      `https://${hostIp}:${httpsPort},https://${hostIp}:3000,http://${hostIp},http://${hostIp}:3000,https://${hostIp}:${httpsPort}/studio,https://${hostIp}:${httpsPort}/studio`,
     );
 
     //
@@ -119,7 +152,7 @@ async function init() {
     await updateEnvFile(
       env_entity_services,
       "ENTITY_SERVICES_PUBLIC_URL",
-      `https://${hostIp}/entity-services`,
+      `https://${hostIp}:${httpsPort}/entity-services`,
     );
 
     //Update data processing environments
@@ -130,7 +163,7 @@ async function init() {
     await updateEnvFile(
       env_data_processing,
       "DATA_PROCESSING_PUBLIC_URL",
-      `https://${hostIp}/data-processing`,
+      `https://${hostIp}:${httpsPort}/data-processing`,
     );
 
     //Update minio environments
@@ -138,24 +171,24 @@ async function init() {
     await updateEnvFile(
       env_minio,
       "MINIO_BROWSER_REDIRECT_URL",
-      `https://${hostIp}/minio-console/`,
+      `https://${hostIp}:${httpsPort}/minio-console/`,
     );
     await updateEnvFile(
       env_minio,
       "MINIO_PUBLIC_URL",
-      `https://${hostIp}/minio-console/`,
+      `https://${hostIp}:${httpsPort}/minio-console/`,
     );
 
     //Update openconceptlab environments
     const env_ocl = path.join(env_path, ".env.openldr-openconceptlab");
-    await updateEnvFile(env_ocl, "OCL_PUBLIC_URL", `https://${hostIp}/ocl-api`);
+    await updateEnvFile(env_ocl, "OCL_PUBLIC_URL", `https://${hostIp}:${httpsPort}/ocl-api`);
 
     //Update keycloak environments
     const env_keycloak = path.join(env_path, ".env.openldr-keycloak");
     await updateEnvFile(
       env_keycloak,
       "KEYCLOAK_PUBLIC_URL",
-      `https://${hostIp}/keycloak`,
+      `https://${hostIp}:${httpsPort}/keycloak`,
     );
 
     //Update studio environments
@@ -163,82 +196,82 @@ async function init() {
     await updateEnvFile(
       env_studio_vite,
       "VITE_API_BASE_URL",
-      `https://${hostIp}/entity-services`,
+      `https://${hostIp}:${httpsPort}/entity-services`,
     );
     await updateEnvFile(
       env_studio_vite,
       "VITE_PROCESSOR_BASE_URL",
-      `https://${hostIp}/data-processing`,
+      `https://${hostIp}:${httpsPort}/data-processing`,
     );
     await updateEnvFile(
       env_studio_vite,
       "VITE_AI_BASE_URL",
-      `https://${hostIp}/ai`,
+      `https://${hostIp}:${httpsPort}/ai`,
     );
     await updateEnvFile(
       env_studio_vite,
       "VITE_KEYCLOAK_URL",
-      `https://${hostIp}/keycloak`,
+      `https://${hostIp}:${httpsPort}/keycloak`,
     );
     await updateEnvFile(
       env_studio_vite,
       "VITE_KEYCLOAK_DASHBOARD_URL",
-      `https://${hostIp}/keycloak`,
+      `https://${hostIp}:${httpsPort}/keycloak`,
     );
     await updateEnvFile(
       env_studio_vite,
       "VITE_MINIO_DASHBOARD_URL",
-      `https://${hostIp}/minio-console`,
+      `https://${hostIp}:${httpsPort}/minio-console`,
     );
     await updateEnvFile(
       env_studio_vite,
       "VITE_OPENSEARCH_DASHBOARD_URL",
-      `https://${hostIp}/opensearch-dashboard`,
+      `https://${hostIp}:${httpsPort}/opensearch-dashboard`,
     );
     await updateEnvFile(
       env_studio_vite,
       "VITE_KAFKA_DASHBOARD_URL",
-      `https://${hostIp}/kafka-console`,
+      `https://${hostIp}:${httpsPort}/kafka-console`,
     );
     await updateEnvFile(
       env_studio_vite,
       "VITE_NGINX_DASHBOARD_URL",
-      `http://${hostIp}:8090`,
+      `http://${hostIp}:${httpPort}`,
     );
     await updateEnvFile(
       env_studio_vite,
       "VITE_KEYCLOAK_DASHBOARD_URL",
-      `https://${hostIp}/keycloak`,
+      `https://${hostIp}:${httpsPort}/keycloak`,
     );
     await updateEnvFile(
       env_studio_vite,
       "VITE_MINIO_DASHBOARD_URL",
-      `https://${hostIp}/minio-console`,
+      `https://${hostIp}:${httpsPort}/minio-console`,
     );
     await updateEnvFile(
       env_studio_vite,
       "VITE_OPENSEARCH_DASHBOARD_URL",
-      `https://${hostIp}/opensearch-dashboard`,
+      `https://${hostIp}:${httpsPort}/opensearch-dashboard`,
     );
     await updateEnvFile(
       env_studio_vite,
       "VITE_REDIS_DASHBOARD_URL",
-      `https://${hostIp}/redis-dashboard`,
+      `https://${hostIp}:${httpsPort}/redis-dashboard`,
     );
     await updateEnvFile(
       env_studio_vite,
       "VITE_KAFKA_DASHBOARD_URL",
-      `https://${hostIp}/kafka-console`,
+      `https://${hostIp}:${httpsPort}/kafka-console`,
     );
     await updateEnvFile(
       env_studio_vite,
       "VITE_OCL_URL",
-      `https://${hostIp}/oclapi/`,
+      `https://${hostIp}:${httpsPort}/ocl-api`,
     );
 
     //Update studio environments
     const env_web_vite = path.join(env_path, ".env.openldr-web-vite");
-    await updateEnvFile(env_web_vite, "VITE_APP_URL", `https://${hostIp}/web`);
+    await updateEnvFile(env_web_vite, "VITE_APP_URL", `https://${hostIp}:${httpsPort}/web`);
   } catch (error) {
     throw new Error(
       `Failed to create openldr configuration: ${
