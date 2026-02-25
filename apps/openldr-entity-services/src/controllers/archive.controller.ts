@@ -4,8 +4,10 @@ import { validator } from "../lib/validator";
 import { pool } from "../lib/db";
 import { getEntryForm } from "../services/form.service";
 import { keycloakService } from "../services/keycloak.service";
-import * as minioUtil from "../services/minio.service";
+// import * as minioUtil from "../services/minio.service";
 import { generate } from "./terminology.controller";
+
+import * as minioUtil from "../lib/minio";
 
 const isPlainObject = (variable: any) => {
   return (
