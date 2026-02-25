@@ -3,7 +3,7 @@ import { services, docker } from "@repo/openldr-core";
 
 // Create OpenSearch sink connector
 const createOpenSearchSinkConnector = async () => {
-  const kafkaConnectUrl = `https://127.0.0.1/kafka-connect`;
+  const kafkaConnectUrl = `https://${process.env.HOST_IP}:${process.env.GATEWAY_HTTPS_PORT}/kafka-connect`;
   const opensearchUrl = `http://openldr-opensearch:${process.env.OPENSEARCH_PORT}`;
 
   console.log("Creating OpenSearch sink connector and message-metadata index");
