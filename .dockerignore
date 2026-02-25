@@ -43,4 +43,17 @@ yarn-error.log*
 ./apps/**/**/src-tauri/target/
 ./apps/**/**/src-tauri/gen/schemas
 
+./apps/**/ai/downloads
+
 postman.txt
+
+**/node_modules
+**/dist
+**/build
+**/.turbo
+**/.next
+**/.cache
+
+.git
+.github
+*.log

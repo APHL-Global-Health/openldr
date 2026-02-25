@@ -3,6 +3,7 @@
   "ui": "tui",
   "tasks": {
     "build": {
+      "cache": false,
       "dependsOn": ["^build"],
       "inputs": ["$TURBO_DEFAULT$", ".env*"],
       "outputs": [".next/**", "!.next/cache/**", "dist/**"]
@@ -11,11 +12,9 @@
       "dependsOn": ["^docker:test"]   
     },
     "docker:build": {
-      "cache": false,
       "dependsOn": ["^docker:build"]   
     },
     "docker:start": {
-      "cache": false,
       "dependsOn": ["^docker:start"]   
     },
     "docker:stop": {

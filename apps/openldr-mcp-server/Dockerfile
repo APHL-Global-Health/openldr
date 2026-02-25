@@ -22,7 +22,7 @@ RUN npm install turbo --global
 COPY --from=builder /app/out/json/ .
 RUN npm ci
 COPY --from=builder /app/out/full/ .
-RUN turbo run build
+RUN turbo run build --filter=${APP_NAME}
  
 FROM base AS runner
 WORKDIR /app

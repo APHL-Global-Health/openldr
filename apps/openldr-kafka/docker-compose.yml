@@ -138,6 +138,7 @@ services:
     hostname: openldr-kafka-conduktor-console
     container_name: openldr-kafka-conduktor-console
     restart: unless-stopped
+    user: "0:0"
     # ports:
     #   - "${KAFKA_CONDUKTOR_PORT}:8080"
     deploy:

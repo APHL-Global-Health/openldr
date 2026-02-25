@@ -22,7 +22,6 @@
   },
   "dependencies": {
     "@modelcontextprotocol/inspector": "^0.13.0",
-    "kafka-node": "^0.5.2",
     "minio": "^8.0.6"
   }
 }

@@ -5,7 +5,7 @@ ARG APP_LOC=openldr-web
  
 FROM base AS builder
 RUN apk update
-RUN apk add --no-cache libc6-compat python3 make g++
+RUN apk add --no-cache libc6-compat
 # Set working directory
 WORKDIR /app
 RUN npm install turbo --global
@@ -27,7 +27,7 @@ RUN npm ci --include=optional
 
 COPY --from=builder /app/out/full/ .
 
-RUN turbo run build
+RUN turbo run build --filter=${APP_NAME}
  
 FROM base AS runner
 WORKDIR /app

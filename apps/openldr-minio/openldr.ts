@@ -158,7 +158,7 @@ const start = async (dir: string) => {
       await minio.createBuckets(buckets, events);
     }
 
-    await minio.createPluginsBucket();
+    await minio.restartMinIOContainer(dir);
     await minio.waitForContainerHealth(120000);
 
     console.log("Minio initialization complete`");

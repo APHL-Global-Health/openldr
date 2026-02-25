@@ -1,31 +1,29 @@
-import kafka from "kafka-node";
+import { Kafka } from "kafkajs";
 import * as messageHandler from "./handlers/validation";
 import { logger } from "../lib/logger";
 
-export const start = () => {
+export const start = async () => {
   try {
-    const consumerOptions: any = {
-      kafkaHost: "openldr-kafka1:19092",
-      groupId: "openldr-validation-consumer",
-      fromOffset: "earliest",
-    };
-
-    // this is the kafka topic that the validation service subscribed to as defined in minio
-    const consumerGroup = new kafka.ConsumerGroup(
-      consumerOptions,
-      "raw-inbound",
-    );
-
-    // Set up Kafka consumer
-    consumerGroup.on("message", function (kafkaMessage) {
-      messageHandler.handleMessage(kafkaMessage);
+    const kafka = new Kafka({
+      clientId: "openldr-validation",
+      brokers: ["openldr-kafka1:19092"],
     });
 
-    consumerGroup.on("error", function (err) {
-      logger.error(
-        { error: err.message, stack: err.stack },
-        "Validation: Error consuming kafka message",
-      );
+    const consumer = kafka.consumer({ groupId: "openldr-validation-consumer" });
+
+    await consumer.connect();
+    await consumer.subscribe({ topic: "raw-inbound", fromBeginning: true });
+
+    await consumer.run({
+      eachMessage: async ({ topic, partition, message }) => {
+        messageHandler.handleMessage({
+          topic,
+          partition,
+          offset: message.offset,
+          value: message.value?.toString(),
+          key: message.key?.toString(),
+        });
+      },
     });
 
     logger.info("Validation service running and consuming messages");
