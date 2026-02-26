@@ -5,7 +5,7 @@
   "scripts": {
     "copy:env": "tsx ../../environments/merge-env.ts ../../environments/.env.base ../../environments/.env.openldr-entity-services ../../environments/.env.openldr-data-processing ../../environments/.env.openldr-external-database ../../environments/.env.openldr-minio ../../environments/.env.openldr-keycloak ../../environments/.env.openldr-postgres ../../environments/.env.openldr-pgadmin ../../environments/.env.openldr-opensearch ../../environments/.env.openldr-kafka ../../environments/.env.openldr-studio ../../environments/.env.openldr-ai .env",
     "docker:build": "npm run setup:services && npm run copy:env && tsx ./docker-compose.ts pull",
-    "docker:start": "npm run copy:env && tsx ./docker-compose.ts up -d && npm run start:services --force-recreate",
+    "docker:start": "npm run copy:env && tsx ./docker-compose.ts up -d && npm run start:services",
     "docker:stop": "npm run copy:env && tsx ./docker-compose.ts stop && npm run stop:services",
     "docker:reset": "npm run copy:env && tsx ./docker-compose.ts down --rmi all -v --remove-orphans && npm run stop:services && rimraf ./.env",
     "setup:services": "tsx openldr.ts setup",
