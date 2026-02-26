@@ -2,7 +2,7 @@
   "mcpServers": {
     "openldr": {
       "type": "streamable-http",
-      "url": "http://127.0.0.1:6060/stream",
+      "url": "http://openldr-mcp-server:6060/stream",
       "note": "For Streamable HTTP connections, add this URL directly in your MCP Client"
     }
   }
