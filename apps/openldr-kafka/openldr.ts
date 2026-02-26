@@ -61,16 +61,65 @@ const createOpenSearchSinkConnector = async () => {
   console.log("INFO", `Connector status: ${statusText}`);
 };
 
+const deleteOpenSearchSinkConnector = async () => {
+  const kafkaConnectUrl = `https://${process.env.HOST_IP}:${process.env.GATEWAY_HTTPS_PORT}/kafka-connect`;
+
+  console.log("Deleting OpenSearch sink connector");
+
+  const res = await fetch(`${kafkaConnectUrl}/connectors/opensearch-sink`, {
+    method: "DELETE",
+  });
+
+  if (res.ok || res.status === 404) {
+    console.log("OpenSearch sink connector deleted (or did not exist).");
+  } else {
+    const text = await res.text();
+    console.error(
+      "Failed to delete OpenSearch sink connector. Response:",
+      text,
+    );
+  }
+};
+
 const setup = async (dir: string) => {
   console.log(`Running setup - ${dir}`);
+  // Do nothing for now, as the connector is being pulled and configured in the start script.
+  // We can add any additional setup steps here in the future if needed.
 };
 
 const reset = async (dir: string) => {
   console.log(`Running reset - ${dir}`);
+
+  try {
+    services.loadEnv(path.resolve(".env"));
+
+    await services.waitForContainerHealth(
+      process.env.KAFKA_CONNECT_HOSTNAME || "openldr-kafka-connect",
+      120000,
+      docker,
+    );
+
+    await deleteOpenSearchSinkConnector();
+    await createOpenSearchSinkConnector();
+
+    console.log("Kafka reset complete!");
+  } catch (error) {
+    console.log(`Reset failed: ${error}`);
+    process.exit(1);
+  }
 };
 
 const stop = async (dir: string) => {
   console.log(`Stopping services - ${dir}`);
+
+  try {
+    services.loadEnv(path.resolve(".env"));
+    await deleteOpenSearchSinkConnector();
+    console.log("Kafka stop complete!");
+  } catch (error) {
+    console.log(`Stop failed: ${error}`);
+    process.exit(1);
+  }
 };
 
 const start = async (dir: string) => {

@@ -5,7 +5,6 @@
   "main": "./dist/main/minio.js",
   "module": "./dist/esm/minio.mjs",
   "scripts": {
-    "prepare": "husky install",
     "tsc": "tsc",
     "type-check": "tsc --noEmit --emitDeclarationOnly false",
     "build": "node build.mjs",
@@ -15,8 +14,7 @@
     "prepublishOnly": "npm run build",
     "functional": "mocha tests/functional/functional-tests.js",
     "format": "prettier -w .",
-    "format-check": "prettier --list-different .",
-    "lint-staged": "lint-staged"
+    "format-check": "prettier --list-different ."
   },
   "exports": {
     ".": {
@@ -52,18 +50,6 @@
     "endOfLine": "lf",
     "trailingComma": "all",
     "semi": false
-  },
-  "lint-staged": {
-    "*.json": [
-      "prettier --write"
-    ],
-    "*.{js,cjs,mjs,ts}": [
-      "eslint --fix",
-      "prettier --write"
-    ],
-    "*.md": [
-      "prettier --write"
-    ]
   },
   "repository": {
     "type": "git",
@@ -129,8 +115,6 @@
     "eslint-plugin-simple-import-sort": "^10.0.0",
     "eslint-plugin-unicorn": "^47.0.0",
     "eslint-plugin-unused-imports": "^2.0.0",
-    "husky": "^8.0.3",
-    "lint-staged": "^13.2.2",
     "mocha": "^10.2.0",
     "mocha-steps": "^1.3.0",
     "nock": "^13.3.1",

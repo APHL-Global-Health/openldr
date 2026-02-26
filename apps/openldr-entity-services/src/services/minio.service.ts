@@ -3,15 +3,7 @@ import { logger } from "../lib/logger";
 import { type MinioUploadResult } from "../types";
 import crypto from "crypto";
 import fs from "fs";
-
-// Create MinIO client
-const minioClient = new Minio.Client({
-  endPoint: process.env.MINIO_HOSTNAME!,
-  port: parseInt(process.env.MINIO_API_PORT || "9000", 10),
-  useSSL: process.env.MINIO_USE_SSL === "true",
-  accessKey: process.env.MINIO_ROOT_USER,
-  secretKey: process.env.MINIO_ROOT_PASSWORD,
-});
+import { minioClient } from "../lib/minio-client";
 
 /**
  * Ensure bucket exists, create if not
