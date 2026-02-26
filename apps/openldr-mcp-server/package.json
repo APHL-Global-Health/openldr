@@ -34,6 +34,7 @@
     "zod": "^4.1.11"
   },
   "devDependencies": {
+    "@modelcontextprotocol/inspector": "^0.21.0",
     "@openldr/data-processing": "*",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
