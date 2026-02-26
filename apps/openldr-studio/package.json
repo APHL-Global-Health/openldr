@@ -101,7 +101,6 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.39.2",
-    "@openldr/ai": "*",
     "@openldr/extensions": "*",
     "@types/d3": "^7.4.3",
     "@types/node": "^24.10.9",
