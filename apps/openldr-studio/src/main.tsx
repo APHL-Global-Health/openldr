@@ -16,7 +16,6 @@ const ArchivePage = React.lazy(() => import("@/pages/ArchivePage"));
 const ExtensionsPage = React.lazy(() => import("@/pages/ExtensionsPage"));
 const DataEntryPage = React.lazy(() => import("@/pages/DataEntry"));
 const ExtensionPage = React.lazy(() => import("@/pages/ExtensionPage"));
-const DocsPage = React.lazy(() => import("@/pages/DocsPage"));
 const SettingsPage = React.lazy(() => import("@/pages/settings/page"));
 const ReportsPage = React.lazy(() => import("@/pages/ReportsPage"));
 const ChatPage = React.lazy(() => import("@/pages/ChatPage"));
@@ -56,8 +55,6 @@ const router = createBrowserRouter([
       { path: `${baseUrl}extensions`, element: <ExtensionsPage /> },
       { path: `${baseUrl}reports`, element: <ReportsPage /> },
       { path: `${baseUrl}chats`, element: <ChatPage /> },
-      //TODO add later
-      // { path: `${baseUrl}docs`, element: <DocsPage /> },
       { path: `${baseUrl}logs`, element: <LogsPage /> },
       { path: `${baseUrl}settings`, element: <SettingsPage /> },
     ],
