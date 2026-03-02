@@ -108,6 +108,13 @@ CREATE INDEX idx_mappings_from       ON concept_mappings(from_concept_id);
 CREATE INDEX idx_mappings_to         ON concept_mappings(to_concept_id);
 CREATE INDEX idx_mappings_type       ON concept_mappings(map_type);
 CREATE INDEX idx_mappings_to_ext     ON concept_mappings(to_system_code, to_concept_code);
+-- Deduplication guard: prevents the same from→to+system+map_type pair being inserted twice.
+-- Covers the common path where to_concept_id is NULL and the target is stored as a
+-- (to_system_code, to_concept_code) pair (used by migration scripts 97 and 98).
+-- Rows where either column is NULL are excluded so in-DB concept links stay flexible.
+CREATE UNIQUE INDEX idx_mappings_dedup
+    ON concept_mappings (from_concept_id, to_system_code, to_concept_code, map_type)
+    WHERE to_system_code IS NOT NULL AND to_concept_code IS NOT NULL;
 
 COMMENT ON TABLE concept_mappings IS 'Cross-walks between codes in different systems (≈ OCL Mapping)';
 COMMENT ON COLUMN concept_mappings.to_concept_id IS 'Set when target concept exists locally; NULL when mapping to external-only code';
