@@ -63,8 +63,37 @@ async function handleMessage(kafkaMessage: any) {
         try {
           let mappingConfig: any = null;
 
-          if (plugin.config?.systemCode) {
-            // Primary path: query terminology directly from openldr_external
+          if (
+            plugin.config?.fieldMappings &&
+            Array.isArray(plugin.config.fieldMappings) &&
+            plugin.config.fieldMappings.length > 0
+          ) {
+            // Primary path: explicit field-to-system mappings.
+            // Supports multi-system data feeds (e.g. WHONET splits into
+            // WHONET_ORG, WHONET_ABX, WHONET_SPEC) as well as mixed feeds
+            // (LOINC + ICD10).  All systems are fetched in one DB round-trip.
+            const systemCodes: string[] = [
+              ...new Set<string>(
+                plugin.config.fieldMappings
+                  .map((fm: any) => fm.systemCode as string)
+                  .filter(Boolean),
+              ),
+            ];
+            const result =
+              await terminologyService.getConceptsBySystemCodes(systemCodes);
+            if (Object.keys(result.bySystem).length > 0) {
+              mappingConfig = {
+                bySystem: result.bySystem,
+                fieldMappings: plugin.config.fieldMappings,
+              };
+            } else {
+              logger.warn(
+                `No concepts found for systems [${systemCodes.join(", ")}] ` +
+                  `(plugin ${dataFeed.mapperPluginId}), continuing with original message`,
+              );
+            }
+          } else if (plugin.config?.systemCode) {
+            // Legacy path: single system code, uses string-value scanning.
             const result = await terminologyService.getConceptsBySystem(
               plugin.config.systemCode,
             );
@@ -72,7 +101,7 @@ async function handleMessage(kafkaMessage: any) {
               mappingConfig = result;
             } else {
               logger.warn(
-                `No concepts found for system_code '${plugin.config.system_code}' ` +
+                `No concepts found for systemCode '${plugin.config.systemCode}' ` +
                   `(plugin ${dataFeed.mapperPluginId}), continuing with original message`,
               );
             }
@@ -109,18 +138,28 @@ async function handleMessage(kafkaMessage: any) {
             }
           } else {
             logger.warn(
-              `Mapper plugin ${dataFeed.mapperPluginId} has neither system_code in config ` +
-                `nor a pluginMinioObjectPath — skipping terminology mapping`,
+              `Mapper plugin ${dataFeed.mapperPluginId} has neither fieldMappings/systemCode ` +
+                `in config nor a pluginMinioObjectPath — skipping terminology mapping`,
             );
           }
 
           // Apply terminology mappings to the message
           if (mappingConfig) {
             try {
-              processedMessage = applyTerminologyMappings(
-                messageContent,
-                mappingConfig,
-              );
+              if (mappingConfig.bySystem) {
+                // New field-mapping mode: resolves raw codes to concept UUIDs
+                // and cross-system mappings using explicit source/target field config
+                processedMessage = applyConceptIdMappings(
+                  messageContent,
+                  mappingConfig,
+                );
+              } else {
+                // Legacy string-scan mode: scans all string values for concept codes
+                processedMessage = applyTerminologyMappings(
+                  messageContent,
+                  mappingConfig,
+                );
+              }
               logger.info(
                 `Successfully applied terminology mappings for plugin ${dataFeed.mapperPluginId}`,
               );
@@ -179,7 +218,149 @@ async function handleMessage(kafkaMessage: any) {
 }
 
 /**
- * Applies terminology mappings to a message using the mapping configuration
+ * Applies explicit field-to-concept mappings using plugin.config.fieldMappings.
+ *
+ * For each { sourceField, targetField, systemCode } entry the message is scanned
+ * recursively for a key matching sourceField.  When found, the raw code value is
+ * looked up in the pre-loaded concept dictionary for that systemCode and the
+ * resolved UUID is added to _conceptIds:
+ *
+ *   _conceptIds: {
+ *     organism_concept_id: "uuid",
+ *     antibiotic_concept_id: "uuid",
+ *     specimen_concept_id:  "uuid",
+ *     ...
+ *   }
+ *
+ * Additionally, the full concept data (with cross-system mappings) is stored in
+ * _mappings keyed by the raw source code, so downstream consumers can enrich
+ * reports without another DB round-trip:
+ *
+ *   _mappings: {
+ *     "eco": { concept: { id, code, name }, mappings: [...] },
+ *     "AMK": { concept: { id, code, name }, mappings: [...] }
+ *   }
+ *
+ * plugin.config.fieldMappings example — WHONET microbiology feed:
+ *   [
+ *     { "sourceField": "organism_code",   "targetField": "organism_concept_id",   "systemCode": "WHONET_ORG"  },
+ *     { "sourceField": "antibiotic_code", "targetField": "antibiotic_concept_id", "systemCode": "WHONET_ABX"  },
+ *     { "sourceField": "specimen_code",   "targetField": "specimen_concept_id",   "systemCode": "WHONET_SPEC" }
+ *   ]
+ *
+ * plugin.config.fieldMappings example — general lab feed:
+ *   [
+ *     { "sourceField": "loinc_code",    "targetField": "observation_concept_id", "systemCode": "LOINC" },
+ *     { "sourceField": "panel_code",    "targetField": "panel_concept_id",       "systemCode": "LOINC" },
+ *     { "sourceField": "icd10_codes",   "targetField": "diagnosis_concept_id",   "systemCode": "ICD10" },
+ *     { "sourceField": "specimen_code", "targetField": "specimen_concept_id",    "systemCode": "WHONET_SPEC" }
+ *   ]
+ */
+function applyConceptIdMappings(
+  message: any,
+  mappingConfig: {
+    bySystem: Record<string, Record<string, any>>;
+    fieldMappings: Array<{
+      sourceField: string;
+      targetField: string;
+      systemCode: string;
+    }>;
+  },
+) {
+  const result = JSON.parse(JSON.stringify(message)); // Deep clone
+  const conceptIds: Record<string, string> = {};
+  const conceptMappings: Record<string, any> = {};
+
+  scanForConceptIdFields(
+    result,
+    mappingConfig.fieldMappings,
+    mappingConfig.bySystem,
+    conceptIds,
+    conceptMappings,
+  );
+
+  if (Object.keys(conceptIds).length > 0) {
+    result._conceptIds = conceptIds;
+  }
+  if (Object.keys(conceptMappings).length > 0) {
+    result._mappings = conceptMappings;
+  }
+
+  return result;
+}
+
+/**
+ * Recursively walks an object looking for keys that match a sourceField name
+ * declared in fieldMappings.  When a matching key is found and its value is a
+ * non-empty string, the value is looked up in bySystem[systemCode].  On a hit:
+ *   - conceptIds[targetField]  is set to the concept UUID
+ *   - conceptMappings[rawCode] is set to the full concept + cross-system data
+ *
+ * Arrays are iterated so that repeated structures (e.g. multiple OBX segments
+ * in an HL7 message) are all resolved.
+ */
+function scanForConceptIdFields(
+  obj: any,
+  fieldMappings: Array<{
+    sourceField: string;
+    targetField: string;
+    systemCode: string;
+  }>,
+  bySystem: Record<string, Record<string, any>>,
+  conceptIds: Record<string, string>,
+  conceptMappings: Record<string, any>,
+) {
+  if (!obj || typeof obj !== "object") return;
+
+  if (Array.isArray(obj)) {
+    obj.forEach((item) =>
+      scanForConceptIdFields(
+        item,
+        fieldMappings,
+        bySystem,
+        conceptIds,
+        conceptMappings,
+      ),
+    );
+    return;
+  }
+
+  for (const { sourceField, targetField, systemCode } of fieldMappings) {
+    if (sourceField in obj) {
+      const rawCode = obj[sourceField];
+      if (typeof rawCode === "string" && rawCode) {
+        const systemConcepts = bySystem[systemCode];
+        if (systemConcepts?.[rawCode]) {
+          const conceptData = systemConcepts[rawCode];
+          conceptIds[targetField] = conceptData.concept.id;
+          conceptMappings[rawCode] = {
+            concept: conceptData.concept,
+            mappings: conceptData.mappings,
+          };
+        }
+      }
+    }
+  }
+
+  for (const value of Object.values(obj)) {
+    if (value && typeof value === "object") {
+      scanForConceptIdFields(
+        value,
+        fieldMappings,
+        bySystem,
+        conceptIds,
+        conceptMappings,
+      );
+    }
+  }
+}
+
+/**
+ * Applies terminology mappings to a message using the mapping configuration.
+ * Legacy mode: scans all string values in the message and checks if they match
+ * a concept code in the mapping config.  Used when plugin.config.systemCode is
+ * set (single-system, no explicit field targeting).
+ *
  * @param {Object} message - The message to apply mappings to
  * @param {Object} mappingConfig - The terminology mapping configuration
  * @returns {Object} - The message with _mappings object added
