@@ -57,3 +57,5 @@ postman.txt
 .git
 .github
 *.log
+
+.claude
