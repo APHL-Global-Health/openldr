@@ -11,10 +11,10 @@ async function handleMessage(kafkaMessage: any) {
 
     // Extract the key and parse it
     const key = kafkaMessage.key;
-    const [facilityId, dataKey, dataFeedId, objectName] = key.split("/");
+    const [projectId, dataKey, dataFeedId, objectName] = key.split("/");
     const validatedName = `${dataKey}/${dataFeedId}/${objectName}`;
 
-    if (!facilityId || !dataFeedId) {
+    if (!projectId || !dataFeedId) {
       throw new Error(`Invalid message key format: ${key}`);
     }
 
@@ -26,18 +26,18 @@ async function handleMessage(kafkaMessage: any) {
 
     // Get the object from MinIO using the full key path
     const objectStream = await minioUtil.getObject({
-      bucketName: facilityId,
+      bucketName: projectId,
       objectName: validatedName,
     });
 
     // Read the object data
     let objectData = "";
     await new Promise((resolve, reject) => {
-      objectStream.on("data", (chunk) => {
+      objectStream.on("data", (chunk: any) => {
         objectData += chunk.toString();
       });
       objectStream.on("end", resolve);
-      objectStream.on("error", (err) =>
+      objectStream.on("error", (err: any) =>
         reject(new Error(`Failed to read object stream: ${err.message}`)),
       );
     });
@@ -69,11 +69,11 @@ async function handleMessage(kafkaMessage: any) {
           // Read the plugin file
           let pluginFile = "";
           await new Promise((resolve, reject) => {
-            pluginStream.on("data", (chunk) => {
+            pluginStream.on("data", (chunk: any) => {
               pluginFile += chunk.toString();
             });
             pluginStream.on("end", resolve);
-            pluginStream.on("error", (err) =>
+            pluginStream.on("error", (err: any) =>
               reject(
                 new Error(
                   `Failed to read plugin file object stream: ${err.message}`,
@@ -140,7 +140,7 @@ async function handleMessage(kafkaMessage: any) {
 
     // Save the processed message to minio with metadata
     await minioUtil.putObject({
-      bucketName: facilityId,
+      bucketName: projectId,
       objectName: messageMetadata.FileName,
       data: bodyData,
       messageMetadata: messageMetadata,

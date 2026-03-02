@@ -142,50 +142,59 @@ async function executeMediumSecurityPlugin(
   messageContent: any,
   pluginId: any,
 ) {
-  // Method 2: Enhanced approach (runInThisContext with safety)
   const wrappedScript = `
     (function() {
-      // Shadow dangerous globals
-      var process = undefined;
-      var global = undefined;
-      var GLOBAL = undefined;
-      var root = undefined;
-      var require = undefined;
-      
       var module = { exports: {} };
       var exports = module.exports;
-      
+
       ${pluginFile}
-      
-      // Validate plugin structure
-      if (typeof module.exports !== 'object' || 
-          typeof module.exports.validate !== 'function' || 
-          typeof module.exports.convert !== 'function') {
-        throw new Error('Plugin must export validate and convert functions');
-      }
-      
+
       return module.exports;
     })();
   `;
 
+  // Isolated context — no access to Node globals, no http bridge
+  const context = {
+    console: {
+      log: (...args: any) => logger.info(`[PLUGIN-${pluginId}]`, ...args),
+      error: (...args: any) => logger.error(`[PLUGIN-${pluginId}]`, ...args),
+      warn: (...args: any) => logger.warn(`[PLUGIN-${pluginId}]`, ...args),
+    },
+    JSON,
+    Object,
+    Array,
+    String,
+    Number,
+    Boolean,
+    Date,
+    Math,
+    RegExp,
+    parseInt,
+    parseFloat,
+    isNaN,
+    isFinite,
+  };
+
   try {
     const script = new vm.Script(wrappedScript, {
       filename: `plugin-${pluginId}.js`,
-      // displayErrors: true,
     });
 
-    const pluginFunctions = script.runInThisContext({
+    const pluginFunctions = script.runInNewContext(context, {
       timeout: 10000,
       displayErrors: true,
-      breakOnSigint: true,
     });
 
+    if (
+      typeof pluginFunctions.validate !== "function" ||
+      typeof pluginFunctions.convert !== "function"
+    ) {
+      throw new Error("Plugin must export validate and convert functions");
+    }
+
     // Execute validation with timeout
-    const validationPromise = Promise.resolve(
-      pluginFunctions.validate(messageContent),
-    );
     const validationResult = await Promise.race([
-      validationPromise,
+      Promise.resolve(pluginFunctions.validate(messageContent)),
       new Promise((_, reject) =>
         setTimeout(() => reject(new Error("Plugin validation timeout")), 5000),
       ),
@@ -196,17 +205,12 @@ async function executeMediumSecurityPlugin(
     }
 
     // Execute conversion with timeout
-    const conversionPromise = Promise.resolve(
-      pluginFunctions.convert(messageContent),
-    );
-    const convertedMessage = await Promise.race([
-      conversionPromise,
+    return await Promise.race([
+      Promise.resolve(pluginFunctions.convert(messageContent)),
       new Promise((_, reject) =>
         setTimeout(() => reject(new Error("Plugin conversion timeout")), 5000),
       ),
     ]);
-
-    return convertedMessage;
   } catch (error: any) {
     logger.error(
       { error: error.message, stack: error.stack },
@@ -264,10 +268,10 @@ async function handleMessage(kafkaMessage: any) {
 
     // Extract the key and parse it
     const key = kafkaMessage.key;
-    const [facilityId, dataKey, dataFeedId, objecName] = key.split("/");
+    const [projectId, dataKey, dataFeedId, objecName] = key.split("/");
     const rawName = `${dataKey}/${dataFeedId}/${objecName}`;
 
-    if (!facilityId || !dataFeedId) {
+    if (!projectId || !dataFeedId) {
       throw new Error(`Invalid message key format: ${key}`);
     }
 
@@ -279,7 +283,7 @@ async function handleMessage(kafkaMessage: any) {
 
     // Get object metadata to determine content type
     const objectStat = await minioUtil.statObject({
-      bucketName: facilityId,
+      bucketName: projectId,
       objectName: rawName,
     });
 
@@ -290,7 +294,7 @@ async function handleMessage(kafkaMessage: any) {
 
     // Get the message object from MinIO using the full key path that aligns to the facility bucket, data key, data feed, and name
     const messageStream = await minioUtil.getObject({
-      bucketName: facilityId,
+      bucketName: projectId,
       objectName: rawName,
     });
 
@@ -451,7 +455,7 @@ async function handleMessage(kafkaMessage: any) {
 
     // Save the validated and converted message to minio with metadata
     await minioUtil.putObject({
-      bucketName: facilityId,
+      bucketName: projectId,
       objectName: messageMetadata.FileName,
       data: bodyData,
       messageMetadata: messageMetadata,

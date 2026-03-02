@@ -137,55 +137,60 @@ async function executeMediumSecurityPlugin(
   messageContent: any,
   pluginId: any,
 ) {
-  // Method 2: Enhanced approach (runInThisContext with safety)
   const wrappedScript = `
     (function() {
-      // Shadow dangerous globals
-      var process = undefined;
-      var global = undefined;
-      var GLOBAL = undefined;
-      var root = undefined;
-      var require = undefined;
-      
       var module = { exports: {} };
       var exports = module.exports;
-      
+
       ${pluginFile}
-      
-      // Validate plugin structure
-      if (typeof module.exports !== 'object' || 
-          typeof module.exports.process !== 'function') {
-        throw new Error('Recipient plugin must export a process function');
-      }
-      
+
       return module.exports;
     })();
   `;
 
+  // Isolated context — no access to Node globals, no http bridge
+  const context = {
+    console: {
+      log: (...args: any) => logger.info(`[PLUGIN-${pluginId}]`, ...args),
+      error: (...args: any) => logger.error(`[PLUGIN-${pluginId}]`, ...args),
+      warn: (...args: any) => logger.warn(`[PLUGIN-${pluginId}]`, ...args),
+    },
+    JSON,
+    Object,
+    Array,
+    String,
+    Number,
+    Boolean,
+    Date,
+    Math,
+    RegExp,
+    parseInt,
+    parseFloat,
+    isNaN,
+    isFinite,
+  };
+
   try {
     const script = new vm.Script(wrappedScript, {
       filename: `plugin-${pluginId}.js`,
-      // displayErrors: true,
     });
 
-    const pluginFunctions = script.runInThisContext({
+    const pluginFunctions = script.runInNewContext(context, {
       timeout: 10000,
       displayErrors: true,
-      breakOnSigint: true,
     });
 
+    if (typeof pluginFunctions.process !== "function") {
+      throw new Error("Recipient plugin must export a process function");
+    }
+
     // Execute processing with timeout
-    const processingPromise = Promise.resolve(
-      pluginFunctions.process(messageContent),
-    );
-    const processedMessage = await Promise.race([
-      processingPromise,
+    return await Promise.race([
+      Promise.resolve(pluginFunctions.process(messageContent)),
       new Promise((_, reject) =>
         setTimeout(() => reject(new Error("Plugin processing timeout")), 5000),
       ),
     ]);
-
-    return processedMessage;
   } catch (error: any) {
     logger.error(
       { error: error.message, stack: error.stack },
@@ -350,11 +355,11 @@ async function handleMessage(kafkaMessage: any) {
     // Read the object data
     let objectData = "";
     await new Promise((resolve, reject) => {
-      objectStream.on("data", (chunk) => {
+      objectStream.on("data", (chunk: any) => {
         objectData += chunk.toString();
       });
       objectStream.on("end", resolve);
-      objectStream.on("error", (err) =>
+      objectStream.on("error", (err: any) =>
         reject(new Error(`Failed to read object stream: ${err.message}`)),
       );
     });
@@ -398,11 +403,11 @@ async function handleMessage(kafkaMessage: any) {
       // Read the plugin file
       let pluginFile = "";
       await new Promise((resolve, reject) => {
-        pluginStream.on("data", (chunk) => {
+        pluginStream.on("data", (chunk: any) => {
           pluginFile += chunk.toString();
         });
         pluginStream.on("end", resolve);
-        pluginStream.on("error", (err) =>
+        pluginStream.on("error", (err: any) =>
           reject(
             new Error(
               `Failed to read plugin file object stream: ${err.message}`,
