@@ -2,6 +2,7 @@ import { utils } from "@repo/openldr-core";
 import * as minioUtil from "../../services/minio.service";
 import * as dataFeedService from "../../services/datafeed.service";
 import * as pluginService from "../../services/plugin.service";
+import * as terminologyService from "../../services/terminology.service";
 import { logger } from "../../lib/logger";
 
 async function handleMessage(kafkaMessage: any) {
@@ -60,35 +61,56 @@ async function handleMessage(kafkaMessage: any) {
         );
       } else {
         try {
-          // Get the plugin file from MinIO
-          const pluginStream = await minioUtil.getObject({
-            bucketName: "plugins",
-            objectName: plugin.pluginMinioObjectPath,
-          });
+          let mappingConfig: any = null;
 
-          // Read the plugin file
-          let pluginFile = "";
-          await new Promise((resolve, reject) => {
-            pluginStream.on("data", (chunk: any) => {
-              pluginFile += chunk.toString();
-            });
-            pluginStream.on("end", resolve);
-            pluginStream.on("error", (err: any) =>
-              reject(
-                new Error(
-                  `Failed to read plugin file object stream: ${err.message}`,
-                ),
-              ),
+          if (plugin.config?.systemCode) {
+            // Primary path: query terminology directly from openldr_external
+            const result = await terminologyService.getConceptsBySystem(
+              plugin.config.systemCode,
             );
-          });
+            if (Object.keys(result.concepts).length > 0) {
+              mappingConfig = result;
+            } else {
+              logger.warn(
+                `No concepts found for system_code '${plugin.config.system_code}' ` +
+                  `(plugin ${dataFeed.mapperPluginId}), continuing with original message`,
+              );
+            }
+          } else if (plugin.pluginMinioObjectPath) {
+            // Legacy path: load JSON mapping config from MinIO
+            // Used for mapper plugins that pre-date the openldr_external schema
+            const pluginStream = await minioUtil.getObject({
+              bucketName: "plugins",
+              objectName: plugin.pluginMinioObjectPath,
+            });
 
-          // Parse the terminology mapping configuration
-          let mappingConfig;
-          try {
-            mappingConfig = JSON.parse(pluginFile);
-          } catch (parseError: any) {
-            logger.error(
-              `Failed to parse mapping configuration for plugin ${dataFeed.mapperPluginId}: ${parseError.message}, continuing with original message`,
+            let pluginFile = "";
+            await new Promise((resolve, reject) => {
+              pluginStream.on("data", (chunk: any) => {
+                pluginFile += chunk.toString();
+              });
+              pluginStream.on("end", resolve);
+              pluginStream.on("error", (err: any) =>
+                reject(
+                  new Error(
+                    `Failed to read plugin file object stream: ${err.message}`,
+                  ),
+                ),
+              );
+            });
+
+            try {
+              mappingConfig = JSON.parse(pluginFile);
+            } catch (parseError: any) {
+              logger.error(
+                `Failed to parse mapping configuration for plugin ${dataFeed.mapperPluginId}: ` +
+                  `${parseError.message}, continuing with original message`,
+              );
+            }
+          } else {
+            logger.warn(
+              `Mapper plugin ${dataFeed.mapperPluginId} has neither system_code in config ` +
+                `nor a pluginMinioObjectPath — skipping terminology mapping`,
             );
           }
 
@@ -104,13 +126,15 @@ async function handleMessage(kafkaMessage: any) {
               );
             } catch (mappingError: any) {
               logger.error(
-                `Message mapping failed for plugin ${dataFeed.mapperPluginId}: ${mappingError.message}, continuing with original message`,
+                `Message mapping failed for plugin ${dataFeed.mapperPluginId}: ` +
+                  `${mappingError.message}, continuing with original message`,
               );
             }
           }
         } catch (pluginError: any) {
           logger.error(
-            `Plugin processing error for plugin ${dataFeed.mapperPluginId}: ${pluginError.message}, continuing with original message`,
+            `Plugin processing error for plugin ${dataFeed.mapperPluginId}: ` +
+              `${pluginError.message}, continuing with original message`,
           );
         }
       }
