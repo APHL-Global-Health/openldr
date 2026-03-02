@@ -10,6 +10,7 @@
 -- ============================================================================
 
 CREATE DATABASE openldr_external;
+
 \c openldr_external
 
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
@@ -497,11 +498,10 @@ CREATE TABLE susceptibility_tests (
     -- Provenance
     import_batch_id       UUID     REFERENCES import_batches(id),
 
-    created_at            TIMESTAMPTZ DEFAULT NOW(),
-
-    UNIQUE (isolate_id, antibiotic_code, test_method, COALESCE(disk_potency, ''))
+    created_at            TIMESTAMPTZ DEFAULT NOW()
 );
 
+CREATE UNIQUE INDEX idx_ast_unique_test ON susceptibility_tests(isolate_id, antibiotic_code, test_method, COALESCE(disk_potency, ''));
 CREATE INDEX idx_ast_isolate             ON susceptibility_tests(isolate_id);
 CREATE INDEX idx_ast_antibiotic          ON susceptibility_tests(antibiotic_concept_id);
 CREATE INDEX idx_ast_abx_code            ON susceptibility_tests(antibiotic_code);
@@ -511,37 +511,164 @@ CREATE INDEX idx_ast_guideline           ON susceptibility_tests(guideline);
 
 -- ----------------------------------------------------------------------------
 -- breakpoints — interpretation criteria (CLSI, EUCAST, etc.)
--- Used to re-interpret results or validate incoming interpretations
+-- One row per guideline + year + organism + antibiotic + test_method combo.
+-- Matches WHONET Breakpoints.txt structure directly.
 -- ----------------------------------------------------------------------------
 CREATE TABLE breakpoints (
-    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    organism_code   VARCHAR(50),                               -- NULL = applies to all organisms
-    antibiotic_code VARCHAR(50)  NOT NULL,
-    test_method     VARCHAR(20)  NOT NULL,
-    guideline       VARCHAR(50)  NOT NULL,
-    guideline_year  INTEGER,
+    id                   UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 
-    -- Disk diffusion breakpoints (mm zone diameter)
-    disk_content    VARCHAR(30),
-    disk_s_gte      NUMERIC(10,2),                             -- S if zone >= this
-    disk_i_min      NUMERIC(10,2),
-    disk_i_max      NUMERIC(10,2),
-    disk_r_lte      NUMERIC(10,2),                             -- R if zone <= this
+    -- Guideline context
+    guideline            VARCHAR(50)  NOT NULL,                 -- CLSI, EUCAST, DIN, BSAC, AFA, SFM, SRGA, NEO
+    guideline_year       INTEGER      NOT NULL,
+    breakpoint_type      VARCHAR(20)  NOT NULL DEFAULT 'Human', -- Human, Animal, ECOFF
+    host                 VARCHAR(50),                            -- Human, Animal, etc.
 
-    -- MIC breakpoints (µg/mL)
-    mic_s_lte       NUMERIC(10,3),                             -- S if MIC <= this
-    mic_i_min       NUMERIC(10,3),
-    mic_i_max       NUMERIC(10,3),
-    mic_r_gte       NUMERIC(10,3),                             -- R if MIC >= this
+    -- What this breakpoint applies to
+    organism_code        VARCHAR(50),                            -- WHONET organism code (or genus/family code)
+    organism_code_type   VARCHAR(50),                            -- WHONET_ORG_CODE, GENUS_CODE, FAMILY_CODE, SPECIES_GROUP, ALL, etc.
+    antibiotic_code      VARCHAR(50)  NOT NULL,                  -- WHONET antibiotic code
+    whonet_test          VARCHAR(50),                            -- Full WHONET test code (e.g. AMK_NM, AMK_ND30)
 
-    notes           TEXT,
-    is_active       BOOLEAN      DEFAULT TRUE,
-    created_at      TIMESTAMPTZ  DEFAULT NOW(),
-    updated_at      TIMESTAMPTZ  DEFAULT NOW()
+    -- Test method & context
+    test_method          VARCHAR(20)  NOT NULL,                  -- MIC, DISK
+    potency              VARCHAR(30),                            -- Disk potency (e.g. '30', '10')
+    site_of_infection    VARCHAR(100),                           -- Meningitis, Respiratory, Urinary tract, etc.
+
+    -- Breakpoint values (generic — meaning depends on test_method)
+    -- For MIC: values in µg/mL; for DISK: values in mm zone diameter
+    r                    VARCHAR(20),                            -- Resistant threshold
+    i                    VARCHAR(20),                            -- Intermediate threshold
+    sdd                  VARCHAR(20),                            -- Susceptible-Dose Dependent threshold
+    s                    VARCHAR(20),                            -- Susceptible threshold
+    ecv_ecoff            VARCHAR(20),                            -- Epidemiological cut-off value
+    ecv_ecoff_tentative  VARCHAR(20),                            -- Tentative ECOFF
+
+    -- Reference
+    reference_table      VARCHAR(100),                           -- CLSI document table reference (e.g. "Table 2B-2")
+    reference_sequence   VARCHAR(20),                            -- Ordering within reference table
+
+    -- Metadata
+    comments             TEXT,
+    date_entered         DATE,
+    date_modified        DATE,
+    created_at           TIMESTAMPTZ  DEFAULT NOW(),
+    updated_at           TIMESTAMPTZ  DEFAULT NOW()
 );
 
-CREATE INDEX idx_bp_org_abx              ON breakpoints(organism_code, antibiotic_code);
 CREATE INDEX idx_bp_guideline            ON breakpoints(guideline, guideline_year);
+CREATE INDEX idx_bp_org                  ON breakpoints(organism_code);
+CREATE INDEX idx_bp_org_type             ON breakpoints(organism_code_type);
+CREATE INDEX idx_bp_abx                  ON breakpoints(antibiotic_code);
+CREATE INDEX idx_bp_org_abx              ON breakpoints(organism_code, antibiotic_code);
+CREATE INDEX idx_bp_method               ON breakpoints(test_method);
+CREATE INDEX idx_bp_type                 ON breakpoints(breakpoint_type);
+CREATE INDEX idx_bp_whonet_test          ON breakpoints(whonet_test);
+CREATE INDEX idx_bp_lookup               ON breakpoints(guideline, guideline_year, organism_code, antibiotic_code, test_method);
+
+-- ----------------------------------------------------------------------------
+-- qc_ranges — expected QC ranges for reference strains
+-- Used to validate that AST systems are performing within acceptable limits.
+-- Matches WHONET QC_Ranges.txt structure.
+-- ----------------------------------------------------------------------------
+CREATE TABLE qc_ranges (
+    id                   UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+
+    -- Guideline context
+    guideline            VARCHAR(50)  NOT NULL,
+    guideline_year       INTEGER      NOT NULL,
+
+    -- QC strain
+    strain               VARCHAR(50)  NOT NULL,                  -- ATCC reference strain code (e.g. 'atcc25922')
+    organism_code        VARCHAR(20),                             -- WHONET organism code for the strain
+
+    -- Antibiotic tested
+    antibiotic_name      VARCHAR(255),                            -- Display name
+    antibiotic_code      VARCHAR(50)  NOT NULL,                   -- WHONET antibiotic code
+    whonet_test          VARCHAR(50),                             -- Full WHONET test code (e.g. AMK_NM)
+
+    -- Method
+    test_method          VARCHAR(20)  NOT NULL,                   -- MIC, DISK
+    medium               VARCHAR(50),                             -- Broth, Agar, Blood Agar, etc.
+
+    -- Expected range
+    range_min            VARCHAR(20),                             -- Minimum acceptable value
+    range_max            VARCHAR(20),                             -- Maximum acceptable value
+
+    -- Reference & metadata
+    reference_table      VARCHAR(100),
+    comments             TEXT,
+    date_entered         DATE,
+    date_modified        DATE,
+    created_at           TIMESTAMPTZ  DEFAULT NOW(),
+    updated_at           TIMESTAMPTZ  DEFAULT NOW()
+);
+
+CREATE INDEX idx_qc_guideline            ON qc_ranges(guideline, guideline_year);
+CREATE INDEX idx_qc_strain               ON qc_ranges(strain);
+CREATE INDEX idx_qc_org                  ON qc_ranges(organism_code);
+CREATE INDEX idx_qc_abx                  ON qc_ranges(antibiotic_code);
+CREATE INDEX idx_qc_method               ON qc_ranges(test_method);
+CREATE INDEX idx_qc_lookup               ON qc_ranges(guideline, guideline_year, strain, antibiotic_code, test_method);
+
+
+-- ----------------------------------------------------------------------------
+-- dosage — EUCAST standard/high dosage recommendations per antibiotic
+-- Source: AMR-for-R dosage dataset
+-- ----------------------------------------------------------------------------
+CREATE TABLE dosage (
+    id                   UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    antibiotic_code      VARCHAR(50)  NOT NULL,                  -- AMR package ab code (matches WHONET)
+    antibiotic_name      VARCHAR(255),
+    dosage_type          VARCHAR(50)  NOT NULL,                  -- standard_dosage, high_dosage, uncomplicated_uti
+    dose                 VARCHAR(100),                           -- e.g. '1 g', '25-30 mg/kg'
+    dose_times           INTEGER,                                -- frequency per day
+    administration       VARCHAR(50),                            -- iv, oral, etc.
+    notes                TEXT,
+    original_txt         VARCHAR(255),                           -- original EUCAST text
+    eucast_version       NUMERIC(5,1),                           -- EUCAST guideline version
+    created_at           TIMESTAMPTZ  DEFAULT NOW(),
+    updated_at           TIMESTAMPTZ  DEFAULT NOW()
+);
+
+CREATE INDEX idx_dosage_abx              ON dosage(antibiotic_code);
+CREATE INDEX idx_dosage_type             ON dosage(dosage_type);
+CREATE INDEX idx_dosage_version          ON dosage(eucast_version);
+
+-- ----------------------------------------------------------------------------
+-- intrinsic_resistance — organism + antibiotic intrinsic resistance pairs
+-- Source: AMR-for-R / EUCAST Expert Rules
+-- Used to auto-flag impossible susceptibility results.
+-- E.g. all Gram-positives are intrinsically resistant to Aztreonam.
+-- ----------------------------------------------------------------------------
+CREATE TABLE intrinsic_resistance (
+    id                   UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    organism_code        VARCHAR(50)  NOT NULL,                  -- AMR package mo code (e.g. B_GRAMP, B_ESCHR_COLI)
+    antibiotic_code      VARCHAR(50)  NOT NULL,                  -- AMR package ab code (e.g. ATM, COL)
+    created_at           TIMESTAMPTZ  DEFAULT NOW()
+);
+
+CREATE UNIQUE INDEX idx_ir_unique        ON intrinsic_resistance(organism_code, antibiotic_code);
+CREATE INDEX idx_ir_org                  ON intrinsic_resistance(organism_code);
+CREATE INDEX idx_ir_abx                  ON intrinsic_resistance(antibiotic_code);
+
+-- ----------------------------------------------------------------------------
+-- organism_groups — organism complex/group memberships
+-- Source: AMR-for-R microorganisms.groups
+-- E.g. "Acinetobacter baumannii complex" contains A. baumannii, A. calcoaceticus, etc.
+-- Used for breakpoint matching (some breakpoints target organism groups).
+-- ----------------------------------------------------------------------------
+CREATE TABLE organism_groups (
+    id                   UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    group_code           VARCHAR(50)  NOT NULL,                  -- AMR mo code of the group
+    member_code          VARCHAR(50)  NOT NULL,                  -- AMR mo code of the member
+    group_name           VARCHAR(255),
+    member_name          VARCHAR(255),
+    created_at           TIMESTAMPTZ  DEFAULT NOW()
+);
+
+CREATE UNIQUE INDEX idx_og_unique        ON organism_groups(group_code, member_code);
+CREATE INDEX idx_og_group                ON organism_groups(group_code);
+CREATE INDEX idx_og_member               ON organism_groups(member_code);
 
 
 -- ############################################################################
@@ -566,7 +693,7 @@ BEGIN
             'coding_systems', 'concepts', 'concept_mappings',
             'facilities', 'data_sources', 'field_mappings',
             'patients', 'lab_requests', 'lab_results',
-            'isolates', 'breakpoints'
+            'isolates', 'breakpoints', 'qc_ranges', 'dosage'
         ])
     LOOP
         EXECUTE format(
@@ -654,16 +781,13 @@ INSERT INTO coding_systems (system_code, system_name, system_uri, system_type, o
     ('WHONET_SPEC', 'WHONET Specimen Codes',                           NULL,                                  'external', 'WHO Collaborating Centre'),
     ('HL7_V2',      'HL7 Version 2 Tables',                            'http://terminology.hl7.org',          'external', 'HL7 International'),
     ('ATC',         'Anatomical Therapeutic Chemical Classification',   'http://www.whocc.no/atc',             'external', 'WHO Collaborating Centre'),
-    ('LOCAL',       'Facility-Local Codes',                             NULL,                                  'local',    NULL)
+    ('LOCAL',       'Facility-Local Codes',                             NULL,                                  'local',    NULL),
+    ('AMR_MO',      'AMR-for-R Microorganism Codes',                    'https://msberends.github.io/AMR/',    'external', 'AMR Package (msberends)'),
+    ('AMR_AB',      'AMR-for-R Antimicrobial Codes',                    'https://msberends.github.io/AMR/',    'external', 'AMR Package (msberends)'),
+    ('AMR_AV',      'AMR-for-R Antiviral Codes',                        'https://msberends.github.io/AMR/',    'external', 'AMR Package (msberends)')
 ON CONFLICT (system_code) DO NOTHING;
 
 
 -- ############################################################################
 -- DONE
 -- ############################################################################
--- Next steps:
---   1. Populate concepts table from WHONET data dictionaries (organisms, antibiotics, specimens)
---   2. Populate concepts from LOINC, ICD-10 subsets relevant to lab data
---   3. Create concept_mappings to cross-walk local LIS codes → standard codes
---   4. Register data_sources and field_mappings for each contributing LIS
---   5. Build ingest pipeline that uses field_mappings + concept_mappings to normalize incoming data

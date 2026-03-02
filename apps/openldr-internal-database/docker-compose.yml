@@ -15,6 +15,8 @@ services:
       - ./migrations/02-openldr_external.sql:/docker-entrypoint-initdb.d/02-openldr_external.sql
       - ./migrations/03-keycloak.sql:/docker-entrypoint-initdb.d/03-keycloak.sql
       - ./migrations/04-conduktor_console.sql:/docker-entrypoint-initdb.d/04-conduktor_console.sql
+      - ./migrations/98-openldr_external_whonet_reference.sql:/docker-entrypoint-initdb.d/98-openldr_external_whonet_reference.sql
+      - ./migrations/98-openldr_external_amr_for_r_ref.sql:/docker-entrypoint-initdb.d/98-openldr_external_amr_for_r_ref.sql
       # - ./migrations/99-mock-data.sql:/docker-entrypoint-initdb.d/99-mock-data.sql
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
