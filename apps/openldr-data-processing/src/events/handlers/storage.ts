@@ -1,288 +1,575 @@
-import { utils } from '@repo/openldr-core';
-import * as minioUtil from '../../services/minio.service';
-import * as dataFeedService from '../../services/datafeed.service';
-import * as pluginService from '../../services/plugin.service';
-import * as runtimePluginService from '../../services/runtime-plugin.service';
-import * as facilityService from '../../services/facility.service';
-import * as externalPersistenceService from '../../services/external-persistence.service';
-import { logger } from '../../lib/logger';
-import { createStageError } from '../../lib/pipeline-error';
+import { utils } from "@repo/openldr-core";
+import * as minioUtil from "../../services/minio.service";
+import * as dataFeedService from "../../services/datafeed.service";
+import * as pluginService from "../../services/plugin.service";
+import * as facilityService from "../../services/facility.service";
+import { logger } from "../../lib/logger";
+import * as messageTrackingService from "../../services/message.tracking.service";
+import vm from "vm";
+import https from "https";
+import http from "http";
 
-async function enrichMessageWithMetadata(messageContent: any, facilityId: any, dataFeed: any, kafkaMessage: any) {
-  const facility = await facilityService.getFacilityById(facilityId);
-  const kafkaValue = JSON.parse(kafkaMessage.value);
-  const userMetadata = kafkaValue.Records[0].s3.object.userMetadata;
+// Security Level Execution Methods
+async function executeHighSecurityPlugin(
+  pluginFile: any,
+  messageContent: any,
+  pluginId: any,
+) {
+  // Helper function for HTTP requests (runs in parent context)
+  async function makeHttpRequest(
+    method: any,
+    url: any,
+    data = null,
+    headers = {},
+  ) {
+    // Basic URL validation
+    const urlObj = new URL(url);
+    if (!["http:", "https:"].includes(urlObj.protocol)) {
+      throw new Error(`Invalid protocol: ${urlObj.protocol}`);
+    }
 
-  return {
-    ...messageContent,
-    _metadata: {
-      timestamp: new Date().toISOString(),
-      host_ip: process.env.HOST_IP,
-      project: userMetadata['X-Amz-Meta-Project'] || null,
-      use_case: userMetadata['X-Amz-Meta-Usecase'] || null,
-      facility: {
-        facility_id: facilityId,
-        facility_name: facility?.facilityName || null,
-        facility_code: facility?.facilityCode || null,
-        facility_type: facility?.facilityType || null,
-        description: facility?.description || null,
-        country_code: facility?.countryCode || null,
-        province_code: facility?.provinceCode || null,
-        region_code: facility?.regionCode || null,
-        district_code: facility?.districtCode || null,
-        sub_district_code: facility?.subDistrictCode || null,
-        latitude: facility?.latitude || null,
-        longitude: facility?.longitude || null,
-      },
-      data_feed: {
-        data_feed_id: dataFeed.dataFeedId,
-        data_feed_name: dataFeed.dataFeedName,
-        schema_plugin: dataFeed.schemaPlugin || null,
-        mapper_plugin: dataFeed.mapperPlugin || null,
-        storage_plugin: dataFeed.storagePlugin || dataFeed.recipientPlugin || null,
-        outpost_plugin: dataFeed.outpostPlugin || null,
-      },
-      message: {
-        message_id: userMetadata['X-Amz-Meta-Messageid'] || null,
-        message_datetime: userMetadata['X-Amz-Meta-Messagedatetime'] || null,
-        user_id: userMetadata['X-Amz-Meta-Userid'] || null,
-        filename: userMetadata['X-Amz-Meta-Filename'] || null,
+    return new Promise((resolve, reject) => {
+      const protocol = urlObj.protocol === "https:" ? https : http;
+      const options = {
+        method: method,
+        headers: {
+          "Content-Type": "application/json",
+          ...headers,
+        },
+      };
+
+      const req = protocol.request(url, options, (res: any) => {
+        let responseData = "";
+        res.on("data", (chunk: any) => (responseData += chunk));
+        res.on("end", () => {
+          resolve({
+            status: res.statusCode,
+            statusText: res.statusMessage,
+            data: responseData,
+            ok: res.statusCode >= 200 && res.statusCode < 300,
+          });
+        });
+      });
+
+      req.on("error", reject);
+      req.setTimeout(10000, () => req.destroy());
+
+      if (data) {
+        req.write(data);
+      }
+      req.end();
+    });
+  }
+
+  // Method 3: Secure approach (runInNewContext)
+  const wrappedScript = `
+    (function() {
+      var module = { exports: {} };
+      var exports = module.exports;
+      
+      ${pluginFile}
+      
+      return module.exports;
+    })();
+  `;
+
+  // Create restricted context with simple HTTP bridge
+  const context = {
+    console: {
+      log: (...args: any) => logger.info(`[PLUGIN-${pluginId}]`, ...args),
+      error: (...args: any) => logger.error(`[PLUGIN-${pluginId}]`, ...args),
+      warn: (...args: any) => logger.warn(`[PLUGIN-${pluginId}]`, ...args),
+    },
+    // Safe built-ins
+    JSON: JSON,
+    Object: Object,
+    Array: Array,
+    String: String,
+    Number: Number,
+    Boolean: Boolean,
+    Date: Date,
+    Math: Math,
+    RegExp: RegExp,
+    parseInt: parseInt,
+    parseFloat: parseFloat,
+    isNaN: isNaN,
+    isFinite: isFinite,
+    // Simple HTTP bridge - plugin requests HTTP calls from parent context
+    http: {
+      request: async function (
+        method: any,
+        url: any,
+        data = null,
+        headers = {},
+      ) {
+        // This function will be called by the plugin
+        // We'll handle the actual HTTP request in the parent context
+        return await makeHttpRequest(method, url, data, headers);
       },
     },
   };
-}
 
-function validateCanonicalStorageRequirements(messageContent: any) {
-  const errors: string[] = [];
-  if (!messageContent.patient?.patient_guid) errors.push('patient.patient_guid is required');
-  if (!messageContent.lab_request?.request_id) errors.push('lab_request.request_id is required');
-  if (messageContent.lab_request) {
-    if (!messageContent.lab_request.facility_concept_id) errors.push('lab_request.facility_concept_id is required');
-    if (!messageContent.lab_request.panel_concept_id) errors.push('lab_request.panel_concept_id is required');
-    if (!messageContent.lab_request.specimen_concept_id) errors.push('lab_request.specimen_concept_id is required');
-  }
-
-  const isolateIndices = new Set<number>();
-  if (Array.isArray(messageContent.lab_results)) {
-    messageContent.lab_results.forEach((result: any, index: number) => {
-      if (!result.observation_concept_id) errors.push(`lab_results[${index}].observation_concept_id is required`);
-    });
-  }
-  if (Array.isArray(messageContent.isolates)) {
-    messageContent.isolates.forEach((isolate: any, index: number) => {
-      if (!isolate.organism_concept_id) errors.push(`isolates[${index}].organism_concept_id is required`);
-      if (typeof isolate.isolate_index !== 'number') {
-        errors.push(`isolates[${index}].isolate_index is required`);
-      } else {
-        isolateIndices.add(isolate.isolate_index);
-      }
-    });
-  }
-  if (Array.isArray(messageContent.susceptibility_tests)) {
-    messageContent.susceptibility_tests.forEach((row: any, index: number) => {
-      if (!row.antibiotic_concept_id) errors.push(`susceptibility_tests[${index}].antibiotic_concept_id is required`);
-      if (typeof row.isolate_index !== 'number') {
-        errors.push(`susceptibility_tests[${index}].isolate_index is required`);
-      } else if (!isolateIndices.has(row.isolate_index)) {
-        errors.push(`susceptibility_tests[${index}].isolate_index ${row.isolate_index} does not reference an isolate`);
-      }
-    });
-  }
-
-  if (errors.length > 0) {
-    throw createStageError({
-      stage: 'storage',
-      code: 'CANONICAL_STORAGE_VALIDATION_FAILED',
-      message: 'Storage validation failed',
-      details: { errors },
-      retryable: false,
-    });
-  }
-}
-
-async function readProjectObjectAsString(bucketName: string, objectName: string) {
   try {
-    const objectStream = await minioUtil.getObject({ bucketName, objectName });
-    let objectData = '';
-    await new Promise<void>((resolve, reject) => {
-      objectStream.on('data', (chunk: any) => {
-        objectData += chunk.toString();
-      });
-      objectStream.on('end', () => resolve());
-      objectStream.on('error', (err: any) => reject(err));
+    const script = new vm.Script(wrappedScript);
+    const pluginFunctions = script.runInNewContext(context, {
+      timeout: 10000,
+      displayErrors: true,
     });
-    return objectData;
+
+    // Validate plugin exports
+    if (typeof pluginFunctions.process !== "function") {
+      throw new Error("Recipient plugin must export a process function");
+    }
+
+    // Execute processing
+    const response = await pluginFunctions.process(messageContent);
+    return response;
   } catch (error: any) {
-    throw createStageError({
-      stage: 'storage',
-      code: 'SOURCE_OBJECT_READ_FAILED',
-      message: 'Failed to read mapped object from MinIO',
-      details: { bucket_name: bucketName, object_name: objectName },
-      cause: error,
-    });
+    logger.error(
+      { error: error.message, stack: error.stack },
+      `High security plugin execution failed (ID: ${pluginId})`,
+    );
+    throw new Error(`Plugin execution failed: ${error.message}`);
   }
 }
 
-export async function handleMessage(kafkaMessage: any) {
+async function executeMediumSecurityPlugin(
+  pluginFile: any,
+  messageContent: any,
+  pluginId: any,
+) {
+  const wrappedScript = `
+    (function() {
+      var module = { exports: {} };
+      var exports = module.exports;
+
+      ${pluginFile}
+
+      return module.exports;
+    })();
+  `;
+
+  // Isolated context — no access to Node globals, no http bridge
+  const context = {
+    console: {
+      log: (...args: any) => logger.info(`[PLUGIN-${pluginId}]`, ...args),
+      error: (...args: any) => logger.error(`[PLUGIN-${pluginId}]`, ...args),
+      warn: (...args: any) => logger.warn(`[PLUGIN-${pluginId}]`, ...args),
+    },
+    JSON,
+    Object,
+    Array,
+    String,
+    Number,
+    Boolean,
+    Date,
+    Math,
+    RegExp,
+    parseInt,
+    parseFloat,
+    isNaN,
+    isFinite,
+  };
+
   try {
+    const script = new vm.Script(wrappedScript, {
+      filename: `plugin-${pluginId}.js`,
+    });
+
+    const pluginFunctions = script.runInNewContext(context, {
+      timeout: 10000,
+      displayErrors: true,
+    });
+
+    if (typeof pluginFunctions.process !== "function") {
+      throw new Error("Recipient plugin must export a process function");
+    }
+
+    // Execute processing with timeout
+    return await Promise.race([
+      Promise.resolve(pluginFunctions.process(messageContent)),
+      new Promise((_, reject) =>
+        setTimeout(() => reject(new Error("Plugin processing timeout")), 5000),
+      ),
+    ]);
+  } catch (error: any) {
+    logger.error(
+      { error: error.message, stack: error.stack },
+      `Medium security plugin execution failed (ID: ${pluginId})`,
+    );
+    throw new Error(`Plugin execution failed: ${error.message}`);
+  }
+}
+
+async function executeLowSecurityPlugin(
+  pluginFile: any,
+  messageContent: any,
+  pluginId: any,
+) {
+  // Method 1: Current approach (runInThisContext)
+  const wrappedScript = `
+    (function() {
+      var module = { exports: {} };
+      ${pluginFile}
+      return module.exports;
+    })();
+  `;
+
+  try {
+    const script = new vm.Script(wrappedScript);
+    const pluginFunctions = script.runInThisContext({});
+
+    // Validate plugin exports
+    if (typeof pluginFunctions.process !== "function") {
+      throw new Error("Recipient plugin must export a process function");
+    }
+
+    // Execute processing
+    return await pluginFunctions.process(messageContent);
+  } catch (error: any) {
+    logger.error(
+      { error: error.message, stack: error.stack },
+      `Low security plugin execution failed (ID: ${pluginId})`,
+    );
+    throw new Error(`Plugin execution failed: ${error.message}`);
+  }
+}
+
+async function enrichMessageWithMetadata(
+  messageContent: any,
+  facilityId: any,
+  dataFeed: any,
+  kafkaMessage: any,
+  _plugin: any,
+) {
+  // Get facility information
+  const facility = await facilityService.getFacilityById(facilityId);
+
+  // Extract metadata from the Kafka message
+  const kafkaValue = JSON.parse(kafkaMessage.value);
+  const userMetadata = kafkaValue.Records[0].s3.object.userMetadata;
+
+  const data_feed: any = {
+    data_feed_id: dataFeed.dataFeedId,
+    data_feed_name: dataFeed.dataFeedName,
+    data_feed_description: dataFeed.description,
+    schema_plugin: null,
+    mapper_plugin: null,
+    recipient_plugin: null,
+  };
+  if (dataFeed.schemaPlugin?.pluginId) {
+    data_feed["schema_plugin"] = {
+      plugin_id: dataFeed.schemaPlugin.pluginId,
+      plugin_name: dataFeed.schemaPlugin.pluginName,
+      plugin_version: dataFeed.schemaPlugin.pluginVersion,
+      plugin_type: dataFeed.schemaPlugin.pluginType,
+      security_level: dataFeed.schemaPlugin.securityLevel,
+      plugin_minio_object_path: dataFeed.schemaPlugin.pluginMinioObjectPath,
+    };
+  }
+  if (dataFeed.mapperPlugin?.pluginId) {
+    data_feed["mapper_plugin"] = {
+      plugin_id: dataFeed.mapperPlugin.pluginId,
+      plugin_name: dataFeed.mapperPlugin.pluginName,
+      plugin_version: dataFeed.mapperPlugin.pluginVersion,
+      plugin_type: dataFeed.mapperPlugin.pluginType,
+      security_level: dataFeed.mapperPlugin.securityLevel,
+      plugin_minio_object_path: dataFeed.mapperPlugin.pluginMinioObjectPath,
+    };
+  }
+  if (dataFeed.recipientPlugin?.pluginId) {
+    data_feed["recipient_plugin"] = {
+      plugin_id: dataFeed.recipientPlugin.pluginId,
+      plugin_name: dataFeed.recipientPlugin.pluginName,
+      plugin_version: dataFeed.recipientPlugin.pluginVersion,
+      plugin_type: dataFeed.recipientPlugin.pluginType,
+      security_level: dataFeed.recipientPlugin.securityLevel,
+      plugin_minio_object_path: dataFeed.recipientPlugin.pluginMinioObjectPath,
+    };
+  }
+
+  // Create metadata object
+  const metadata = {
+    timestamp: new Date().toISOString(),
+    environment: process.env.HOST_ENVIRONMENT,
+    host_ip: process.env.HOST_IP,
+    project: userMetadata["X-Amz-Meta-Project"] || null,
+    use_case: userMetadata["X-Amz-Meta-Usecase"] || null,
+    facility: {
+      facility_id: facilityId,
+      facility_name: facility?.facilityName || null,
+      facility_code: facility?.facilityCode || null,
+      facility_type: facility?.facilityType || null,
+      description: facility?.description || null,
+      country_code: facility?.countryCode || null,
+      province_code: facility?.provinceCode || null,
+      region_code: facility?.regionCode || null,
+      district_code: facility?.districtCode || null,
+      sub_district_code: facility?.subDistrictCode || null,
+      latitude: facility?.latitude || null,
+      longitude: facility?.longitude || null,
+    },
+    data_feed,
+    message: {
+      message_id: userMetadata["X-Amz-Meta-Messageid"] || null,
+      message_datetime: userMetadata["X-Amz-Meta-Messagedatetime"] || null,
+      user_id: userMetadata["X-Amz-Meta-Userid"] || null,
+      filename: userMetadata["X-Amz-Meta-Filename"] || null,
+    },
+  };
+
+  // Add metadata to message content (similar to _mappings)
+  const enrichedMessage = {
+    ...messageContent,
+    _metadata: metadata,
+  };
+
+  return enrichedMessage;
+}
+
+async function handleMessage(kafkaMessage: any) {
+  try {
+    // Parse the Kafka message value
     const kafkaValue = JSON.parse(kafkaMessage.value);
+
+    // Extract the key and parse it
     const key = kafkaMessage.key;
-    const [projectId, dataKey, dataFeedId, objectName] = key.split('/');
-    const mappedName = `${dataKey}/${dataFeedId}/${objectName}`;
+    const [projectId, dataKey, dataFeedId, objectName] = key.split("/");
+    const mapperName = `${dataKey}/${dataFeedId}/${objectName}`;
 
     if (!projectId || !dataFeedId) {
-      throw createStageError({
-        stage: 'storage',
-        code: 'INVALID_MESSAGE_KEY',
-        message: 'Invalid Kafka message key format for storage stage',
-        details: { key },
-        retryable: false,
-      });
+      throw new Error(`Invalid message key format: ${key}`);
     }
 
+    // Get the data feed to retrieve the recipient plugin ID
     const dataFeed = await dataFeedService.getDataFeedById(dataFeedId);
     if (!dataFeed) {
-      throw createStageError({
-        stage: 'storage',
-        code: 'DATA_FEED_NOT_FOUND',
-        message: `Data feed with ID ${dataFeedId} not found`,
-        details: { data_feed_id: dataFeedId },
-        retryable: false,
-      });
+      throw new Error(`Data feed with ID ${dataFeedId} not found`);
     }
 
-    const objectData = await readProjectObjectAsString(projectId, mappedName);
+    const userMetadata =
+      kafkaValue?.Records?.[0]?.s3?.object?.userMetadata ?? {};
+    const messageId = userMetadata["X-Amz-Meta-Messageid"];
+    await messageTrackingService.markStageStarted({
+      messageId,
+      stage: "storage",
+      topic: kafkaMessage.topic,
+      objectPath: `${projectId}/${mapperName}`,
+      pluginName: dataFeed.recipientPlugin?.pluginName || null,
+      pluginVersion: dataFeed.recipientPlugin?.pluginVersion || null,
+    });
+
+    // Get the object from MinIO using the full key path
+    const objectStream = await minioUtil.getObject({
+      bucketName: projectId,
+      objectName: mapperName,
+    });
+
+    // Read the object data
+    let objectData = "";
+    await new Promise((resolve, reject) => {
+      objectStream.on("data", (chunk: any) => {
+        objectData += chunk.toString();
+      });
+      objectStream.on("end", resolve);
+      objectStream.on("error", (err: any) =>
+        reject(new Error(`Failed to read object stream: ${err.message}`)),
+      );
+    });
+
+    // Parse the message content
     const messageContent = JSON.parse(objectData);
-    validateCanonicalStorageRequirements(messageContent);
 
-    const enrichedMessage = await enrichMessageWithMetadata(messageContent, dataFeed.facilityId, dataFeed, kafkaMessage);
+    // Default processed message to original message
+    let processedMessage = messageContent;
 
-    const { plugin, selection } = await pluginService.resolvePluginSelection({
-      pluginID: dataFeed.storagePluginId || dataFeed.recipientPluginId,
-      pluginType: 'storage',
-      pluginVersion: dataFeed.storagePlugin?.pluginVersion || dataFeed.recipientPlugin?.pluginVersion || null,
-    });
-
-    const { plugin: runtimePlugin, pluginSource } = await runtimePluginService.readPluginSourceWithFallback(
-      'storage',
-      plugin,
-    );
-
-    const pluginMeta = {
-      plugin_id: runtimePlugin.pluginId,
-      plugin_name: runtimePlugin.pluginName,
-      plugin_version: runtimePlugin.pluginVersion,
-    };
-
-    let pluginResult: any;
-    try {
-      pluginResult = await runtimePluginService.executeProcessPlugin(pluginSource, enrichedMessage, runtimePlugin, 'storage');
-    } catch (error: any) {
-      throw createStageError({
-        stage: 'storage',
-        code: 'STORAGE_PLUGIN_FAILED',
-        message: error.message || 'Storage plugin execution failed',
-        details: { plugin_selection: { ...(enrichedMessage._plugin_selection || {}), storage: selection } },
-        plugin: pluginMeta,
-        cause: error,
+    // If data feed has a recipient plugin configured, use it for processing
+    if (dataFeed.recipientPluginId) {
+      // Get the recipient plugin to use for processing
+      const plugin = await pluginService.getPluginById({
+        pluginID: dataFeed.recipientPluginId,
       });
-    }
+      if (!plugin) {
+        throw new Error(
+          `Plugin with ID ${dataFeed.recipientPluginId} not found`,
+        );
+      }
 
-    if (!pluginResult || typeof pluginResult !== 'object') {
-      throw createStageError({
-        stage: 'storage',
-        code: 'INVALID_STORAGE_RESULT',
-        message: 'Storage plugin returned an invalid processing result',
-        details: { returned_type: typeof pluginResult },
-        plugin: pluginMeta,
-        retryable: false,
-      });
-    }
-
-    const processedMessage = {
-      ...enrichedMessage,
-      _storage: { ...pluginMeta, processed_at: new Date().toISOString() },
-      _plugin_selection: {
-        ...(enrichedMessage._plugin_selection || {}),
-        storage: {
-          ...selection,
-          runtime_plugin_id: runtimePlugin.pluginId,
-          runtime_plugin_name: runtimePlugin.pluginName,
-          runtime_plugin_version: runtimePlugin.pluginVersion,
-        },
-      },
-      _processing_results: pluginResult,
-    };
-
-    const bodyData = JSON.stringify(processedMessage, null, 2);
-    const size = Buffer.byteLength(bodyData);
-    const userMetadata = kafkaValue.Records[0].s3.object.userMetadata;
-
-    const messageMetadata = utils.generateMessageMetadata({
-      dataFeed,
-      size,
-      messageId: userMetadata['X-Amz-Meta-Messageid'],
-      messageDateTime: userMetadata['X-Amz-Meta-Messagedatetime'],
-      userId: userMetadata['X-Amz-Meta-Userid'],
-      status: 'processed',
-      messageContentType: 'application/json',
-      fileFormat: '.json',
-    });
-
-    let persistenceResult: any;
-    try {
-      persistenceResult = await externalPersistenceService.persistProcessedMessageToExternal({
-        message: processedMessage,
+      // Enrich message with metadata before passing to plugin
+      const enrichedMessage = await enrichMessageWithMetadata(
+        messageContent,
+        dataFeed.facilityId,
         dataFeed,
-        messageMetadata,
-        kafkaKey: key,
-        processedBody: bodyData,
+        kafkaMessage,
+        plugin,
+      );
+
+      // Update processedMessage to enriched message
+      processedMessage = enrichedMessage;
+
+      // Get the plugin file from MinIO
+      const pluginStream = await minioUtil.getObject({
+        bucketName: "plugins",
+        objectName: plugin.pluginMinioObjectPath,
       });
-    } catch (error: any) {
-      throw createStageError({
-        stage: 'storage',
-        code: 'EXTERNAL_PERSISTENCE_FAILED',
-        message: 'Failed to persist processed message to openldr_external',
-        details: {
-          data_feed_id: dataFeedId,
-          target_file: messageMetadata.FileName,
+
+      // Read the plugin file
+      let pluginFile = "";
+      await new Promise((resolve, reject) => {
+        pluginStream.on("data", (chunk: any) => {
+          pluginFile += chunk.toString();
+        });
+        pluginStream.on("end", resolve);
+        pluginStream.on("error", (err: any) =>
+          reject(
+            new Error(
+              `Failed to read plugin file object stream: ${err.message}`,
+            ),
+          ),
+        );
+      });
+
+      // Execute based on plugin's security level
+      try {
+        let pluginResult;
+
+        switch (plugin.securityLevel) {
+          case "high":
+            pluginResult = await executeHighSecurityPlugin(
+              pluginFile,
+              enrichedMessage,
+              plugin.pluginId,
+            );
+            break;
+
+          case "medium":
+            pluginResult = await executeMediumSecurityPlugin(
+              pluginFile,
+              enrichedMessage,
+              plugin.pluginId,
+            );
+            break;
+
+          case "low":
+            pluginResult = await executeLowSecurityPlugin(
+              pluginFile,
+              enrichedMessage,
+              plugin.pluginId,
+            );
+            break;
+
+          default:
+            throw new Error(
+              `Invalid security level: ${plugin.securityLevel} for plugin ${plugin.pluginId}`,
+            );
+        }
+
+        // Add processing results to the final message
+        if (pluginResult) {
+          processedMessage = {
+            ...processedMessage, // enriched message with _metadata
+            _processing_results: pluginResult, // add processing results
+          };
+        } else {
+          // Plugin returned null/undefined, add empty processing results
+          processedMessage = {
+            ...processedMessage, // enriched message with _metadata
+            _processing_results: {
+              success: false,
+              processed: { patients: 0, requests: 0, results: 0 },
+              errors: ["Plugin returned null/undefined"],
+              record_ids: { patients: [], requests: [], results: [] },
+              processing_completed: new Date().toISOString(),
+            },
+          };
+          logger.info(
+            `Plugin ${dataFeed.recipientPluginId} returned null/undefined, added empty processing results`,
+          );
+        }
+      } catch (pluginError: any) {
+        logger.error(
+          pluginError.message,
+          `Plugin execution error for plugin ${dataFeed.recipientPluginId} (${plugin.securityLevel} security)`,
+        );
+        // Add error information to processing results
+        processedMessage = {
+          ...processedMessage, // enriched message with _metadata
+          _processing_results: {
+            success: false,
+            processed: { patients: 0, requests: 0, results: 0 },
+            errors: [pluginError.message],
+            record_ids: { patients: [], requests: [], results: [] },
+            processing_completed: new Date().toISOString(),
+          },
+        };
+      }
+    } else {
+      // No recipient plugin configured, enrich with metadata and add empty processing results
+      const enrichedMessage = await enrichMessageWithMetadata(
+        messageContent,
+        dataFeed.facilityId,
+        dataFeed,
+        kafkaMessage,
+        null,
+      );
+      processedMessage = {
+        ...enrichedMessage, // enriched message with _metadata
+        _processing_results: {
+          success: true,
+          processed: { patients: 0, requests: 0, results: 0 },
+          errors: [],
+          record_ids: { patients: [], requests: [], results: [] },
+          processing_completed: new Date().toISOString(),
+          notes: [
+            "No recipient plugin configured for this data feed - message enriched with metadata only",
+          ],
         },
-        plugin: pluginMeta,
-        cause: error,
-      });
+      };
     }
 
-    processedMessage._processing_results = {
-      ...(processedMessage._processing_results || {}),
-      record_ids: {
-        ...(processedMessage._processing_results?.record_ids || {}),
-        ...(persistenceResult?.recordIds || {}),
-      },
-      notes: [
-        ...((processedMessage._processing_results?.notes || []) as string[]),
-        'Persisted to openldr_external before processed MinIO write',
-      ],
-    };
+    // get message size
+    const bodyData = JSON.stringify(processedMessage, null, 2);
+    const size = Buffer.byteLength(bodyData); // Calculate size directly from the string
 
-    const persistedBodyData = JSON.stringify(processedMessage, null, 2);
+    // Extract metadata from the Kafka message
+    const messageDateTime = userMetadata["X-Amz-Meta-Messagedatetime"];
+    const userId = userMetadata["X-Amz-Meta-Userid"];
 
+    // create standard message metadata from internalDB schema
+    const messageMetadata = utils.generateMessageMetadata({
+      dataFeed: dataFeed,
+      size: size,
+      messageId: messageId,
+      messageDateTime: messageDateTime,
+      userId: userId,
+      status: "processed",
+      messageContentType: "application/json", // Processed messages are always JSON
+      fileFormat: ".json", // Specify JSON extension for processed messages
+    });
+
+    // Save the message data to minio with metadata
     await minioUtil.putObject({
       bucketName: projectId,
       objectName: messageMetadata.FileName,
-      data: persistedBodyData,
-      messageMetadata,
+      data: bodyData,
+      messageMetadata: messageMetadata,
     });
 
-    return {
-      projectId,
-      objectName: messageMetadata.FileName,
-      dataFeedId,
-      messageId: userMetadata['X-Amz-Meta-Messageid'] || null,
-      pluginSelection: processedMessage._plugin_selection,
-      persistence: persistenceResult,
-    };
+    await messageTrackingService.markStageCompleted({
+      messageId,
+      stage: "storage",
+      topic: kafkaMessage.topic,
+      objectPath: `${projectId}/${messageMetadata.FileName}`,
+      pluginName: dataFeed.recipientPlugin?.pluginName || null,
+      pluginVersion: dataFeed.recipientPlugin?.pluginVersion || null,
+    });
   } catch (error: any) {
-    logger.error({ error: error.message, stack: error.stack }, 'Storage stage failed');
+    logger.error(
+      { error: error.message, stack: error.stack },
+      "Error processing message",
+    );
     throw error;
   }
 }
+
+export { handleMessage };

@@ -2,6 +2,7 @@ import express from "express";
 import * as minioUtil from "../services/minio.service";
 import { utils } from "@repo/openldr-core";
 import { getDataFeedById } from "../services/datafeed.service";
+import * as messageTrackingService from "../services/message.tracking.service";
 import { logger } from "../lib/logger";
 // import { createRemoteJWKSet, jwtVerify } from "jose";
 
@@ -196,6 +197,69 @@ router.post("/process-feed", async (req, res) => {
     const statusCode = error.status || 500;
     const errorMessage = error.message || "An unexpected error occurred";
     return res.status(statusCode).json({ error: errorMessage });
+  }
+});
+
+router.get("/messages/:messageId/status", async (req, res) => {
+  try {
+    const run = await messageTrackingService.getRunByMessageId(
+      req.params.messageId,
+    );
+    if (!run) {
+      return res
+        .status(404)
+        .json({ error: "Message tracking record not found" });
+    }
+    return res.status(200).json({
+      messageId: run.messageId,
+      status: run.currentStatus,
+      currentStage: run.currentStage,
+      projectId: run.projectId,
+      dataFeedId: run.dataFeedId,
+      paths: {
+        raw: run.rawObjectPath,
+        validated: run.validatedObjectPath,
+        mapped: run.mappedObjectPath,
+        processed: run.processedObjectPath,
+      },
+      outpostStatus: run.outpostStatus,
+      error: run.errorMessage
+        ? {
+            stage: run.errorStage,
+            code: run.errorCode,
+            message: run.errorMessage,
+            details: run.errorDetails,
+          }
+        : null,
+      createdAt: run.createdAt,
+      updatedAt: run.updatedAt,
+      completedAt: run.completedAt,
+    });
+  } catch (error: any) {
+    logger.error(
+      { error: error.message, stack: error.stack },
+      "Error in status route",
+    );
+    return res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+router.get("/messages/:messageId/events", async (req, res) => {
+  try {
+    const events = await messageTrackingService.getEventsByMessageId(
+      req.params.messageId,
+    );
+    return res.status(200).json({
+      messageId: req.params.messageId,
+      count: events.length,
+      events,
+    });
+  } catch (error: any) {
+    logger.error(
+      { error: error.message, stack: error.stack },
+      "Error in events route",
+    );
+    return res.status(500).json({ error: "Internal server error" });
   }
 });
 

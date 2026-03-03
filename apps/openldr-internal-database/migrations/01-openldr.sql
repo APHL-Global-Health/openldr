@@ -347,3 +347,61 @@ CREATE TABLE "userExtensions" (
 
 CREATE INDEX IF NOT EXISTS idx_user_extensions_user_id ON "userExtensions"(user_id);
 CREATE INDEX IF NOT EXISTS idx_extensions_kind ON extensions(kind);
+
+
+-- ----------------------------------------------------------
+-- Processing tracking tables
+-- ----------------------------------------------------------
+CREATE TABLE IF NOT EXISTS "messageProcessingRuns" (
+  "id" UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  "messageId" UUID NOT NULL UNIQUE,
+  "projectId" UUID NOT NULL,
+  "dataFeedId" UUID NULL,
+  "userId" UUID NULL,
+  "currentStage" VARCHAR(50) NOT NULL,
+  "currentStatus" VARCHAR(30) NOT NULL,
+  "rawObjectPath" TEXT NULL,
+  "validatedObjectPath" TEXT NULL,
+  "mappedObjectPath" TEXT NULL,
+  "processedObjectPath" TEXT NULL,
+  "outpostStatus" VARCHAR(30) NULL,
+  "errorStage" VARCHAR(50) NULL,
+  "errorCode" VARCHAR(100) NULL,
+  "errorMessage" TEXT NULL,
+  "errorDetails" JSONB NULL,
+  "createdAt" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  "updatedAt" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  "completedAt" TIMESTAMPTZ NULL
+);
+
+CREATE INDEX IF NOT EXISTS "idx_messageProcessingRuns_projectId"
+  ON "messageProcessingRuns" ("projectId");
+
+CREATE INDEX IF NOT EXISTS "idx_messageProcessingRuns_dataFeedId"
+  ON "messageProcessingRuns" ("dataFeedId");
+
+CREATE INDEX IF NOT EXISTS "idx_messageProcessingRuns_currentStatus"
+  ON "messageProcessingRuns" ("currentStatus");
+
+CREATE TABLE IF NOT EXISTS "messageProcessingEvents" (
+  "id" UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  "messageId" UUID NOT NULL,
+  "stage" VARCHAR(50) NOT NULL,
+  "status" VARCHAR(30) NOT NULL,
+  "eventType" VARCHAR(50) NOT NULL,
+  "topic" VARCHAR(100) NULL,
+  "objectPath" TEXT NULL,
+  "pluginName" VARCHAR(100) NULL,
+  "pluginVersion" VARCHAR(30) NULL,
+  "errorCode" VARCHAR(100) NULL,
+  "errorMessage" TEXT NULL,
+  "errorDetails" JSONB NULL,
+  "metadata" JSONB NULL,
+  "createdAt" TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS "idx_messageProcessingEvents_messageId_createdAt"
+  ON "messageProcessingEvents" ("messageId", "createdAt");
+
+CREATE INDEX IF NOT EXISTS "idx_messageProcessingEvents_stage"
+  ON "messageProcessingEvents" ("stage");
