@@ -1,21 +1,6 @@
 import { externalPool } from "../lib/db.external";
 import { logger } from "../lib/logger";
 
-/**
- * Fetches all active concepts and their cross-system mappings for a given
- * coding system from openldr_external and returns them in the same shape that
- * applyTerminologyMappings() already consumes:
- *
- *   {
- *     concepts: {
- *       "<concept_code>": {
- *         concept:  { id, code, name },
- *         mappings: [{ relationship, externalId, toConceptCode, toConceptName,
- *                      toSourceName, toSourceOwner, toSourceUrl }]
- *       }
- *     }
- *   }
- */
 export async function getConceptsBySystem(systemCode: string): Promise<{
   concepts: Record<string, any>;
 }> {
@@ -79,26 +64,6 @@ export async function getConceptsBySystem(systemCode: string): Promise<{
   }
 }
 
-/**
- * Fetches concepts for multiple coding systems in a single query.
- * Returns a map keyed by system_code, each value being a concept_code →
- * concept-data dictionary (same shape per system as getConceptsBySystem).
- *
- * Used when plugin.config.fieldMappings references several coding systems,
- * e.g. WHONET_ORG + WHONET_ABX + WHONET_SPEC for a microbiology data feed,
- * or LOINC + ICD10 for a general lab data feed.
- *
- *   {
- *     bySystem: {
- *       "WHONET_ORG": {
- *         "eco": { concept: { id, code, name }, mappings: [...] },
- *         ...
- *       },
- *       "WHONET_ABX": { ... },
- *       "WHONET_SPEC": { ... }
- *     }
- *   }
- */
 export async function getConceptsBySystemCodes(systemCodes: string[]): Promise<{
   bySystem: Record<string, Record<string, any>>;
 }> {
@@ -174,4 +139,250 @@ export async function getConceptsBySystemCodes(systemCodes: string[]): Promise<{
     );
     throw error;
   }
+}
+
+export async function getCodingSystemsByCodes(systemCodes: string[]) {
+  if (systemCodes.length === 0) {
+    return {} as Record<string, any>;
+  }
+
+  const sql = `
+    SELECT id, system_code, system_name, system_uri, system_version, system_type, is_active
+    FROM coding_systems
+    WHERE system_code = ANY($1)
+      AND is_active = true
+  `;
+
+  const result = await externalPool.query(sql, [systemCodes]);
+  const byCode: Record<string, any> = {};
+  for (const row of result.rows) {
+    byCode[row.system_code] = row;
+  }
+  return byCode;
+}
+
+export async function assertCodingSystemsExist(systemCodes: string[]) {
+  const uniqueCodes = [...new Set(systemCodes.filter(Boolean))];
+  const byCode = await getCodingSystemsByCodes(uniqueCodes);
+  const missing = uniqueCodes.filter((code) => !byCode[code]);
+  if (missing.length > 0) {
+    throw new Error(`Unknown coding system(s): ${missing.join(", ")}`);
+  }
+  return byCode;
+}
+
+export function isConceptReference(value: any) {
+  return Boolean(
+    value &&
+      typeof value === "object" &&
+      !Array.isArray(value) &&
+      typeof value.system_id === "string" &&
+      typeof value.concept_code === "string" &&
+      typeof value.display_name === "string",
+  );
+}
+
+export function collectConceptReferences(
+  value: any,
+  currentPath = "$",
+  results: Array<{ path: string; key: string; reference: any }> = [],
+) {
+  if (!value || typeof value !== "object") {
+    return results;
+  }
+
+  if (Array.isArray(value)) {
+    value.forEach((item, index) =>
+      collectConceptReferences(item, `${currentPath}[${index}]`, results),
+    );
+    return results;
+  }
+
+  for (const [key, child] of Object.entries(value)) {
+    const childPath = `${currentPath}.${key}`;
+    if (key.endsWith("_code") && isConceptReference(child)) {
+      results.push({ path: childPath, key, reference: child });
+    } else if (child && typeof child === "object") {
+      collectConceptReferences(child, childPath, results);
+    }
+  }
+
+  return results;
+}
+
+export async function resolveOrCreateConceptRef(reference: any) {
+  const systemCode = reference.system_id;
+  const conceptCode = reference.concept_code;
+  const displayName = reference.display_name;
+
+  const systems = await assertCodingSystemsExist([systemCode]);
+  const system = systems[systemCode];
+
+  const existingSql = `
+    SELECT id, concept_code, display_name, concept_class, datatype, properties
+    FROM concepts
+    WHERE system_id = $1
+      AND concept_code = $2
+      AND is_active = true
+      AND retired = false
+    LIMIT 1
+  `;
+
+  const existing = await externalPool.query(existingSql, [
+    system.id,
+    conceptCode,
+  ]);
+  if (existing.rowCount === 1) {
+    return {
+      created: false,
+      system,
+      concept: existing.rows[0],
+    };
+  }
+
+  const insertSql = `
+    INSERT INTO concepts (
+      system_id,
+      concept_code,
+      display_name,
+      concept_class,
+      datatype,
+      properties,
+      names,
+      is_active,
+      retired
+    ) VALUES (
+      $1,
+      $2,
+      $3,
+      $4,
+      $5,
+      $6::jsonb,
+      $7::jsonb,
+      true,
+      false
+    )
+    ON CONFLICT (system_id, concept_code)
+    DO UPDATE SET
+      display_name = EXCLUDED.display_name,
+      concept_class = COALESCE(concepts.concept_class, EXCLUDED.concept_class),
+      datatype = COALESCE(concepts.datatype, EXCLUDED.datatype),
+      properties = CASE
+        WHEN concepts.properties IS NULL OR concepts.properties = '{}'::jsonb THEN EXCLUDED.properties
+        ELSE concepts.properties
+      END,
+      updated_at = NOW()
+    RETURNING id, concept_code, display_name, concept_class, datatype, properties
+  `;
+
+  const names = JSON.stringify([
+    {
+      locale: "en",
+      name: displayName,
+      name_type: "fully_specified",
+      preferred: true,
+    },
+  ]);
+
+  const inserted = await externalPool.query(insertSql, [
+    system.id,
+    conceptCode,
+    displayName,
+    reference.concept_class || null,
+    reference.datatype || null,
+    JSON.stringify(reference.properties || {}),
+    names,
+  ]);
+
+  return {
+    created: true,
+    system,
+    concept: inserted.rows[0],
+  };
+}
+
+export async function resolveConceptReferencesInMessage(message: any) {
+  const conceptReferences = collectConceptReferences(message);
+  if (conceptReferences.length === 0) {
+    return message;
+  }
+
+  const systemCodes = conceptReferences.map(
+    ({ reference }) => reference.system_id,
+  );
+  await assertCodingSystemsExist(systemCodes);
+
+  async function transform(value: any): Promise<any> {
+    if (Array.isArray(value)) {
+      const mapped = [];
+      for (const item of value) {
+        mapped.push(await transform(item));
+      }
+      return mapped;
+    }
+
+    if (!value || typeof value !== "object") {
+      return value;
+    }
+
+    const output: Record<string, any> = {};
+    const resolutions: any[] = [];
+
+    for (const [key, child] of Object.entries(value)) {
+      if (key.endsWith("_code") && isConceptReference(child)) {
+        const resolved = await resolveOrCreateConceptRef(child);
+        const targetKey = key.replace(/_code$/, "_concept_id");
+        output[targetKey] = resolved.concept.id;
+        resolutions.push({
+          source_field: key,
+          target_field: targetKey,
+          concept_id: resolved.concept.id,
+          system_id: (child as any).system_id,
+          concept_code: (child as any).concept_code,
+          display_name: (child as any).display_name,
+          created: resolved.created,
+        });
+        continue;
+      }
+
+      output[key] = await transform(child);
+    }
+
+    if (resolutions.length > 0) {
+      output._resolved_concepts = [
+        ...(Array.isArray((value as any)._resolved_concepts)
+          ? (value as any)._resolved_concepts
+          : []),
+        ...resolutions,
+      ];
+    }
+
+    return output;
+  }
+
+  const transformed = await transform(message);
+  const flatResolutions = collectResolvedConcepts(transformed);
+  transformed._mapping_results = {
+    resolved: flatResolutions.length,
+    created: flatResolutions.filter((item) => item.created).length,
+    reused: flatResolutions.filter((item) => !item.created).length,
+  };
+  return transformed;
+}
+
+function collectResolvedConcepts(value: any, results: any[] = []) {
+  if (!value || typeof value !== "object") {
+    return results;
+  }
+  if (Array.isArray(value)) {
+    value.forEach((item) => collectResolvedConcepts(item, results));
+    return results;
+  }
+  if (Array.isArray((value as any)._resolved_concepts)) {
+    results.push(...(value as any)._resolved_concepts);
+  }
+  Object.values(value).forEach((child) =>
+    collectResolvedConcepts(child, results),
+  );
+  return results;
 }

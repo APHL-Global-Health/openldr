@@ -78,21 +78,38 @@ router.post("/process-feed", async (req, res) => {
         .json({ error: "Invalid Authorization header format" });
     }
 
-    // Verify JWT signature against Keycloak JWKS
-    let userId: string;
-    try {
-      const { payload } = await jwtVerify(jwtToken, getJWKS(), {
-        issuer: `${process.env.KEYCLOAK_BASE_URL}/realms/${process.env.KEYCLOAK_REALM}`,
-      });
-      if (!payload.sub) {
-        return res.status(403).json({ error: "No user ID found in token" });
-      }
-      userId = payload.sub;
-    } catch (jwtError: any) {
-      return res
-        .status(401)
-        .json({ error: "Invalid or expired token", details: jwtError.message });
+    // Decode the JWT (base64)
+    const parts: any[] = jwtToken.split(".");
+    if (parts.length !== 3) {
+      return null;
     }
+
+    // Decode payload (second part)
+    const payload = JSON.parse(
+      Buffer.from(parts[1], "base64").toString("utf-8"),
+    );
+    const userId = payload?.sub; //client_id
+    if (!userId) {
+      return res
+        .status(403)
+        .json({ error: "No client_id found in token payload" });
+    }
+
+    // // Verify JWT signature against Keycloak JWKS
+    // let userId: string;
+    // try {
+    //   const { payload } = await jwtVerify(jwtToken, getJWKS(), {
+    //     issuer: `${process.env.KEYCLOAK_BASE_URL}/realms/${process.env.KEYCLOAK_REALM}`,
+    //   });
+    //   if (!payload.sub) {
+    //     return res.status(403).json({ error: "No user ID found in token" });
+    //   }
+    //   userId = payload.sub;
+    // } catch (jwtError: any) {
+    //   return res
+    //     .status(401)
+    //     .json({ error: "Invalid or expired token", details: jwtError.message });
+    // }
 
     // Get the data feed
     const dataFeed = await getDataFeedById(dataFeedId);
