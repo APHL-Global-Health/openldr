@@ -1,50 +1,31 @@
 import { Kafka } from 'kafkajs';
-import * as messageHandler from './handlers/storage';
+import * as messageHandler from './handlers/outpost';
 import { logger } from '../lib/logger';
 import { buildDlqBody } from '../lib/pipeline-error';
 import { resolveKafkaMessagePayload } from '../lib/dlq';
 
 export const start = async () => {
   try {
-    const kafka = new Kafka({ clientId: 'openldr-storage', brokers: ['openldr-kafka1:19092'] });
+    const kafka = new Kafka({ clientId: 'openldr-outpost', brokers: ['openldr-kafka1:19092'] });
     const producer = kafka.producer();
     await producer.connect();
 
-    const consumer = kafka.consumer({ groupId: 'openldr-storage-consumer' });
+    const consumer = kafka.consumer({ groupId: 'openldr-outpost-consumer' });
     await consumer.connect();
-    await consumer.subscribe({ topic: 'mapped-inbound', fromBeginning: true });
+    await consumer.subscribe({ topic: 'processed-inbound', fromBeginning: true });
 
     await consumer.run({
       eachMessage: async ({ topic, partition, message }) => {
         try {
-          const result = await messageHandler.handleMessage({
+          await messageHandler.handleMessage({
             topic,
             partition,
             offset: message.offset,
             value: message.value?.toString(),
             key: message.key?.toString(),
           });
-
-          if (result?.projectId && result?.objectName) {
-            const processedKey = `${result.projectId}/${result.objectName}`;
-            await producer.send({
-              topic: 'processed-inbound',
-              messages: [{
-                key: Buffer.from(processedKey),
-                value: JSON.stringify({
-                  EventName: 'internal:processed',
-                  Key: processedKey,
-                  processed_object: {
-                    bucket_name: result.projectId,
-                    object_name: result.objectName,
-                  },
-                  plugin_selection: result.pluginSelection || null,
-                }),
-              }],
-            });
-          }
         } catch (err: any) {
-          logger.error({ err, topic, partition }, 'Message failed — routing to DLQ');
+          logger.error({ err, topic, partition }, 'Outpost message failed — routing to DLQ');
           const { resolvedPayload, resolvedPayloadError } = await resolveKafkaMessagePayload(message);
           const dlqBody = buildDlqBody({
             topic,
@@ -73,8 +54,8 @@ export const start = async () => {
       },
     });
 
-    logger.info('Storage service running and consuming messages');
+    logger.info('Outpost service running and consuming messages');
   } catch (err: any) {
-    logger.error({ error: err.message, stack: err.stack }, 'Storage service initialization failed');
+    logger.error({ error: err.message, stack: err.stack }, 'Outpost service initialization failed');
   }
 };

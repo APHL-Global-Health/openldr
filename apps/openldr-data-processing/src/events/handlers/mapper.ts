@@ -34,29 +34,22 @@ async function readProjectObjectAsString(
 }
 
 function normalizeMapperResult(mapperResult: any) {
-  if (!mapperResult) {
-    return { transformedMessage: null, fieldMappings: null };
-  }
-
-  if (Array.isArray(mapperResult)) {
+  if (!mapperResult) return { transformedMessage: null, fieldMappings: null };
+  if (Array.isArray(mapperResult))
     return { transformedMessage: null, fieldMappings: mapperResult };
-  }
-
   if (mapperResult.transformedMessage) {
     return {
       transformedMessage: mapperResult.transformedMessage,
       fieldMappings: mapperResult.fieldMappings || null,
     };
   }
-
   if (Array.isArray(mapperResult.fieldMappings)) {
     return {
       transformedMessage: null,
       fieldMappings: mapperResult.fieldMappings,
     };
   }
-
-  return { transformedMessage: null, fieldMappings: null };
+  return { transformedMessage: mapperResult, fieldMappings: null };
 }
 
 async function buildLegacyMappingConfig(plugin: any) {
@@ -65,10 +58,10 @@ async function buildLegacyMappingConfig(plugin: any) {
     Array.isArray(plugin.config.fieldMappings) &&
     plugin.config.fieldMappings.length > 0
   ) {
-    const systemCodes: string[] = [
-      ...new Set<string>(
+    const systemCodes: any[] = [
+      ...new Set(
         plugin.config.fieldMappings
-          .map((fm: any) => fm.systemCode as string)
+          .map((fm: any) => fm.systemCode)
           .filter(Boolean),
       ),
     ];
@@ -82,20 +75,86 @@ async function buildLegacyMappingConfig(plugin: any) {
       };
     }
   }
-
   if (plugin.config?.systemCode) {
     const result = await terminologyService.getConceptsBySystem(
       plugin.config.systemCode,
     );
-    if (Object.keys(result.concepts).length > 0) {
-      return result;
-    }
+    if (Object.keys(result.concepts).length > 0) return result;
   }
-
   return null;
 }
 
-async function handleMessage(kafkaMessage: any) {
+function applyConceptIdMappings(
+  message: any,
+  mappingConfig: {
+    bySystem: Record<string, Record<string, any>>;
+    fieldMappings: Array<{
+      sourceField: string;
+      targetField: string;
+      systemCode: string;
+    }>;
+  },
+) {
+  const result = JSON.parse(JSON.stringify(message));
+  const conceptIds: Record<string, string> = result._conceptIds || {};
+  const conceptMappings: Record<string, any> = result._mappings || {};
+
+  function scan(obj: any) {
+    if (!obj || typeof obj !== "object") return;
+    if (Array.isArray(obj)) return obj.forEach(scan);
+
+    for (const {
+      sourceField,
+      targetField,
+      systemCode,
+    } of mappingConfig.fieldMappings) {
+      if (!(sourceField in obj)) continue;
+      const rawCode = obj[sourceField];
+      if (typeof rawCode !== "string" || !rawCode) continue;
+      const concept =
+        mappingConfig.bySystem?.[systemCode]?.[rawCode.toUpperCase()]?.concept;
+      if (!concept) continue;
+      obj[targetField] = concept.id;
+      conceptIds[`${systemCode}:${rawCode.toUpperCase()}`] = concept.id;
+      conceptMappings[sourceField] = {
+        targetField,
+        systemCode,
+        conceptId: concept.id,
+      };
+    }
+
+    Object.values(obj).forEach(scan);
+  }
+
+  scan(result);
+  if (Object.keys(conceptIds).length > 0) result._conceptIds = conceptIds;
+  if (Object.keys(conceptMappings).length > 0)
+    result._mappings = conceptMappings;
+  return result;
+}
+
+function applyTerminologyMappings(
+  message: any,
+  mappingConfig: { concepts: Record<string, any> },
+) {
+  const result = JSON.parse(JSON.stringify(message));
+  function scan(obj: any) {
+    if (!obj || typeof obj !== "object") return;
+    if (Array.isArray(obj)) return obj.forEach(scan);
+    for (const [key, value] of Object.entries(obj)) {
+      if (typeof value === "string") {
+        const concept = mappingConfig.concepts[value.toUpperCase()]?.concept;
+        if (concept) obj[key] = concept.id;
+      } else {
+        scan(value);
+      }
+    }
+  }
+  scan(result);
+  return result;
+}
+
+export async function handleMessage(kafkaMessage: any) {
   try {
     const kafkaValue = JSON.parse(kafkaMessage.value);
     const key = kafkaMessage.key;
@@ -108,6 +167,7 @@ async function handleMessage(kafkaMessage: any) {
         code: "INVALID_MESSAGE_KEY",
         message: "Invalid Kafka message key format for mapping stage",
         details: { key },
+        retryable: false,
       });
     }
 
@@ -118,6 +178,7 @@ async function handleMessage(kafkaMessage: any) {
         code: "DATA_FEED_NOT_FOUND",
         message: `Data feed with ID ${dataFeedId} not found`,
         details: { data_feed_id: dataFeedId },
+        retryable: false,
       });
     }
 
@@ -125,8 +186,7 @@ async function handleMessage(kafkaMessage: any) {
       projectId,
       validatedName,
     );
-    const messageContent = JSON.parse(objectData);
-    let processedMessage = messageContent;
+    let processedMessage = JSON.parse(objectData);
 
     const { plugin, selection } = await pluginService.resolvePluginSelection({
       pluginID: dataFeed.mapperPluginId,
@@ -143,16 +203,32 @@ async function handleMessage(kafkaMessage: any) {
       plugin_version: runtimePlugin.pluginVersion,
     };
 
-    const mapperResult = await runtimePluginService.executeMapperPlugin(
-      pluginSource,
-      processedMessage,
-      runtimePlugin,
-    );
+    let mapperResult: any;
+    try {
+      mapperResult = await runtimePluginService.executeMapperPlugin(
+        pluginSource,
+        processedMessage,
+        runtimePlugin,
+      );
+    } catch (error: any) {
+      throw createStageError({
+        stage: "mapping",
+        code: "MAPPER_PLUGIN_FAILED",
+        message: error.message || "Mapper plugin execution failed",
+        details: {
+          plugin_selection: {
+            ...(processedMessage._plugin_selection || {}),
+            mapper: selection,
+          },
+        },
+        plugin: pluginMeta,
+        cause: error,
+      });
+    }
 
     const normalized = normalizeMapperResult(mapperResult);
-    if (normalized.transformedMessage) {
+    if (normalized.transformedMessage)
       processedMessage = normalized.transformedMessage;
-    }
 
     if (normalized.fieldMappings && normalized.fieldMappings.length > 0) {
       const systemCodes: any[] = [
@@ -172,17 +248,9 @@ async function handleMessage(kafkaMessage: any) {
     } else {
       const legacyMappingConfig: any = await buildLegacyMappingConfig(plugin);
       if (legacyMappingConfig) {
-        if (legacyMappingConfig.bySystem) {
-          processedMessage = applyConceptIdMappings(
-            processedMessage,
-            legacyMappingConfig,
-          );
-        } else {
-          processedMessage = applyTerminologyMappings(
-            processedMessage,
-            legacyMappingConfig,
-          );
-        }
+        processedMessage = legacyMappingConfig.bySystem
+          ? applyConceptIdMappings(processedMessage, legacyMappingConfig)
+          : applyTerminologyMappings(processedMessage, legacyMappingConfig);
       }
     }
 
@@ -198,18 +266,21 @@ async function handleMessage(kafkaMessage: any) {
         message:
           error.message ||
           "Failed to resolve concept references in mapped message",
-        details: {},
+        details: {
+          plugin_selection: {
+            ...(processedMessage._plugin_selection || {}),
+            mapper: selection,
+          },
+        },
         plugin: pluginMeta,
         cause: error,
+        retryable: false,
       });
     }
 
     processedMessage = {
       ...processedMessage,
-      _mapper: {
-        ...pluginMeta,
-        mapped_at: new Date().toISOString(),
-      },
+      _mapper: { ...pluginMeta, mapped_at: new Date().toISOString() },
       _plugin_selection: {
         ...(processedMessage._plugin_selection || {}),
         mapper: {
@@ -250,131 +321,3 @@ async function handleMessage(kafkaMessage: any) {
     throw error;
   }
 }
-
-function applyConceptIdMappings(
-  message: any,
-  mappingConfig: {
-    bySystem: Record<string, Record<string, any>>;
-    fieldMappings: Array<{
-      sourceField: string;
-      targetField: string;
-      systemCode: string;
-    }>;
-  },
-) {
-  const result = JSON.parse(JSON.stringify(message));
-  const conceptIds: Record<string, string> = result._conceptIds || {};
-  const conceptMappings: Record<string, any> = result._mappings || {};
-
-  scanForConceptIdFields(
-    result,
-    mappingConfig.fieldMappings,
-    mappingConfig.bySystem,
-    conceptIds,
-    conceptMappings,
-  );
-
-  if (Object.keys(conceptIds).length > 0) {
-    result._conceptIds = conceptIds;
-  }
-  if (Object.keys(conceptMappings).length > 0) {
-    result._mappings = conceptMappings;
-  }
-
-  return result;
-}
-
-function scanForConceptIdFields(
-  obj: any,
-  fieldMappings: Array<{
-    sourceField: string;
-    targetField: string;
-    systemCode: string;
-  }>,
-  bySystem: Record<string, Record<string, any>>,
-  conceptIds: Record<string, string>,
-  conceptMappings: Record<string, any>,
-) {
-  if (!obj || typeof obj !== "object") return;
-
-  if (Array.isArray(obj)) {
-    obj.forEach((item) =>
-      scanForConceptIdFields(
-        item,
-        fieldMappings,
-        bySystem,
-        conceptIds,
-        conceptMappings,
-      ),
-    );
-    return;
-  }
-
-  for (const { sourceField, targetField, systemCode } of fieldMappings) {
-    if (sourceField in obj) {
-      const rawCode = obj[sourceField];
-      if (typeof rawCode === "string" && rawCode) {
-        const systemConcepts = bySystem[systemCode];
-        if (systemConcepts?.[rawCode]) {
-          const conceptData = systemConcepts[rawCode];
-          conceptIds[targetField] = conceptData.concept.id;
-          conceptMappings[`${systemCode}:${rawCode}`] = {
-            concept: conceptData.concept,
-            mappings: conceptData.mappings,
-          };
-        }
-      }
-    }
-  }
-
-  for (const value of Object.values(obj)) {
-    if (value && typeof value === "object") {
-      scanForConceptIdFields(
-        value,
-        fieldMappings,
-        bySystem,
-        conceptIds,
-        conceptMappings,
-      );
-    }
-  }
-}
-
-function applyTerminologyMappings(message: any, mappingConfig: any) {
-  const processedMessage = JSON.parse(JSON.stringify(message));
-  if (!mappingConfig.concepts) {
-    return processedMessage;
-  }
-
-  const foundConcepts = new Set<string>();
-  scanForConcepts(processedMessage, mappingConfig.concepts, foundConcepts);
-
-  if (foundConcepts.size > 0) {
-    processedMessage._mappings = processedMessage._mappings || {};
-    foundConcepts.forEach((conceptKey: string) => {
-      const conceptData = mappingConfig.concepts[conceptKey];
-      processedMessage._mappings[conceptKey] = {
-        concept: conceptData.concept,
-        mappings: conceptData.mappings || [],
-      };
-    });
-  }
-
-  return processedMessage;
-}
-
-function scanForConcepts(obj: any, concepts: any, foundConcepts: Set<string>) {
-  if (typeof obj === "string") {
-    if (concepts[obj]) {
-      foundConcepts.add(obj);
-    }
-  } else if (Array.isArray(obj)) {
-    obj.forEach((item) => scanForConcepts(item, concepts, foundConcepts));
-  } else if (obj && typeof obj === "object") {
-    Object.values(obj).forEach((value) =>
-      scanForConcepts(value, concepts, foundConcepts),
-    );
-  }
-}
-
-export { handleMessage };

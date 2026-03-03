@@ -14,6 +14,8 @@ const projectRoot = path.resolve(__dirname, '..', '..');
 
 type PluginRecord = any;
 
+type RuntimePluginType = 'schema' | 'mapper' | 'storage' | 'outpost';
+
 function wrapPluginSource(pluginSource: string) {
   return `
     (function() {
@@ -52,12 +54,7 @@ function createBaseContext(pluginId: string) {
   } as Record<string, any>;
 }
 
-async function makeHttpRequest(
-  method: string,
-  url: string,
-  data: any = null,
-  headers: Record<string, any> = {},
-) {
+async function makeHttpRequest(method: string, url: string, data: any = null, headers: Record<string, any> = {}) {
   const urlObj = new URL(url);
   if (!['http:', 'https:'].includes(urlObj.protocol)) {
     throw new Error(`Invalid protocol: ${urlObj.protocol}`);
@@ -90,9 +87,7 @@ async function makeHttpRequest(
 
     req.on('error', reject);
     req.setTimeout(10000, () => req.destroy());
-    if (data) {
-      req.write(typeof data === 'string' ? data : JSON.stringify(data));
-    }
+    if (data) req.write(typeof data === 'string' ? data : JSON.stringify(data));
     req.end();
   });
 }
@@ -138,10 +133,7 @@ export async function readPluginSource(plugin: PluginRecord): Promise<string> {
   return await readStreamToString(pluginStream);
 }
 
-export async function readPluginSourceWithFallback(
-  pluginType: 'schema' | 'mapper' | 'recipient',
-  plugin: PluginRecord,
-) {
+export async function readPluginSourceWithFallback(pluginType: RuntimePluginType, plugin: PluginRecord) {
   try {
     const pluginSource = await readPluginSource(plugin);
     return { plugin, pluginSource };
@@ -164,7 +156,6 @@ export async function readPluginSourceWithFallback(
 
 function runPluginModule(pluginSource: string, plugin: PluginRecord) {
   const wrappedScript = wrapPluginSource(pluginSource);
-
   if (plugin.securityLevel === 'low') {
     const script = new vm.Script(wrappedScript, {
       filename: `${plugin.pluginName || plugin.pluginId || 'plugin'}.js`,
@@ -214,16 +205,9 @@ function normalizeValidationResult(validationResult: any) {
   };
 }
 
-export async function executeValidationPlugin(
-  pluginSource: string,
-  messageContent: any,
-  plugin: PluginRecord,
-) {
+export async function executeValidationPlugin(pluginSource: string, messageContent: any, plugin: PluginRecord) {
   const pluginFunctions = runPluginModule(pluginSource, plugin);
-  if (
-    typeof pluginFunctions.validate !== 'function' ||
-    typeof pluginFunctions.convert !== 'function'
-  ) {
+  if (typeof pluginFunctions.validate !== 'function' || typeof pluginFunctions.convert !== 'function') {
     throw new Error('Schema plugin must export validate and convert functions');
   }
 
@@ -255,46 +239,38 @@ export async function executeValidationPlugin(
   };
 }
 
-export async function executeMapperPlugin(
-  pluginSource: string,
-  messageContent: any,
-  plugin: PluginRecord,
-) {
+export async function executeMapperPlugin(pluginSource: string, messageContent: any, plugin: PluginRecord) {
   const pluginFunctions = runPluginModule(pluginSource, plugin);
   const mapperFn = pluginFunctions.map || pluginFunctions.mapping;
   if (typeof mapperFn !== 'function') {
     throw new Error('Mapper plugin must export map or mapping function');
   }
 
-  const result = await callWithTimeout(
-    Promise.resolve(mapperFn(messageContent)),
-    'Plugin mapping',
-  );
-
+  const result = await callWithTimeout(Promise.resolve(mapperFn(messageContent)), 'Plugin mapping');
   if (result === undefined || result === null) {
     throw new Error('Mapper plugin returned null/undefined');
   }
-
   return result;
 }
 
-export async function executeRecipientPlugin(
+export async function executeProcessPlugin(
   pluginSource: string,
   messageContent: any,
   plugin: PluginRecord,
+  stageLabel: 'storage' | 'outpost',
 ) {
   const pluginFunctions = runPluginModule(pluginSource, plugin);
   if (typeof pluginFunctions.process !== 'function') {
-    throw new Error('Recipient plugin must export process function');
+    throw new Error(`${stageLabel} plugin must export process function`);
   }
 
   const result = await callWithTimeout(
     Promise.resolve(pluginFunctions.process(messageContent)),
-    'Plugin processing',
+    `${stageLabel} plugin processing`,
   );
 
   if (result === undefined || result === null) {
-    throw new Error('Recipient plugin returned null/undefined');
+    throw new Error(`${stageLabel} plugin returned null/undefined`);
   }
 
   return result;

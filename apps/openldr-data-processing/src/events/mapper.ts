@@ -1,15 +1,12 @@
 import { Kafka } from 'kafkajs';
 import * as messageHandler from './handlers/mapper';
 import { logger } from '../lib/logger';
-import { buildDlqBody, serializeError } from '../lib/pipeline-error';
+import { buildDlqBody } from '../lib/pipeline-error';
+import { resolveKafkaMessagePayload } from '../lib/dlq';
 
 export const start = async () => {
   try {
-    const kafka = new Kafka({
-      clientId: 'openldr-mapper',
-      brokers: ['openldr-kafka1:19092'],
-    });
-
+    const kafka = new Kafka({ clientId: 'openldr-mapper', brokers: ['openldr-kafka1:19092'] });
     const producer = kafka.producer();
     await producer.connect();
 
@@ -28,24 +25,30 @@ export const start = async () => {
             key: message.key?.toString(),
           });
         } catch (err: any) {
-          const serialized = serializeError(err);
-          logger.error({ err: serialized, topic, partition }, 'Message failed — routing to DLQ');
+          logger.error({ err, topic, partition }, 'Message failed — routing to DLQ');
+          const { resolvedPayload, resolvedPayloadError } = await resolveKafkaMessagePayload(message);
+          const dlqBody = buildDlqBody({
+            topic,
+            partition,
+            message,
+            error: err,
+            resolvedPayload,
+            resolvedPayloadError,
+            pluginSelection: resolvedPayload?._plugin_selection || err?.details?.plugin_selection || null,
+          });
           await producer.send({
             topic: `${topic}-dead-letter`,
-            messages: [
-              {
-                key: message.key,
-                value: JSON.stringify(buildDlqBody({ topic, partition, message, error: err })),
-                headers: {
-                  ...message.headers,
-                  'x-dlq-error': serialized.message,
-                  'x-dlq-topic': topic,
-                  'x-dlq-timestamp': new Date().toISOString(),
-                  'x-dlq-stage': serialized.stage,
-                  'x-dlq-code': serialized.code,
-                },
+            messages: [{
+              key: message.key,
+              value: JSON.stringify(dlqBody),
+              headers: {
+                ...message.headers,
+                'x-dlq-error': err.message,
+                'x-dlq-topic': topic,
+                'x-dlq-timestamp': new Date().toISOString(),
+                'x-dlq-error-id': dlqBody.dlq.error.error_id,
               },
-            ],
+            }],
           });
         }
       },

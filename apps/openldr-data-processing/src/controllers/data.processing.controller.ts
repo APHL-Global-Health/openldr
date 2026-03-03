@@ -3,20 +3,20 @@ import * as minioUtil from "../services/minio.service";
 import { utils } from "@repo/openldr-core";
 import { getDataFeedById } from "../services/datafeed.service";
 import { logger } from "../lib/logger";
-import { createRemoteJWKSet, jwtVerify } from "jose";
+// import { createRemoteJWKSet, jwtVerify } from "jose";
 
-// Lazily initialised so env vars are read after dotenv has loaded
-let _jwks: ReturnType<typeof createRemoteJWKSet> | null = null;
-function getJWKS() {
-  if (!_jwks) {
-    _jwks = createRemoteJWKSet(
-      new URL(
-        `${process.env.KEYCLOAK_BASE_URL}/realms/${process.env.KEYCLOAK_REALM}/protocol/openid-connect/certs`,
-      ),
-    );
-  }
-  return _jwks;
-}
+// // Lazily initialised so env vars are read after dotenv has loaded
+// let _jwks: ReturnType<typeof createRemoteJWKSet> | null = null;
+// function getJWKS() {
+//   if (!_jwks) {
+//     _jwks = createRemoteJWKSet(
+//       new URL(
+//         `${process.env.KEYCLOAK_BASE_URL}/realms/${process.env.KEYCLOAK_REALM}/protocol/openid-connect/certs`,
+//       ),
+//     );
+//   }
+//   return _jwks;
+// }
 
 const router = express.Router();
 

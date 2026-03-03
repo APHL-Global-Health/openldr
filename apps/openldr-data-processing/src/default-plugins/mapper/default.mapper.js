@@ -1,13 +1,4 @@
-function mapping(message) {
-  return {
-    transformedMessage: message,
-    fieldMappings: [],
-  };
+function map(message) {
+  return { transformedMessage: message };
 }
-
-module.exports = {
-  name: 'default-mapper',
-  version: '1.1.0',
-  status: 'active',
-  mapping,
-};
+module.exports = { name: 'default-mapper', version: '1.2.0', status: 'active', map };

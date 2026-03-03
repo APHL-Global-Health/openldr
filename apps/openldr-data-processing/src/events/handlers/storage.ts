@@ -7,30 +7,15 @@ import * as facilityService from '../../services/facility.service';
 import { logger } from '../../lib/logger';
 import { createStageError } from '../../lib/pipeline-error';
 
-async function enrichMessageWithMetadata(
-  messageContent: any,
-  facilityId: any,
-  dataFeed: any,
-  kafkaMessage: any,
-) {
+async function enrichMessageWithMetadata(messageContent: any, facilityId: any, dataFeed: any, kafkaMessage: any) {
   const facility = await facilityService.getFacilityById(facilityId);
   const kafkaValue = JSON.parse(kafkaMessage.value);
   const userMetadata = kafkaValue.Records[0].s3.object.userMetadata;
-
-  const data_feed: any = {
-    data_feed_id: dataFeed.dataFeedId,
-    data_feed_name: dataFeed.dataFeedName,
-    data_feed_description: dataFeed.description,
-    schema_plugin: dataFeed.schemaPlugin || null,
-    mapper_plugin: dataFeed.mapperPlugin || null,
-    recipient_plugin: dataFeed.recipientPlugin || null,
-  };
 
   return {
     ...messageContent,
     _metadata: {
       timestamp: new Date().toISOString(),
-      environment: process.env.HOST_ENVIRONMENT,
       host_ip: process.env.HOST_IP,
       project: userMetadata['X-Amz-Meta-Project'] || null,
       use_case: userMetadata['X-Amz-Meta-Usecase'] || null,
@@ -48,7 +33,14 @@ async function enrichMessageWithMetadata(
         latitude: facility?.latitude || null,
         longitude: facility?.longitude || null,
       },
-      data_feed,
+      data_feed: {
+        data_feed_id: dataFeed.dataFeedId,
+        data_feed_name: dataFeed.dataFeedName,
+        schema_plugin: dataFeed.schemaPlugin || null,
+        mapper_plugin: dataFeed.mapperPlugin || null,
+        storage_plugin: dataFeed.storagePlugin || dataFeed.recipientPlugin || null,
+        outpost_plugin: dataFeed.outpostPlugin || null,
+      },
       message: {
         message_id: userMetadata['X-Amz-Meta-Messageid'] || null,
         message_datetime: userMetadata['X-Amz-Meta-Messagedatetime'] || null,
@@ -61,42 +53,23 @@ async function enrichMessageWithMetadata(
 
 function validateCanonicalStorageRequirements(messageContent: any) {
   const errors: string[] = [];
-
-  if (!messageContent.patient?.patient_guid) {
-    errors.push('patient.patient_guid is required');
-  }
-
-  if (!messageContent.lab_request?.request_id) {
-    errors.push('lab_request.request_id is required');
-  }
-
+  if (!messageContent.patient?.patient_guid) errors.push('patient.patient_guid is required');
+  if (!messageContent.lab_request?.request_id) errors.push('lab_request.request_id is required');
   if (messageContent.lab_request) {
-    if (!messageContent.lab_request.facility_concept_id) {
-      errors.push('lab_request.facility_concept_id is required');
-    }
-    if (!messageContent.lab_request.panel_concept_id) {
-      errors.push('lab_request.panel_concept_id is required');
-    }
-    if (!messageContent.lab_request.specimen_concept_id) {
-      errors.push('lab_request.specimen_concept_id is required');
-    }
+    if (!messageContent.lab_request.facility_concept_id) errors.push('lab_request.facility_concept_id is required');
+    if (!messageContent.lab_request.panel_concept_id) errors.push('lab_request.panel_concept_id is required');
+    if (!messageContent.lab_request.specimen_concept_id) errors.push('lab_request.specimen_concept_id is required');
   }
 
   const isolateIndices = new Set<number>();
-
   if (Array.isArray(messageContent.lab_results)) {
     messageContent.lab_results.forEach((result: any, index: number) => {
-      if (!result.observation_concept_id) {
-        errors.push(`lab_results[${index}].observation_concept_id is required`);
-      }
+      if (!result.observation_concept_id) errors.push(`lab_results[${index}].observation_concept_id is required`);
     });
   }
-
   if (Array.isArray(messageContent.isolates)) {
     messageContent.isolates.forEach((isolate: any, index: number) => {
-      if (!isolate.organism_concept_id) {
-        errors.push(`isolates[${index}].organism_concept_id is required`);
-      }
+      if (!isolate.organism_concept_id) errors.push(`isolates[${index}].organism_concept_id is required`);
       if (typeof isolate.isolate_index !== 'number') {
         errors.push(`isolates[${index}].isolate_index is required`);
       } else {
@@ -104,12 +77,9 @@ function validateCanonicalStorageRequirements(messageContent: any) {
       }
     });
   }
-
   if (Array.isArray(messageContent.susceptibility_tests)) {
     messageContent.susceptibility_tests.forEach((row: any, index: number) => {
-      if (!row.antibiotic_concept_id) {
-        errors.push(`susceptibility_tests[${index}].antibiotic_concept_id is required`);
-      }
+      if (!row.antibiotic_concept_id) errors.push(`susceptibility_tests[${index}].antibiotic_concept_id is required`);
       if (typeof row.isolate_index !== 'number') {
         errors.push(`susceptibility_tests[${index}].isolate_index is required`);
       } else if (!isolateIndices.has(row.isolate_index)) {
@@ -124,6 +94,7 @@ function validateCanonicalStorageRequirements(messageContent: any) {
       code: 'CANONICAL_STORAGE_VALIDATION_FAILED',
       message: 'Storage validation failed',
       details: { errors },
+      retryable: false,
     });
   }
 }
@@ -151,12 +122,12 @@ async function readProjectObjectAsString(bucketName: string, objectName: string)
   }
 }
 
-async function handleMessage(kafkaMessage: any) {
+export async function handleMessage(kafkaMessage: any) {
   try {
     const kafkaValue = JSON.parse(kafkaMessage.value);
     const key = kafkaMessage.key;
     const [projectId, dataKey, dataFeedId, objectName] = key.split('/');
-    const mapperName = `${dataKey}/${dataFeedId}/${objectName}`;
+    const mappedName = `${dataKey}/${dataFeedId}/${objectName}`;
 
     if (!projectId || !dataFeedId) {
       throw createStageError({
@@ -164,6 +135,7 @@ async function handleMessage(kafkaMessage: any) {
         code: 'INVALID_MESSAGE_KEY',
         message: 'Invalid Kafka message key format for storage stage',
         details: { key },
+        retryable: false,
       });
     }
 
@@ -174,28 +146,24 @@ async function handleMessage(kafkaMessage: any) {
         code: 'DATA_FEED_NOT_FOUND',
         message: `Data feed with ID ${dataFeedId} not found`,
         details: { data_feed_id: dataFeedId },
+        retryable: false,
       });
     }
 
-    const objectData = await readProjectObjectAsString(projectId, mapperName);
+    const objectData = await readProjectObjectAsString(projectId, mappedName);
     const messageContent = JSON.parse(objectData);
     validateCanonicalStorageRequirements(messageContent);
 
-    const enrichedMessage = await enrichMessageWithMetadata(
-      messageContent,
-      dataFeed.facilityId,
-      dataFeed,
-      kafkaMessage,
-    );
+    const enrichedMessage = await enrichMessageWithMetadata(messageContent, dataFeed.facilityId, dataFeed, kafkaMessage);
 
     const { plugin, selection } = await pluginService.resolvePluginSelection({
-      pluginID: dataFeed.recipientPluginId,
-      pluginType: 'recipient',
-      pluginVersion: dataFeed.recipientPlugin?.pluginVersion || null,
+      pluginID: dataFeed.storagePluginId || dataFeed.recipientPluginId,
+      pluginType: 'storage',
+      pluginVersion: dataFeed.storagePlugin?.pluginVersion || dataFeed.recipientPlugin?.pluginVersion || null,
     });
 
     const { plugin: runtimePlugin, pluginSource } = await runtimePluginService.readPluginSourceWithFallback(
-      'recipient',
+      'storage',
       plugin,
     );
 
@@ -207,17 +175,13 @@ async function handleMessage(kafkaMessage: any) {
 
     let pluginResult: any;
     try {
-      pluginResult = await runtimePluginService.executeRecipientPlugin(
-        pluginSource,
-        enrichedMessage,
-        runtimePlugin,
-      );
+      pluginResult = await runtimePluginService.executeProcessPlugin(pluginSource, enrichedMessage, runtimePlugin, 'storage');
     } catch (error: any) {
       throw createStageError({
         stage: 'storage',
-        code: 'RECIPIENT_PLUGIN_FAILED',
-        message: error.message || 'Recipient plugin execution failed',
-        details: {},
+        code: 'STORAGE_PLUGIN_FAILED',
+        message: error.message || 'Storage plugin execution failed',
+        details: { plugin_selection: { ...(enrichedMessage._plugin_selection || {}), storage: selection } },
         plugin: pluginMeta,
         cause: error,
       });
@@ -226,22 +190,20 @@ async function handleMessage(kafkaMessage: any) {
     if (!pluginResult || typeof pluginResult !== 'object') {
       throw createStageError({
         stage: 'storage',
-        code: 'INVALID_RECIPIENT_RESULT',
-        message: 'Recipient plugin returned an invalid processing result',
+        code: 'INVALID_STORAGE_RESULT',
+        message: 'Storage plugin returned an invalid processing result',
         details: { returned_type: typeof pluginResult },
         plugin: pluginMeta,
+        retryable: false,
       });
     }
 
     const processedMessage = {
       ...enrichedMessage,
-      _storage: {
-        ...pluginMeta,
-        processed_at: new Date().toISOString(),
-      },
+      _storage: { ...pluginMeta, processed_at: new Date().toISOString() },
       _plugin_selection: {
         ...(enrichedMessage._plugin_selection || {}),
-        recipient: {
+        storage: {
           ...selection,
           runtime_plugin_id: runtimePlugin.pluginId,
           runtime_plugin_name: runtimePlugin.pluginName,
@@ -272,10 +234,16 @@ async function handleMessage(kafkaMessage: any) {
       data: bodyData,
       messageMetadata,
     });
+
+    return {
+      projectId,
+      objectName: messageMetadata.FileName,
+      dataFeedId,
+      messageId: userMetadata['X-Amz-Meta-Messageid'] || null,
+      pluginSelection: processedMessage._plugin_selection,
+    };
   } catch (error: any) {
     logger.error({ error: error.message, stack: error.stack }, 'Storage stage failed');
     throw error;
   }
 }
-
-export { handleMessage };

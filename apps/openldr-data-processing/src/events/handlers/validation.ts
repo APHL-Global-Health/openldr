@@ -9,21 +9,7 @@ import { createStageError } from '../../lib/pipeline-error';
 
 function parseMessageByContentType(messageData: string, contentType?: string) {
   try {
-    if (contentType === 'application/json' || contentType === 'application/fhir+json') {
-      return JSON.parse(messageData);
-    }
-
-    if (
-      contentType === 'application/hl7-v2' ||
-      contentType === 'application/xml' ||
-      contentType === 'application/fhir+xml' ||
-      contentType === 'text/xml' ||
-      contentType === 'text/csv' ||
-      contentType === 'text/plain'
-    ) {
-      return messageData;
-    }
-
+    if (contentType === 'application/json' || contentType === 'application/fhir+json') return JSON.parse(messageData);
     try {
       return JSON.parse(messageData);
     } catch {
@@ -36,6 +22,7 @@ function parseMessageByContentType(messageData: string, contentType?: string) {
       message: `Failed to parse message content (${contentType || 'unknown'})`,
       details: { content_type: contentType || 'unknown' },
       cause: error,
+      retryable: false,
     });
   }
 }
@@ -63,7 +50,7 @@ async function readProjectObjectAsString(bucketName: string, objectName: string)
   }
 }
 
-async function handleMessage(kafkaMessage: any) {
+export async function handleMessage(kafkaMessage: any) {
   try {
     const kafkaValue = JSON.parse(kafkaMessage.value);
     const key = kafkaMessage.key;
@@ -75,6 +62,7 @@ async function handleMessage(kafkaMessage: any) {
         code: 'INVALID_MESSAGE_KEY',
         message: 'Invalid Kafka message key format for validation stage',
         details: { key },
+        retryable: false,
       });
     }
 
@@ -85,14 +73,15 @@ async function handleMessage(kafkaMessage: any) {
         code: 'DATA_FEED_NOT_FOUND',
         message: `Data feed with ID ${dataFeedId} not found`,
         details: { data_feed_id: dataFeedId },
+        retryable: false,
       });
     }
 
     const rawObjectName = `${dataKey}/${dataFeedId}/${objectName}`;
     const messageData = await readProjectObjectAsString(projectId, rawObjectName);
     const messageContentType =
-      kafkaValue?.Records?.[0]?.s3?.object?.userMetadata?.['Content-Type'] ||
-      kafkaValue?.Records?.[0]?.s3?.object?.contentType ||
+      kafkaValue?.Records?.[0]?.s3?.object?.userMetadata?.['X-Amz-Meta-Messagecontenttype'] ||
+      kafkaValue?.Records?.[0]?.s3?.object?.userMetadata?.['content-type'] ||
       'application/json';
 
     const messageContent = parseMessageByContentType(messageData, messageContentType);
@@ -108,11 +97,7 @@ async function handleMessage(kafkaMessage: any) {
       plugin,
     );
 
-    const result = await runtimePluginService.executeValidationPlugin(
-      pluginSource,
-      messageContent,
-      runtimePlugin,
-    );
+    const result = await runtimePluginService.executeValidationPlugin(pluginSource, messageContent, runtimePlugin);
 
     if (!result.ok) {
       throw createStageError({
@@ -124,6 +109,14 @@ async function handleMessage(kafkaMessage: any) {
           plugin_id: runtimePlugin.pluginId,
           plugin_name: runtimePlugin.pluginName,
           plugin_version: runtimePlugin.pluginVersion,
+          plugin_selection: {
+            schema: {
+              ...selection,
+              runtime_plugin_id: runtimePlugin.pluginId,
+              runtime_plugin_name: runtimePlugin.pluginName,
+              runtime_plugin_version: runtimePlugin.pluginVersion,
+            },
+          },
           validation_details: result.details || {},
         },
         plugin: {
@@ -131,17 +124,15 @@ async function handleMessage(kafkaMessage: any) {
           plugin_name: runtimePlugin.pluginName,
           plugin_version: runtimePlugin.pluginVersion,
         },
+        retryable: false,
       });
     }
 
     let processedMessage = result.converted;
-
     const conceptReferences = terminologyService.collectConceptReferences(processedMessage);
     if (conceptReferences.length > 0) {
       try {
-        await terminologyService.assertCodingSystemsExist(
-          conceptReferences.map((item) => item.reference.system_id),
-        );
+        await terminologyService.assertCodingSystemsExist(conceptReferences.map((item) => item.reference.system_id));
       } catch (error: any) {
         throw createStageError({
           stage: 'validation',
@@ -150,6 +141,14 @@ async function handleMessage(kafkaMessage: any) {
           details: {
             concept_reference_count: conceptReferences.length,
             referenced_systems: [...new Set(conceptReferences.map((item) => item.reference.system_id))],
+            plugin_selection: {
+              schema: {
+                ...selection,
+                runtime_plugin_id: runtimePlugin.pluginId,
+                runtime_plugin_name: runtimePlugin.pluginName,
+                runtime_plugin_version: runtimePlugin.pluginVersion,
+              },
+            },
           },
           plugin: {
             plugin_id: runtimePlugin.pluginId,
@@ -157,6 +156,7 @@ async function handleMessage(kafkaMessage: any) {
             plugin_version: runtimePlugin.pluginVersion,
           },
           cause: error,
+          retryable: false,
         });
       }
     }
@@ -183,8 +183,8 @@ async function handleMessage(kafkaMessage: any) {
 
     const bodyData = JSON.stringify(processedMessage, null, 2);
     const size = Buffer.byteLength(bodyData);
-
     const userMetadata = kafkaValue.Records[0].s3.object.userMetadata;
+
     const messageMetadata = utils.generateMessageMetadata({
       dataFeed,
       size,
@@ -207,5 +207,3 @@ async function handleMessage(kafkaMessage: any) {
     throw error;
   }
 }
-
-export { handleMessage };
