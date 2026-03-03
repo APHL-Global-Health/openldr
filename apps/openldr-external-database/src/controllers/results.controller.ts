@@ -7,7 +7,7 @@ const router = express.Router();
 router.post("/", async (req, res) => {
   try {
     const {
-      lab_requests_id,
+      request_id,
       obx_set_id,
       observation_code,
       observation_desc,
@@ -19,10 +19,10 @@ router.post("/", async (req, res) => {
     } = req.body;
 
     // Validate required fields
-    if (!lab_requests_id) {
+    if (!request_id) {
       return res.status(400).json({
         error: "Validation Error",
-        message: "lab_requests_id is required",
+        message: "request_id is required",
         status_code: 400,
         timestamp: new Date().toISOString(),
       });
@@ -30,8 +30,8 @@ router.post("/", async (req, res) => {
 
     // Check if the request exists
     const existingRequest = await query(
-      "SELECT lab_requests_id FROM lab_requests WHERE lab_requests_id = $1",
-      [lab_requests_id],
+      "SELECT request_id FROM lab_requests WHERE request_id = $1",
+      [request_id],
     );
 
     if (existingRequest.rows.length === 0) {
@@ -43,11 +43,11 @@ router.post("/", async (req, res) => {
       });
     }
 
-    // Check if result already exists (based on lab_requests_id and obx_set_id)
+    // Check if result already exists (based on request_id and obx_set_id)
     if (obx_set_id) {
       const existingResult = await query(
-        "SELECT lab_results_id, lab_requests_id, obx_set_id, observation_code, created_at FROM lab_results WHERE lab_requests_id = $1 AND obx_set_id = $2",
-        [lab_requests_id, obx_set_id],
+        "SELECT id, request_id, obx_set_id, observation_code, created_at FROM lab_results WHERE request_id = $1 AND obx_set_id = $2",
+        [request_id, obx_set_id],
       );
 
       if (existingResult.rows.length > 0) {
@@ -65,12 +65,12 @@ router.post("/", async (req, res) => {
     // Insert new result
     const result = await query(
       `INSERT INTO lab_results (
-        lab_requests_id, obx_set_id, observation_code, observation_desc,
+        request_id, obx_set_id, observation_code, observation_desc,
         rpt_result, rpt_units, rpt_flag, result_timestamp, result_data
       ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) 
-      RETURNING lab_results_id, lab_requests_id, observation_code, created_at`,
+      RETURNING id, request_id, observation_code, created_at`,
       [
-        lab_requests_id,
+        request_id,
         obx_set_id,
         observation_code,
         observation_desc,
@@ -103,7 +103,7 @@ router.post("/", async (req, res) => {
 router.get("/", async (req, res) => {
   try {
     const {
-      lab_requests_id,
+      request_id,
       observation_code,
       rpt_flag,
       limit = 50,
@@ -117,10 +117,10 @@ router.get("/", async (req, res) => {
     let params = [];
     let paramCount = 0;
 
-    if (lab_requests_id) {
+    if (request_id) {
       paramCount++;
-      whereConditions.push(`lr.lab_requests_id = $${paramCount}`);
-      params.push(lab_requests_id);
+      whereConditions.push(`lr.request_id = $${paramCount}`);
+      params.push(request_id);
     }
 
     if (observation_code) {
@@ -162,7 +162,7 @@ router.get("/", async (req, res) => {
     const countResult: any = await query(
       `SELECT COUNT(*) as total 
        FROM lab_results lres
-       JOIN lab_requests lr ON lres.lab_requests_id = lr.lab_requests_id
+       JOIN lab_requests lr ON lres.request_id = lr.request_id
        ${whereClause}`,
       params,
     );
@@ -172,13 +172,13 @@ router.get("/", async (req, res) => {
     const offsetNum = typeof offset === "string" ? parseInt(offset) : 0;
     const result: any = await query(
       `SELECT 
-        lres.lab_results_id, lres.lab_requests_id, lres.obx_set_id,
+        lres.id, lres.request_id, lres.obx_set_id,
         lres.observation_code, lres.observation_desc, lres.rpt_result,
         lres.rpt_units, lres.rpt_flag, lres.result_timestamp,
         lres.created_at,
         lr.request_id, lr.facility_code, lr.panel_code
       FROM lab_results lres
-      JOIN lab_requests lr ON lres.lab_requests_id = lr.lab_requests_id
+      JOIN lab_requests lr ON lres.request_id = lr.request_id
       ${whereClause}
       ORDER BY lres.${sortField} ${sortDirection}
       LIMIT $${paramCount + 1} OFFSET $${paramCount + 2}`,
@@ -214,14 +214,14 @@ router.get("/:id", async (req, res) => {
 
     const result = await query(
       `SELECT 
-        lres.lab_results_id, lres.lab_requests_id, lres.obx_set_id,
+        lres.id, lres.request_id, lres.obx_set_id,
         lres.observation_code, lres.observation_desc, lres.rpt_result,
         lres.rpt_units, lres.rpt_flag, lres.result_timestamp,
         lres.result_data, lres.created_at,
         lr.request_id, lr.facility_code, lr.panel_code, lr.panel_desc
       FROM lab_results lres
-      JOIN lab_requests lr ON lres.lab_requests_id = lr.lab_requests_id
-      WHERE lres.lab_results_id = $1`,
+      JOIN lab_requests lr ON lres.request_id = lr.request_id
+      WHERE lres.id = $1`,
       [id],
     );
 
@@ -268,7 +268,7 @@ router.put("/:id", async (req, res) => {
 
     // Check if result exists
     const existingResult = await query(
-      "SELECT lab_results_id FROM lab_results WHERE lab_results_id = $1",
+      "SELECT id FROM lab_results WHERE id = $1",
       [id],
     );
 
@@ -356,8 +356,8 @@ router.put("/:id", async (req, res) => {
     const result = await query(
       `UPDATE lab_results 
        SET ${updateFields.join(", ")}
-       WHERE lab_results_id = $${paramCount}
-       RETURNING lab_results_id, lab_requests_id, observation_code`,
+       WHERE id = $${paramCount}
+       RETURNING id, request_id, observation_code`,
       params,
     );
 
@@ -385,7 +385,7 @@ router.delete("/:id", async (req, res) => {
 
     // Check if result exists
     const existingResult = await query(
-      "SELECT lab_results_id FROM lab_results WHERE lab_results_id = $1",
+      "SELECT id FROM lab_results WHERE id = $1",
       [id],
     );
 
@@ -399,7 +399,7 @@ router.delete("/:id", async (req, res) => {
     }
 
     // Delete the result
-    await query("DELETE FROM lab_results WHERE lab_results_id = $1", [id]);
+    await query("DELETE FROM lab_results WHERE id = $1", [id]);
 
     res.json({
       message: "Lab result deleted successfully",

@@ -183,13 +183,13 @@ async function process(messageContent) {
 
           const requestResponse = await apiCall('/api/v1/requests', 'POST', requestData);
           if (requestResponse.success && requestResponse.data && requestResponse.data.data) {
-            response.record_ids.requests.push(requestResponse.data.data.lab_requests_id);
+            response.record_ids.requests.push(requestResponse.data.data.request_id);
                         
             for(let y=0; y<tests.length; y++){
               const test = tests[y];
               
               const resultData = {
-                    lab_requests_id: requestResponse.data.data.lab_requests_id,
+                    request_id: requestResponse.data.data.request_id,
                     obx_set_id: y+1, // Default to 1 for manual entry
                     observation_code: test.Code,
                     observation_desc: test.Description,
@@ -214,7 +214,7 @@ async function process(messageContent) {
 
               const resultResponse = await apiCall('/api/v1/results', 'POST', resultData);
               if (resultResponse.success && resultResponse.data && resultResponse.data.data) {
-                response.record_ids.results.push(resultResponse.data.data.lab_results_id);
+                response.record_ids.results.push(resultResponse.data.data.id);
               }
               response.processed.results++;
             }

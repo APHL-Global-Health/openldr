@@ -171,7 +171,7 @@ export async function getKPI(
       ext,
       `SELECT COUNT(*)::int AS count
        FROM lab_results lr
-       JOIN lab_requests lrq ON lr.lab_requests_id = lrq.lab_requests_id
+       JOIN lab_requests lrq ON lr.request_id = lrq.id
        ${resWhere}`,
       resParams,
     ),
@@ -223,7 +223,7 @@ export async function getLabActivity(
       `SELECT date_trunc('${truncUnit}', lrq.specimen_datetime) AS bucket,
               COUNT(*)::int AS results
        FROM lab_results lr
-       JOIN lab_requests lrq ON lr.lab_requests_id = lrq.lab_requests_id
+       JOIN lab_requests lrq ON lr.request_id = lrq.id
        ${resW}
        GROUP BY bucket ORDER BY bucket`,
       resParams,
@@ -353,7 +353,7 @@ export async function getResultFlagDistribution(
       COALESCE(UPPER(TRIM(lr.rpt_flag)), 'N') AS flag,
       COUNT(*)::int AS count
     FROM lab_results lr
-    JOIN lab_requests lrq ON lr.lab_requests_id = lrq.lab_requests_id
+    JOIN lab_requests lrq ON lr.request_id = lrq.id
     ${w}
     GROUP BY flag
     ORDER BY count DESC
@@ -384,15 +384,16 @@ export async function getFacilityActivity(
 
   const sql = `
     SELECT
-      lrq.facility_code  AS "facilityCode",
-      COALESCE(lrq.facility_name, lrq.facility_code) AS "facilityName",
-      COUNT(DISTINCT lrq.lab_requests_id)::int  AS "requestCount",
-      COUNT(lr.lab_results_id)::int             AS "resultCount",
+      fs.facility_code  AS "facilityCode",
+      COALESCE(fs.facility_name, fs.facility_code) AS "facilityName",
+      COUNT(DISTINCT lrq.id)::int  AS "requestCount",
+      COUNT(lr.id)::int             AS "resultCount",
       COUNT(DISTINCT lrq.patient_id)::int       AS "patientCount"
     FROM lab_requests lrq
-    LEFT JOIN lab_results lr ON lr.lab_requests_id = lrq.lab_requests_id
+    LEFT JOIN lab_results lr ON lr.request_id = lrq.id
+    LEFT JOIN facilities fs ON fs.id = lrq.facility_id
     ${w}
-    GROUP BY lrq.facility_code, lrq.facility_name
+    GROUP BY fs.facility_code, fs.facility_name
     ORDER BY "requestCount" DESC
     LIMIT 20
   `;
@@ -479,7 +480,7 @@ export async function getPipelineCounts(
 // Recent Lab Results (openldr_external)
 //
 // Columns used:
-//   lab_results: lab_results_id, lab_requests_id, observation_code,
+//   lab_results: id, request_id, observation_code,
 //     observation_desc, rpt_result, rpt_units, rpt_flag, result_timestamp
 //   lab_requests: request_id, facility_code, facility_name, patient_id,
 //     panel_code, panel_desc, specimen_datetime
@@ -496,9 +497,9 @@ export async function getRecentLabResults(
 
   const sql = `
     SELECT
-      lr.lab_results_id                                    AS "labResultsId",
+      lr.id                                    AS "labResultsId",
       lrq.request_id                                       AS "requestId",
-      COALESCE(lrq.facility_name, lrq.facility_code)       AS "facilityName",
+      COALESCE(fs.facility_name, fs.facility_code)       AS "facilityName",
       COALESCE(lrq.patient_id, '')                          AS "patientId",
       COALESCE(lrq.panel_desc, lrq.panel_code, '')          AS "panelDesc",
       COALESCE(lr.observation_desc, lr.observation_code, '') AS "observationDesc",
@@ -507,7 +508,8 @@ export async function getRecentLabResults(
       COALESCE(lr.rpt_flag, '')                              AS "rptFlag",
       COALESCE(lr.result_timestamp, lrq.specimen_datetime)   AS "resultTimestamp"
     FROM lab_results lr
-    JOIN lab_requests lrq ON lr.lab_requests_id = lrq.lab_requests_id
+    JOIN lab_requests lrq ON lr.request_id = lrq.id
+    LEFT JOIN facilities fs ON fs.id = lrq.facility_id
     ${w}
     ORDER BY lr.result_timestamp DESC NULLS LAST
     LIMIT ${safeLimit}
@@ -551,7 +553,9 @@ export async function getServiceHealth(): Promise<ServiceHealthResult[]> {
   // MinIO
   const minioUrl = isDev
     ? `http://localhost:${process.env.MINIO_API_PORT || 9000}/minio/health/live`
-    : `http://${process.env.MINIO_HOSTNAME}:${process.env.MINIO_API_PORT || 9000}/minio/health/live`;
+    : `http://${process.env.MINIO_HOSTNAME}:${
+        process.env.MINIO_API_PORT || 9000
+      }/minio/health/live`;
   const minioPing = await probeService(minioUrl);
   results.push({
     name: "minio",
@@ -588,8 +592,8 @@ export async function getServiceHealth(): Promise<ServiceHealthResult[]> {
       status: kcPing.ok
         ? "healthy"
         : kcPing.responseTimeMs > 3000
-          ? "degraded"
-          : "down",
+        ? "degraded"
+        : "down",
       responseTimeMs: kcPing.responseTimeMs,
     });
   }
@@ -615,7 +619,9 @@ export async function getServiceHealth(): Promise<ServiceHealthResult[]> {
   ) {
     const dpBase = isDev
       ? process.env.DATA_PROCESSING_PUBLIC_URL || "http://localhost:1003"
-      : `http://${process.env.DATA_PROCESSING_HOSTNAME}:${process.env.DATA_PROCESSING_PORT || 1003}`;
+      : `http://${process.env.DATA_PROCESSING_HOSTNAME}:${
+          process.env.DATA_PROCESSING_PORT || 1003
+        }`;
     const dpPing = await probeService(`${dpBase}/health`);
     results.push({
       name: "data-processing",

@@ -32,7 +32,7 @@ router.post("/", async (req, res) => {
 
     // Check if request already exists
     const existingRequest = await query(
-      "SELECT lab_requests_id, request_id, facility_code, created_at, obr_set_id FROM lab_requests WHERE request_id = $1 AND facility_code = $2 AND obr_set_id = $3",
+      "SELECT request_id, request_id, facility_code, created_at, obr_set_id FROM lab_requests WHERE request_id = $1 AND facility_code = $2 AND obr_set_id = $3",
       [request_id, facility_code, obr_set_id],
     );
 
@@ -53,7 +53,7 @@ router.post("/", async (req, res) => {
         request_id, facility_code, facility_id, facility_name, patient_id,
         obr_set_id, panel_code, panel_desc, specimen_datetime, request_data, mappings
       ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) 
-      RETURNING lab_requests_id, request_id, facility_code, created_at`,
+      RETURNING request_id, request_id, facility_code, created_at`,
       [
         request_id,
         facility_code,
@@ -158,7 +158,7 @@ router.get("/", async (req, res) => {
     const offsetNum = typeof offset === "string" ? parseInt(offset) : 0;
     const result: any = await query(
       `SELECT 
-        lab_requests_id, request_id, facility_code, facility_id, facility_name,
+        request_id, request_id, facility_code, facility_id, facility_name,
         patient_id, obr_set_id, panel_code, panel_desc, specimen_datetime,
         created_at, updated_at
       FROM lab_requests 
@@ -197,11 +197,11 @@ router.get("/:id", async (req, res) => {
 
     const result = await query(
       `SELECT 
-        lab_requests_id, request_id, facility_code, facility_id, facility_name,
+        request_id, request_id, facility_code, facility_id, facility_name,
         patient_id, obr_set_id, panel_code, panel_desc, specimen_datetime, request_data,
         mappings, created_at, updated_at
       FROM lab_requests 
-      WHERE lab_requests_id = $1`,
+      WHERE request_id = $1`,
       [id],
     );
 
@@ -248,7 +248,7 @@ router.put("/:id", async (req, res) => {
 
     // Check if request exists
     const existingRequest = await query(
-      "SELECT lab_requests_id FROM lab_requests WHERE lab_requests_id = $1",
+      "SELECT request_id FROM lab_requests WHERE request_id = $1",
       [id],
     );
 
@@ -336,8 +336,8 @@ router.put("/:id", async (req, res) => {
     const result = await query(
       `UPDATE lab_requests 
        SET ${updateFields.join(", ")}, updated_at = NOW()
-       WHERE lab_requests_id = $${paramCount}
-       RETURNING lab_requests_id, request_id, facility_code, updated_at`,
+       WHERE request_id = $${paramCount}
+       RETURNING request_id, request_id, facility_code, updated_at`,
       params,
     );
 
@@ -365,7 +365,7 @@ router.delete("/:id", async (req, res) => {
 
     // Check if request exists
     const existingRequest = await query(
-      "SELECT lab_requests_id FROM lab_requests WHERE lab_requests_id = $1",
+      "SELECT request_id FROM lab_requests WHERE request_id = $1",
       [id],
     );
 
@@ -384,15 +384,12 @@ router.delete("/:id", async (req, res) => {
       await client.query("BEGIN");
 
       // Delete related results first
-      await client.query("DELETE FROM lab_results WHERE lab_requests_id = $1", [
-        id,
-      ]);
+      await client.query("DELETE FROM lab_results WHERE request_id = $1", [id]);
 
       // Delete the request
-      await client.query(
-        "DELETE FROM lab_requests WHERE lab_requests_id = $1",
-        [id],
-      );
+      await client.query("DELETE FROM lab_requests WHERE request_id = $1", [
+        id,
+      ]);
 
       await client.query("COMMIT");
 

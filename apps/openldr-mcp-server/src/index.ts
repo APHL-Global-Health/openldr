@@ -612,7 +612,7 @@ const getServer = () => {
             // First, find lab_requests by request_id
             const requestsQuery = `
       SELECT 
-        lr.lab_requests_id,
+        lr.request_id,
         lr.request_id,
         lr.facility_code,
         lr.facility_name,
@@ -635,12 +635,12 @@ const getServer = () => {
 
             // If request found, get associated lab_results
             if (requestsResult.rows.length > 0) {
-              const labRequestsId = requestsResult.rows[0].lab_requests_id;
+              const labRequestsId = requestsResult.rows[0].id;
 
               const resultsQuery = `
         SELECT 
-          lr.lab_results_id,
-          lr.lab_requests_id,
+          lr.id,
+          lr.request_id,
           lr.obx_set_id,
           lr.observation_code,
           lr.observation_desc,
@@ -651,7 +651,7 @@ const getServer = () => {
           lr.created_at,
           lr.updated_at
         FROM lab_results lr
-        WHERE lr.lab_requests_id = $1
+        WHERE lr.request_id = $1
       `;
 
               const resultsResult = await externalDb!.query(resultsQuery, [
@@ -1077,7 +1077,7 @@ const getServer = () => {
 
             // Check if exists in database
             const dbQuery = `
-            SELECT lab_requests_id, request_id, created_at
+            SELECT request_id, request_id, created_at
             FROM lab_requests
             WHERE request_id = $1
             LIMIT 1
@@ -1232,7 +1232,7 @@ const getServer = () => {
 
         const query = `
         SELECT 
-          lab_requests_id,
+          request_id,
           request_id,
           facility_code,
           facility_name,

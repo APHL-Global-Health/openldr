@@ -101,7 +101,7 @@ router.get("/requests", async (req, res) => {
     const offsetNum = typeof offset === "string" ? parseInt(offset) : 0;
     const result: any = await query(
       `SELECT 
-        lab_requests_id, request_id, facility_code, facility_name,
+        request_id, request_id, facility_code, facility_name,
         patient_id, obr_set_id, panel_code, panel_desc, specimen_datetime,
         status, created_at
       FROM lab_requests 
@@ -190,7 +190,7 @@ router.get("/results", async (req, res) => {
     const countResult: any = await query(
       `SELECT COUNT(*) as total 
        FROM lab_results lres
-       JOIN lab_requests lr ON lres.lab_requests_id = lr.lab_requests_id
+       JOIN lab_requests lr ON lres.request_id = lr.request_id
        ${whereClause}`,
       params,
     );
@@ -200,11 +200,11 @@ router.get("/results", async (req, res) => {
     const offsetNum = typeof offset === "string" ? parseInt(offset) : 0;
     const result: any = await query(
       `SELECT 
-        lres.lab_results_id, lres.observation_code, lres.observation_desc,
+        lres.id, lres.observation_code, lres.observation_desc,
         lres.rpt_result, lres.rpt_units, lres.rpt_flag, lres.result_timestamp,
         lr.request_id, lr.facility_code, lr.panel_code, lr.patient_id
       FROM lab_results lres
-      JOIN lab_requests lr ON lres.lab_requests_id = lr.lab_requests_id
+      JOIN lab_requests lr ON lres.request_id = lr.request_id
       ${whereClause}
       ORDER BY lres.result_timestamp DESC
       LIMIT $${paramCount + 1} OFFSET $${paramCount + 2}`,
@@ -273,7 +273,7 @@ router.get("/abnormal", async (req, res) => {
     const countResult: any = await query(
       `SELECT COUNT(*) as total 
        FROM lab_results lres
-       JOIN lab_requests lr ON lres.lab_requests_id = lr.lab_requests_id
+       JOIN lab_requests lr ON lres.request_id = lr.request_id
        ${whereClause}`,
       params,
     );
@@ -283,11 +283,11 @@ router.get("/abnormal", async (req, res) => {
     const offsetNum = typeof offset === "string" ? parseInt(offset) : 0;
     const result: any = await query(
       `SELECT 
-        lres.lab_results_id, lres.observation_code, lres.observation_desc,
+        lres.id, lres.observation_code, lres.observation_desc,
         lres.rpt_result, lres.rpt_units, lres.rpt_flag, lres.result_timestamp,
         lr.request_id, lr.facility_code, lr.panel_code, lr.patient_id
       FROM lab_results lres
-      JOIN lab_requests lr ON lres.lab_requests_id = lr.lab_requests_id
+      JOIN lab_requests lr ON lres.request_id = lr.request_id
       ${whereClause}
       ORDER BY lres.result_timestamp DESC
       LIMIT $${paramCount + 1} OFFSET $${paramCount + 2}`,
@@ -383,7 +383,7 @@ router.get("/ocm", async (req, res) => {
     const offsetNum = typeof offset === "string" ? parseInt(offset) : 0;
     const result: any = await query(
       `SELECT 
-        lab_requests_id, request_id, facility_code, facility_name,
+        request_id, request_id, facility_code, facility_name,
         patient_id, obr_set_id, panel_code, panel_desc, specimen_datetime,
         mappings, status, created_at
       FROM lab_requests 
@@ -491,7 +491,7 @@ router.get("/trends", async (req, res) => {
         COUNT(CASE WHEN lres.rpt_flag = 'H' THEN 1 END) as high_results,
         COUNT(CASE WHEN lres.rpt_flag = 'L' THEN 1 END) as low_results
       FROM lab_results lres
-      JOIN lab_requests lr ON lres.lab_requests_id = lr.lab_requests_id
+      JOIN lab_requests lr ON lres.request_id = lr.request_id
       ${whereClause}
       GROUP BY ${dateGroup}
       ORDER BY period ASC`,
@@ -566,7 +566,7 @@ router.get("/patient-history", async (req, res) => {
     const countResult: any = await query(
       `SELECT COUNT(*) as total 
        FROM lab_results lres
-       JOIN lab_requests lr ON lres.lab_requests_id = lr.lab_requests_id
+       JOIN lab_requests lr ON lres.request_id = lr.request_id
        ${whereClause}`,
       params,
     );
@@ -590,7 +590,7 @@ router.get("/patient-history", async (req, res) => {
         lres.result_data,
         lr.request_data
       FROM lab_results lres
-      JOIN lab_requests lr ON lres.lab_requests_id = lr.lab_requests_id
+      JOIN lab_requests lr ON lres.request_id = lr.request_id
       ${whereClause}
       ORDER BY lres.result_timestamp DESC
       LIMIT $${paramCount + 1} OFFSET $${paramCount + 2}`,
@@ -673,14 +673,14 @@ router.get("/facility-comparison", async (req, res) => {
         lr.facility_name,
         COUNT(DISTINCT lr.request_id) as total_requests,
         COUNT(DISTINCT lr.patient_id) as unique_patients,
-        COUNT(lres.lab_results_id) as total_results,
+        COUNT(lres.id) as total_results,
         COUNT(CASE WHEN lres.rpt_flag IN ('H', 'L', 'A', 'R') THEN 1 END) as abnormal_results,
         ROUND(
-          COUNT(CASE WHEN lres.rpt_flag IN ('H', 'L', 'A', 'R') THEN 1 END) * 100.0 / COUNT(lres.lab_results_id), 
+          COUNT(CASE WHEN lres.rpt_flag IN ('H', 'L', 'A', 'R') THEN 1 END) * 100.0 / COUNT(lres.id), 
           2
         ) as abnormal_percentage
       FROM lab_results lres
-      JOIN lab_requests lr ON lres.lab_requests_id = lr.lab_requests_id
+      JOIN lab_requests lr ON lres.request_id = lr.request_id
       ${whereClause}
       GROUP BY lr.facility_code, lr.facility_name
       ORDER BY total_requests DESC`,

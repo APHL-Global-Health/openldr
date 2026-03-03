@@ -82,7 +82,7 @@ You help users understand the health and status of their laboratory data process
 
 ## Important Notes
 - Topics are named: raw-inbound, mapped-inbound, validated-inbound, processed-inbound
-- Database tables: lab_requests (links via request_id), lab_results (links via lab_requests_id)
+- Database tables: lab_requests (links via request_id), lab_results (links via request_id)
 - RequestID extraction from Kafka messages may be incomplete - this is known
 - Kafka queries can timeout if messages are very large - use smaller limits if this happens
 

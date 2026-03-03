@@ -121,11 +121,11 @@ function extractRequest(hl7Data) {
 
 /**
  * Extract lab result data for API from enhanced HL7 format
- * Only requires: lab_requests_id (others are optional)
+ * Only requires: request_id (others are optional)
  */
 function extractResult(resultData, labRequestsId) {
   return {
-    lab_requests_id: labRequestsId,
+    request_id: labRequestsId,
     obx_set_id: resultData.OBXSetID,
     observation_code: resultData.ObservationCode,
     observation_desc: resultData.ObservationDesc,
@@ -182,24 +182,24 @@ async function process(messageContent) {
       const requestData = extractRequest(messageContent);
       const requestResponse = await apiCall('/api/v1/requests', 'POST', requestData);
       if (requestResponse.success && requestResponse.data && requestResponse.data.data) {
-        result.record_ids.requests.push(requestResponse.data.data.lab_requests_id);
-        labRequestsId = requestResponse.data.data.lab_requests_id;
+        result.record_ids.requests.push(requestResponse.data.data.request_id);
+        labRequestsId = requestResponse.data.data.request_id;
       }
       result.processed.requests++;
     }
 
-    // Store results if they exist and we have a lab_requests_id
+    // Store results if they exist and we have a request_id
     if (messageContent.labresults && Array.isArray(messageContent.labresults) && labRequestsId) {
       for (const resultItem of messageContent.labresults) {
         const resultData = extractResult(resultItem, labRequestsId);
         const resultResponse = await apiCall('/api/v1/results', 'POST', resultData);
         if (resultResponse.success && resultResponse.data && resultResponse.data.data) {
-          result.record_ids.results.push(resultResponse.data.data.lab_results_id);
+          result.record_ids.results.push(resultResponse.data.data.id);
         }
         result.processed.results++;
       }
     } else if (messageContent.labresults && Array.isArray(messageContent.labresults) && !labRequestsId) {
-      result.errors.push('Cannot store results: lab_requests_id not available');
+      result.errors.push('Cannot store results: request_id not available');
     }
 
     // Add processing completion timestamp

@@ -50,9 +50,9 @@ const TABLE_DEFS: Record<string, TableDef> = {
   },
   lab_requests: {
     table: "lab_requests",
-    primaryKey: "lab_requests_id",
+    primaryKey: "request_id",
     topLevelColumns: new Set([
-      "lab_requests_id",
+      "request_id",
       "request_id",
       "facility_code",
       "facility_id",
@@ -70,10 +70,10 @@ const TABLE_DEFS: Record<string, TableDef> = {
   },
   lab_results: {
     table: "lab_results",
-    primaryKey: "lab_results_id",
+    primaryKey: "id",
     topLevelColumns: new Set([
-      "lab_results_id",
-      "lab_requests_id",
+      "id",
+      "request_id",
       "obx_set_id",
       "observation_code",
       "observation_desc",

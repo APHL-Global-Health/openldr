@@ -153,11 +153,11 @@ function extractRequest(manualData) {
 
 /**
  * Extract lab result data for API from manual entry format
- * Only requires: lab_requests_id (others are optional)
+ * Only requires: request_id (others are optional)
  */
 function extractResult(manualData, labRequestsId) {
   return {
-    lab_requests_id: labRequestsId,
+    request_id: labRequestsId,
     obx_set_id: 1, // Default to 1 for manual entry
     observation_code: manualData.observationCode,
     observation_desc: manualData.observationDescription || manualData.observationCode,
@@ -216,22 +216,22 @@ async function process(messageContent) {
       const requestData = extractRequest(messageContent);
       const requestResponse = await apiCall('/api/v1/requests', 'POST', requestData);
       if (requestResponse.success && requestResponse.data && requestResponse.data.data) {
-        result.record_ids.requests.push(requestResponse.data.data.lab_requests_id);
-        labRequestsId = requestResponse.data.data.lab_requests_id;
+        result.record_ids.requests.push(requestResponse.data.data.request_id);
+        labRequestsId = requestResponse.data.data.request_id;
       }
       result.processed.requests++;
     }
 
-    // Store result if we have results and a lab_requests_id
+    // Store result if we have results and a request_id
     if (messageContent.results && labRequestsId) {
       const resultData = extractResult(messageContent, labRequestsId);
       const resultResponse = await apiCall('/api/v1/results', 'POST', resultData);
       if (resultResponse.success && resultResponse.data && resultResponse.data.data) {
-        result.record_ids.results.push(resultResponse.data.data.lab_results_id);
+        result.record_ids.results.push(resultResponse.data.data.id);
       }
       result.processed.results++;
     } else if (messageContent.results && !labRequestsId) {
-      result.errors.push('Cannot store results: lab_requests_id not available');
+      result.errors.push('Cannot store results: request_id not available');
     }
 
     // Add processing completion timestamp
