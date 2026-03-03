@@ -126,6 +126,7 @@ COMMENT ON COLUMN concept_mappings.to_concept_id IS 'Set when target concept exi
 
 CREATE TABLE facilities (
     id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    facility_concept_id  UUID NULL REFERENCES concepts(id),
     facility_code   VARCHAR(50)  NOT NULL UNIQUE,    -- the code used in incoming messages
     facility_name   VARCHAR(255) NOT NULL,
     facility_type   VARCHAR(50),                     -- 'hospital', 'national_ref', 'district', 'private', 'research'
@@ -145,6 +146,7 @@ CREATE TABLE facilities (
 
 CREATE INDEX idx_facilities_country  ON facilities(country_code);
 CREATE INDEX idx_facilities_type     ON facilities(facility_type);
+CREATE INDEX idx_facilities_facility_concept_id ON facilities(facility_concept_id);
 
 
 -- ############################################################################

@@ -4,6 +4,7 @@ import * as dataFeedService from '../../services/datafeed.service';
 import * as pluginService from '../../services/plugin.service';
 import * as runtimePluginService from '../../services/runtime-plugin.service';
 import * as facilityService from '../../services/facility.service';
+import * as externalPersistenceService from '../../services/external-persistence.service';
 import { logger } from '../../lib/logger';
 import { createStageError } from '../../lib/pipeline-error';
 
@@ -228,10 +229,47 @@ export async function handleMessage(kafkaMessage: any) {
       fileFormat: '.json',
     });
 
+    let persistenceResult: any;
+    try {
+      persistenceResult = await externalPersistenceService.persistProcessedMessageToExternal({
+        message: processedMessage,
+        dataFeed,
+        messageMetadata,
+        kafkaKey: key,
+        processedBody: bodyData,
+      });
+    } catch (error: any) {
+      throw createStageError({
+        stage: 'storage',
+        code: 'EXTERNAL_PERSISTENCE_FAILED',
+        message: 'Failed to persist processed message to openldr_external',
+        details: {
+          data_feed_id: dataFeedId,
+          target_file: messageMetadata.FileName,
+        },
+        plugin: pluginMeta,
+        cause: error,
+      });
+    }
+
+    processedMessage._processing_results = {
+      ...(processedMessage._processing_results || {}),
+      record_ids: {
+        ...(processedMessage._processing_results?.record_ids || {}),
+        ...(persistenceResult?.recordIds || {}),
+      },
+      notes: [
+        ...((processedMessage._processing_results?.notes || []) as string[]),
+        'Persisted to openldr_external before processed MinIO write',
+      ],
+    };
+
+    const persistedBodyData = JSON.stringify(processedMessage, null, 2);
+
     await minioUtil.putObject({
       bucketName: projectId,
       objectName: messageMetadata.FileName,
-      data: bodyData,
+      data: persistedBodyData,
       messageMetadata,
     });
 
@@ -241,6 +279,7 @@ export async function handleMessage(kafkaMessage: any) {
       dataFeedId,
       messageId: userMetadata['X-Amz-Meta-Messageid'] || null,
       pluginSelection: processedMessage._plugin_selection,
+      persistence: persistenceResult,
     };
   } catch (error: any) {
     logger.error({ error: error.message, stack: error.stack }, 'Storage stage failed');
