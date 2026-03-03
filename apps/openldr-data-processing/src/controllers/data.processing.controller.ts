@@ -180,6 +180,19 @@ router.post("/process-feed", async (req, res) => {
       messageMetadata: messageMetadata,
     });
 
+    await messageTrackingService.startRun({
+      messageId: messageMetadata.MessageId,
+      projectId: projectId,
+      dataFeedId: dataFeedId,
+      userId: userId,
+      rawObjectPath: `${bucket}/${messageMetadata.FileName}`,
+      metadata: {
+        contentType,
+        size,
+        bucket,
+      },
+    });
+
     // return a 200 status with the messageId
     res.status(200).json({
       message: "Message successfully processed.",
