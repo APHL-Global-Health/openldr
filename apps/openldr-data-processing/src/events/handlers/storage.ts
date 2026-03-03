@@ -5,6 +5,7 @@ import * as pluginService from '../../services/plugin.service';
 import * as runtimePluginService from '../../services/runtime-plugin.service';
 import * as facilityService from '../../services/facility.service';
 import { logger } from '../../lib/logger';
+import { createStageError } from '../../lib/pipeline-error';
 
 async function enrichMessageWithMetadata(
   messageContent: any,
@@ -61,6 +62,14 @@ async function enrichMessageWithMetadata(
 function validateCanonicalStorageRequirements(messageContent: any) {
   const errors: string[] = [];
 
+  if (!messageContent.patient?.patient_guid) {
+    errors.push('patient.patient_guid is required');
+  }
+
+  if (!messageContent.lab_request?.request_id) {
+    errors.push('lab_request.request_id is required');
+  }
+
   if (messageContent.lab_request) {
     if (!messageContent.lab_request.facility_concept_id) {
       errors.push('lab_request.facility_concept_id is required');
@@ -68,7 +77,12 @@ function validateCanonicalStorageRequirements(messageContent: any) {
     if (!messageContent.lab_request.panel_concept_id) {
       errors.push('lab_request.panel_concept_id is required');
     }
+    if (!messageContent.lab_request.specimen_concept_id) {
+      errors.push('lab_request.specimen_concept_id is required');
+    }
   }
+
+  const isolateIndices = new Set<number>();
 
   if (Array.isArray(messageContent.lab_results)) {
     messageContent.lab_results.forEach((result: any, index: number) => {
@@ -83,6 +97,11 @@ function validateCanonicalStorageRequirements(messageContent: any) {
       if (!isolate.organism_concept_id) {
         errors.push(`isolates[${index}].organism_concept_id is required`);
       }
+      if (typeof isolate.isolate_index !== 'number') {
+        errors.push(`isolates[${index}].isolate_index is required`);
+      } else {
+        isolateIndices.add(isolate.isolate_index);
+      }
     });
   }
 
@@ -91,25 +110,45 @@ function validateCanonicalStorageRequirements(messageContent: any) {
       if (!row.antibiotic_concept_id) {
         errors.push(`susceptibility_tests[${index}].antibiotic_concept_id is required`);
       }
+      if (typeof row.isolate_index !== 'number') {
+        errors.push(`susceptibility_tests[${index}].isolate_index is required`);
+      } else if (!isolateIndices.has(row.isolate_index)) {
+        errors.push(`susceptibility_tests[${index}].isolate_index ${row.isolate_index} does not reference an isolate`);
+      }
     });
   }
 
   if (errors.length > 0) {
-    throw new Error(`Storage validation failed: ${errors.join('; ')}`);
+    throw createStageError({
+      stage: 'storage',
+      code: 'CANONICAL_STORAGE_VALIDATION_FAILED',
+      message: 'Storage validation failed',
+      details: { errors },
+    });
   }
 }
 
 async function readProjectObjectAsString(bucketName: string, objectName: string) {
-  const objectStream = await minioUtil.getObject({ bucketName, objectName });
-  let objectData = '';
-  await new Promise<void>((resolve, reject) => {
-    objectStream.on('data', (chunk: any) => {
-      objectData += chunk.toString();
+  try {
+    const objectStream = await minioUtil.getObject({ bucketName, objectName });
+    let objectData = '';
+    await new Promise<void>((resolve, reject) => {
+      objectStream.on('data', (chunk: any) => {
+        objectData += chunk.toString();
+      });
+      objectStream.on('end', () => resolve());
+      objectStream.on('error', (err: any) => reject(err));
     });
-    objectStream.on('end', () => resolve());
-    objectStream.on('error', (err: any) => reject(new Error(`Failed to read object stream: ${err.message}`)));
-  });
-  return objectData;
+    return objectData;
+  } catch (error: any) {
+    throw createStageError({
+      stage: 'storage',
+      code: 'SOURCE_OBJECT_READ_FAILED',
+      message: 'Failed to read mapped object from MinIO',
+      details: { bucket_name: bucketName, object_name: objectName },
+      cause: error,
+    });
+  }
 }
 
 async function handleMessage(kafkaMessage: any) {
@@ -120,12 +159,22 @@ async function handleMessage(kafkaMessage: any) {
     const mapperName = `${dataKey}/${dataFeedId}/${objectName}`;
 
     if (!projectId || !dataFeedId) {
-      throw new Error(`Invalid message key format: ${key}`);
+      throw createStageError({
+        stage: 'storage',
+        code: 'INVALID_MESSAGE_KEY',
+        message: 'Invalid Kafka message key format for storage stage',
+        details: { key },
+      });
     }
 
     const dataFeed = await dataFeedService.getDataFeedById(dataFeedId);
     if (!dataFeed) {
-      throw new Error(`Data feed with ID ${dataFeedId} not found`);
+      throw createStageError({
+        stage: 'storage',
+        code: 'DATA_FEED_NOT_FOUND',
+        message: `Data feed with ID ${dataFeedId} not found`,
+        details: { data_feed_id: dataFeedId },
+      });
     }
 
     const objectData = await readProjectObjectAsString(projectId, mapperName);
@@ -139,7 +188,7 @@ async function handleMessage(kafkaMessage: any) {
       kafkaMessage,
     );
 
-    const plugin = await pluginService.resolvePluginOrDefault({
+    const { plugin, selection } = await pluginService.resolvePluginSelection({
       pluginID: dataFeed.recipientPluginId,
       pluginType: 'recipient',
       pluginVersion: dataFeed.recipientPlugin?.pluginVersion || null,
@@ -150,6 +199,12 @@ async function handleMessage(kafkaMessage: any) {
       plugin,
     );
 
+    const pluginMeta = {
+      plugin_id: runtimePlugin.pluginId,
+      plugin_name: runtimePlugin.pluginName,
+      plugin_version: runtimePlugin.pluginVersion,
+    };
+
     let pluginResult: any;
     try {
       pluginResult = await runtimePluginService.executeRecipientPlugin(
@@ -157,27 +212,41 @@ async function handleMessage(kafkaMessage: any) {
         enrichedMessage,
         runtimePlugin,
       );
-    } catch (pluginError: any) {
-      logger.error(
-        { error: pluginError.message, pluginId: runtimePlugin.pluginId },
-        'Recipient plugin execution failed',
-      );
-      pluginResult = {
-        success: false,
-        processed: { patients: 0, requests: 0, results: 0 },
-        errors: [pluginError.message],
-        record_ids: { patients: [], requests: [], results: [] },
-        processing_completed: new Date().toISOString(),
-      };
+    } catch (error: any) {
+      throw createStageError({
+        stage: 'storage',
+        code: 'RECIPIENT_PLUGIN_FAILED',
+        message: error.message || 'Recipient plugin execution failed',
+        details: {},
+        plugin: pluginMeta,
+        cause: error,
+      });
+    }
+
+    if (!pluginResult || typeof pluginResult !== 'object') {
+      throw createStageError({
+        stage: 'storage',
+        code: 'INVALID_RECIPIENT_RESULT',
+        message: 'Recipient plugin returned an invalid processing result',
+        details: { returned_type: typeof pluginResult },
+        plugin: pluginMeta,
+      });
     }
 
     const processedMessage = {
       ...enrichedMessage,
       _storage: {
-        plugin_id: runtimePlugin.pluginId,
-        plugin_name: runtimePlugin.pluginName,
-        plugin_version: runtimePlugin.pluginVersion,
+        ...pluginMeta,
         processed_at: new Date().toISOString(),
+      },
+      _plugin_selection: {
+        ...(enrichedMessage._plugin_selection || {}),
+        recipient: {
+          ...selection,
+          runtime_plugin_id: runtimePlugin.pluginId,
+          runtime_plugin_name: runtimePlugin.pluginName,
+          runtime_plugin_version: runtimePlugin.pluginVersion,
+        },
       },
       _processing_results: pluginResult,
     };
@@ -204,7 +273,7 @@ async function handleMessage(kafkaMessage: any) {
       messageMetadata,
     });
   } catch (error: any) {
-    logger.error({ error: error.message, stack: error.stack }, 'Error processing message');
+    logger.error({ error: error.message, stack: error.stack }, 'Storage stage failed');
     throw error;
   }
 }

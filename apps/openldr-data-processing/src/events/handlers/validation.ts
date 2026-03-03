@@ -1,27 +1,25 @@
-import { utils } from "@repo/openldr-core";
-import * as minioUtil from "../../services/minio.service";
-import * as dataFeedService from "../../services/datafeed.service";
-import * as pluginService from "../../services/plugin.service";
-import * as runtimePluginService from "../../services/runtime-plugin.service";
-import * as terminologyService from "../../services/terminology.service";
-import { logger } from "../../lib/logger";
+import { utils } from '@repo/openldr-core';
+import * as minioUtil from '../../services/minio.service';
+import * as dataFeedService from '../../services/datafeed.service';
+import * as pluginService from '../../services/plugin.service';
+import * as runtimePluginService from '../../services/runtime-plugin.service';
+import * as terminologyService from '../../services/terminology.service';
+import { logger } from '../../lib/logger';
+import { createStageError } from '../../lib/pipeline-error';
 
 function parseMessageByContentType(messageData: string, contentType?: string) {
   try {
-    if (
-      contentType === "application/json" ||
-      contentType === "application/fhir+json"
-    ) {
+    if (contentType === 'application/json' || contentType === 'application/fhir+json') {
       return JSON.parse(messageData);
     }
 
     if (
-      contentType === "application/hl7-v2" ||
-      contentType === "application/xml" ||
-      contentType === "application/fhir+xml" ||
-      contentType === "text/xml" ||
-      contentType === "text/csv" ||
-      contentType === "text/plain"
+      contentType === 'application/hl7-v2' ||
+      contentType === 'application/xml' ||
+      contentType === 'application/fhir+xml' ||
+      contentType === 'text/xml' ||
+      contentType === 'text/csv' ||
+      contentType === 'text/plain'
     ) {
       return messageData;
     }
@@ -32,71 +30,83 @@ function parseMessageByContentType(messageData: string, contentType?: string) {
       return messageData;
     }
   } catch (error: any) {
-    throw new Error(
-      `Failed to parse message content (${contentType || "unknown"}): ${
-        error.message
-      }`,
-    );
+    throw createStageError({
+      stage: 'validation',
+      code: 'MESSAGE_PARSE_FAILED',
+      message: `Failed to parse message content (${contentType || 'unknown'})`,
+      details: { content_type: contentType || 'unknown' },
+      cause: error,
+    });
   }
 }
 
-async function readProjectObjectAsString(
-  bucketName: string,
-  objectName: string,
-) {
-  const objectStream = await minioUtil.getObject({ bucketName, objectName });
-  let messageData = "";
-  await new Promise<void>((resolve, reject) => {
-    objectStream.on("data", (chunk: any) => {
-      messageData += chunk.toString();
+async function readProjectObjectAsString(bucketName: string, objectName: string) {
+  try {
+    const objectStream = await minioUtil.getObject({ bucketName, objectName });
+    let messageData = '';
+    await new Promise<void>((resolve, reject) => {
+      objectStream.on('data', (chunk: any) => {
+        messageData += chunk.toString();
+      });
+      objectStream.on('end', () => resolve());
+      objectStream.on('error', (err: any) => reject(err));
     });
-    objectStream.on("end", () => resolve());
-    objectStream.on("error", (err: any) =>
-      reject(new Error(`Failed to read object stream: ${err.message}`)),
-    );
-  });
-  return messageData;
+    return messageData;
+  } catch (error: any) {
+    throw createStageError({
+      stage: 'validation',
+      code: 'SOURCE_OBJECT_READ_FAILED',
+      message: 'Failed to read raw source object from MinIO',
+      details: { bucket_name: bucketName, object_name: objectName },
+      cause: error,
+    });
+  }
 }
 
 async function handleMessage(kafkaMessage: any) {
   try {
     const kafkaValue = JSON.parse(kafkaMessage.value);
     const key = kafkaMessage.key;
-    const [projectId, dataKey, dataFeedId, objectName] = key.split("/");
+    const [projectId, dataKey, dataFeedId, objectName] = key.split('/');
 
     if (!projectId || !dataFeedId) {
-      throw new Error(`Invalid message key format: ${key}`);
+      throw createStageError({
+        stage: 'validation',
+        code: 'INVALID_MESSAGE_KEY',
+        message: 'Invalid Kafka message key format for validation stage',
+        details: { key },
+      });
     }
 
     const dataFeed = await dataFeedService.getDataFeedById(dataFeedId);
     if (!dataFeed) {
-      throw new Error(`Data feed with ID ${dataFeedId} not found`);
+      throw createStageError({
+        stage: 'validation',
+        code: 'DATA_FEED_NOT_FOUND',
+        message: `Data feed with ID ${dataFeedId} not found`,
+        details: { data_feed_id: dataFeedId },
+      });
     }
 
     const rawObjectName = `${dataKey}/${dataFeedId}/${objectName}`;
-    const messageData = await readProjectObjectAsString(
-      projectId,
-      rawObjectName,
-    );
+    const messageData = await readProjectObjectAsString(projectId, rawObjectName);
     const messageContentType =
-      kafkaValue?.Records?.[0]?.s3?.object?.userMetadata?.["Content-Type"] ||
+      kafkaValue?.Records?.[0]?.s3?.object?.userMetadata?.['Content-Type'] ||
       kafkaValue?.Records?.[0]?.s3?.object?.contentType ||
-      "application/json";
+      'application/json';
 
-    const messageContent = parseMessageByContentType(
-      messageData,
-      messageContentType,
-    );
-    let processedMessage = messageContent;
+    const messageContent = parseMessageByContentType(messageData, messageContentType);
 
-    const plugin = await pluginService.resolvePluginOrDefault({
+    const { plugin, selection } = await pluginService.resolvePluginSelection({
       pluginID: dataFeed.schemaPluginId,
-      pluginType: "schema",
+      pluginType: 'schema',
       pluginVersion: dataFeed.schemaPlugin?.pluginVersion || null,
     });
 
-    const { plugin: runtimePlugin, pluginSource } =
-      await runtimePluginService.readPluginSourceWithFallback("schema", plugin);
+    const { plugin: runtimePlugin, pluginSource } = await runtimePluginService.readPluginSourceWithFallback(
+      'schema',
+      plugin,
+    );
 
     const result = await runtimePluginService.executeValidationPlugin(
       pluginSource,
@@ -104,22 +114,51 @@ async function handleMessage(kafkaMessage: any) {
       runtimePlugin,
     );
 
-    if (!result) {
-      logger.info(
-        { dataFeedId, pluginId: runtimePlugin.pluginId },
-        "Message validation failed, skipping conversion",
-      );
-      return;
+    if (!result.ok) {
+      throw createStageError({
+        stage: 'validation',
+        code: 'PLUGIN_VALIDATION_FAILED',
+        message: result.reason || 'Schema plugin rejected the message',
+        details: {
+          data_feed_id: dataFeedId,
+          plugin_id: runtimePlugin.pluginId,
+          plugin_name: runtimePlugin.pluginName,
+          plugin_version: runtimePlugin.pluginVersion,
+          validation_details: result.details || {},
+        },
+        plugin: {
+          plugin_id: runtimePlugin.pluginId,
+          plugin_name: runtimePlugin.pluginName,
+          plugin_version: runtimePlugin.pluginVersion,
+        },
+      });
     }
 
-    processedMessage = result;
+    let processedMessage = result.converted;
 
-    const conceptReferences =
-      terminologyService.collectConceptReferences(processedMessage);
+    const conceptReferences = terminologyService.collectConceptReferences(processedMessage);
     if (conceptReferences.length > 0) {
-      await terminologyService.assertCodingSystemsExist(
-        conceptReferences.map((item) => item.reference.system_id),
-      );
+      try {
+        await terminologyService.assertCodingSystemsExist(
+          conceptReferences.map((item) => item.reference.system_id),
+        );
+      } catch (error: any) {
+        throw createStageError({
+          stage: 'validation',
+          code: 'UNKNOWN_CODING_SYSTEM',
+          message: error.message || 'One or more coding systems do not exist',
+          details: {
+            concept_reference_count: conceptReferences.length,
+            referenced_systems: [...new Set(conceptReferences.map((item) => item.reference.system_id))],
+          },
+          plugin: {
+            plugin_id: runtimePlugin.pluginId,
+            plugin_name: runtimePlugin.pluginName,
+            plugin_version: runtimePlugin.pluginVersion,
+          },
+          cause: error,
+        });
+      }
     }
 
     processedMessage = {
@@ -131,6 +170,15 @@ async function handleMessage(kafkaMessage: any) {
         concept_reference_count: conceptReferences.length,
         validated_at: new Date().toISOString(),
       },
+      _plugin_selection: {
+        ...(processedMessage._plugin_selection || {}),
+        schema: {
+          ...selection,
+          runtime_plugin_id: runtimePlugin.pluginId,
+          runtime_plugin_name: runtimePlugin.pluginName,
+          runtime_plugin_version: runtimePlugin.pluginVersion,
+        },
+      },
     };
 
     const bodyData = JSON.stringify(processedMessage, null, 2);
@@ -140,12 +188,12 @@ async function handleMessage(kafkaMessage: any) {
     const messageMetadata = utils.generateMessageMetadata({
       dataFeed,
       size,
-      messageId: userMetadata["X-Amz-Meta-Messageid"],
-      messageDateTime: userMetadata["X-Amz-Meta-Messagedatetime"],
-      userId: userMetadata["X-Amz-Meta-Userid"],
-      status: "validated",
-      messageContentType: "application/json",
-      fileFormat: ".json",
+      messageId: userMetadata['X-Amz-Meta-Messageid'],
+      messageDateTime: userMetadata['X-Amz-Meta-Messagedatetime'],
+      userId: userMetadata['X-Amz-Meta-Userid'],
+      status: 'validated',
+      messageContentType: 'application/json',
+      fileFormat: '.json',
     });
 
     await minioUtil.putObject({
@@ -155,10 +203,7 @@ async function handleMessage(kafkaMessage: any) {
       messageMetadata,
     });
   } catch (error: any) {
-    logger.error(
-      { error: error.message, stack: error.stack },
-      "Error processing message",
-    );
+    logger.error({ error: error.message, stack: error.stack }, 'Validation stage failed');
     throw error;
   }
 }

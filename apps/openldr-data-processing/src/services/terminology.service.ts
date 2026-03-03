@@ -141,6 +141,50 @@ export async function getConceptsBySystemCodes(systemCodes: string[]): Promise<{
   }
 }
 
+function normalizeConceptCode(value: any) {
+  return String(value || "")
+    .replace(/\s+/g, " ")
+    .trim()
+    .toUpperCase();
+}
+
+function normalizeConceptDisplayName(reference: any) {
+  const rawDisplayName = String(reference?.display_name || "")
+    .replace(/\s+/g, " ")
+    .trim();
+  const fallbackCode = normalizeConceptCode(
+    reference?.concept_code || "UNKNOWN",
+  );
+
+  if (!rawDisplayName) {
+    return fallbackCode;
+  }
+
+  if (/^[^A-Za-z0-9]*$/.test(rawDisplayName)) {
+    return fallbackCode;
+  }
+
+  const suspiciousFragments = new Set(["arks", "ment", "ts", "us Threads"]);
+  if (suspiciousFragments.has(rawDisplayName)) {
+    return fallbackCode;
+  }
+
+  return rawDisplayName;
+}
+
+function normalizeConceptProperties(reference: any) {
+  const properties =
+    reference?.properties && typeof reference.properties === "object"
+      ? { ...reference.properties }
+      : {};
+
+  if (reference?.display_name) {
+    properties.source_display_name = String(reference.display_name);
+  }
+
+  return properties;
+}
+
 export async function getCodingSystemsByCodes(systemCodes: string[]) {
   if (systemCodes.length === 0) {
     return {} as Record<string, any>;
@@ -212,8 +256,9 @@ export function collectConceptReferences(
 
 export async function resolveOrCreateConceptRef(reference: any) {
   const systemCode = reference.system_id;
-  const conceptCode = reference.concept_code;
-  const displayName = reference.display_name;
+  const conceptCode = normalizeConceptCode(reference.concept_code);
+  const displayName = normalizeConceptDisplayName(reference);
+  const normalizedProperties = normalizeConceptProperties(reference);
 
   const systems = await assertCodingSystemsExist([systemCode]);
   const system = systems[systemCode];
@@ -290,7 +335,7 @@ export async function resolveOrCreateConceptRef(reference: any) {
     displayName,
     reference.concept_class || null,
     reference.datatype || null,
-    JSON.stringify(reference.properties || {}),
+    JSON.stringify(normalizedProperties),
     names,
   ]);
 

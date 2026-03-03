@@ -1,24 +1,21 @@
-// storage.ts
-import { Kafka } from "kafkajs";
-import * as messageHandler from "./handlers/storage";
-import { logger } from "../lib/logger";
+import { Kafka } from 'kafkajs';
+import * as messageHandler from './handlers/storage';
+import { logger } from '../lib/logger';
+import { buildDlqBody, serializeError } from '../lib/pipeline-error';
 
 export const start = async () => {
   try {
     const kafka = new Kafka({
-      clientId: "openldr-storage",
-      brokers: ["openldr-kafka1:19092"],
+      clientId: 'openldr-storage',
+      brokers: ['openldr-kafka1:19092'],
     });
 
     const producer = kafka.producer();
     await producer.connect();
 
-    const consumer = kafka.consumer({
-      groupId: "openldr-external-storage-consumer",
-    });
-
+    const consumer = kafka.consumer({ groupId: 'openldr-external-storage-consumer' });
     await consumer.connect();
-    await consumer.subscribe({ topic: "mapped-inbound", fromBeginning: true });
+    await consumer.subscribe({ topic: 'mapped-inbound', fromBeginning: true });
 
     await consumer.run({
       eachMessage: async ({ topic, partition, message }) => {
@@ -31,21 +28,21 @@ export const start = async () => {
             key: message.key?.toString(),
           });
         } catch (err: any) {
-          logger.error(
-            { err, topic, partition },
-            "Message failed — routing to DLQ",
-          );
+          const serialized = serializeError(err);
+          logger.error({ err: serialized, topic, partition }, 'Message failed — routing to DLQ');
           await producer.send({
             topic: `${topic}-dead-letter`,
             messages: [
               {
                 key: message.key,
-                value: message.value,
+                value: JSON.stringify(buildDlqBody({ topic, partition, message, error: err })),
                 headers: {
                   ...message.headers,
-                  "x-dlq-error": err.message,
-                  "x-dlq-topic": topic,
-                  "x-dlq-timestamp": new Date().toISOString(),
+                  'x-dlq-error': serialized.message,
+                  'x-dlq-topic': topic,
+                  'x-dlq-timestamp': new Date().toISOString(),
+                  'x-dlq-stage': serialized.stage,
+                  'x-dlq-code': serialized.code,
                 },
               },
             ],
@@ -54,11 +51,8 @@ export const start = async () => {
       },
     });
 
-    logger.info("Storage service running and consuming messages");
+    logger.info('Storage service running and consuming messages');
   } catch (err: any) {
-    logger.error(
-      { error: err.message, stack: err.stack },
-      "Storage service initialization failed",
-    );
+    logger.error({ error: err.message, stack: err.stack }, 'Storage service initialization failed');
   }
 };

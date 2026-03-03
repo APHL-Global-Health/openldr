@@ -5,23 +5,32 @@ import * as pluginService from "../../services/plugin.service";
 import * as runtimePluginService from "../../services/runtime-plugin.service";
 import * as terminologyService from "../../services/terminology.service";
 import { logger } from "../../lib/logger";
+import { createStageError } from "../../lib/pipeline-error";
 
 async function readProjectObjectAsString(
   bucketName: string,
   objectName: string,
 ) {
-  const objectStream = await minioUtil.getObject({ bucketName, objectName });
-  let objectData = "";
-  await new Promise<void>((resolve, reject) => {
-    objectStream.on("data", (chunk: any) => {
-      objectData += chunk.toString();
+  try {
+    const objectStream = await minioUtil.getObject({ bucketName, objectName });
+    let objectData = "";
+    await new Promise<void>((resolve, reject) => {
+      objectStream.on("data", (chunk: any) => {
+        objectData += chunk.toString();
+      });
+      objectStream.on("end", () => resolve());
+      objectStream.on("error", (err: any) => reject(err));
     });
-    objectStream.on("end", () => resolve());
-    objectStream.on("error", (err: any) =>
-      reject(new Error(`Failed to read object stream: ${err.message}`)),
-    );
-  });
-  return objectData;
+    return objectData;
+  } catch (error: any) {
+    throw createStageError({
+      stage: "mapping",
+      code: "SOURCE_OBJECT_READ_FAILED",
+      message: "Failed to read validated object from MinIO",
+      details: { bucket_name: bucketName, object_name: objectName },
+      cause: error,
+    });
+  }
 }
 
 function normalizeMapperResult(mapperResult: any) {
@@ -94,12 +103,22 @@ async function handleMessage(kafkaMessage: any) {
     const validatedName = `${dataKey}/${dataFeedId}/${objectName}`;
 
     if (!projectId || !dataFeedId) {
-      throw new Error(`Invalid message key format: ${key}`);
+      throw createStageError({
+        stage: "mapping",
+        code: "INVALID_MESSAGE_KEY",
+        message: "Invalid Kafka message key format for mapping stage",
+        details: { key },
+      });
     }
 
     const dataFeed = await dataFeedService.getDataFeedById(dataFeedId);
     if (!dataFeed) {
-      throw new Error(`Data feed with ID ${dataFeedId} not found`);
+      throw createStageError({
+        stage: "mapping",
+        code: "DATA_FEED_NOT_FOUND",
+        message: `Data feed with ID ${dataFeedId} not found`,
+        details: { data_feed_id: dataFeedId },
+      });
     }
 
     const objectData = await readProjectObjectAsString(
@@ -109,89 +128,96 @@ async function handleMessage(kafkaMessage: any) {
     const messageContent = JSON.parse(objectData);
     let processedMessage = messageContent;
 
-    const plugin = await pluginService.resolvePluginOrDefault({
+    const { plugin, selection } = await pluginService.resolvePluginSelection({
       pluginID: dataFeed.mapperPluginId,
       pluginType: "mapper",
       pluginVersion: dataFeed.mapperPlugin?.pluginVersion || null,
     });
 
-    let runtimePlugin = plugin;
-    let pluginSource: string | null = null;
-    try {
-      const loaded = await runtimePluginService.readPluginSourceWithFallback(
-        "mapper",
-        plugin,
-      );
-      runtimePlugin = loaded.plugin;
-      pluginSource = loaded.pluginSource;
-    } catch (error: any) {
-      logger.warn(
-        { error: error.message, pluginId: plugin.pluginId },
-        "Mapper plugin source unavailable, using legacy config path only",
-      );
+    const { plugin: runtimePlugin, pluginSource } =
+      await runtimePluginService.readPluginSourceWithFallback("mapper", plugin);
+
+    const pluginMeta = {
+      plugin_id: runtimePlugin.pluginId,
+      plugin_name: runtimePlugin.pluginName,
+      plugin_version: runtimePlugin.pluginVersion,
+    };
+
+    const mapperResult = await runtimePluginService.executeMapperPlugin(
+      pluginSource,
+      processedMessage,
+      runtimePlugin,
+    );
+
+    const normalized = normalizeMapperResult(mapperResult);
+    if (normalized.transformedMessage) {
+      processedMessage = normalized.transformedMessage;
     }
 
-    if (pluginSource) {
-      try {
-        const mapperResult = await runtimePluginService.executeMapperPlugin(
-          pluginSource,
-          processedMessage,
-          runtimePlugin,
-        );
-        const normalized = normalizeMapperResult(mapperResult);
-        if (normalized.transformedMessage) {
-          processedMessage = normalized.transformedMessage;
-        }
-        if (normalized.fieldMappings && normalized.fieldMappings.length > 0) {
-          const systemCodes: any[] = [
-            ...new Set(
-              normalized.fieldMappings
-                .map((item: any) => item.systemCode)
-                .filter(Boolean),
-            ),
-          ];
-          const result = await terminologyService.getConceptsBySystemCodes(
-            systemCodes,
+    if (normalized.fieldMappings && normalized.fieldMappings.length > 0) {
+      const systemCodes: any[] = [
+        ...new Set(
+          normalized.fieldMappings
+            .map((item: any) => item.systemCode)
+            .filter(Boolean),
+        ),
+      ];
+      const result = await terminologyService.getConceptsBySystemCodes(
+        systemCodes,
+      );
+      processedMessage = applyConceptIdMappings(processedMessage, {
+        bySystem: result.bySystem,
+        fieldMappings: normalized.fieldMappings,
+      });
+    } else {
+      const legacyMappingConfig: any = await buildLegacyMappingConfig(plugin);
+      if (legacyMappingConfig) {
+        if (legacyMappingConfig.bySystem) {
+          processedMessage = applyConceptIdMappings(
+            processedMessage,
+            legacyMappingConfig,
           );
-          processedMessage = applyConceptIdMappings(processedMessage, {
-            bySystem: result.bySystem,
-            fieldMappings: normalized.fieldMappings,
-          });
+        } else {
+          processedMessage = applyTerminologyMappings(
+            processedMessage,
+            legacyMappingConfig,
+          );
         }
-      } catch (error: any) {
-        logger.error(
-          { error: error.message, pluginId: runtimePlugin.pluginId },
-          "Mapper plugin execution failed, falling back to legacy config behavior",
-        );
       }
     }
 
-    const legacyMappingConfig: any = await buildLegacyMappingConfig(plugin);
-    if (legacyMappingConfig) {
-      if (legacyMappingConfig.bySystem) {
-        processedMessage = applyConceptIdMappings(
+    try {
+      processedMessage =
+        await terminologyService.resolveConceptReferencesInMessage(
           processedMessage,
-          legacyMappingConfig,
         );
-      } else {
-        processedMessage = applyTerminologyMappings(
-          processedMessage,
-          legacyMappingConfig,
-        );
-      }
+    } catch (error: any) {
+      throw createStageError({
+        stage: "mapping",
+        code: "CONCEPT_RESOLUTION_FAILED",
+        message:
+          error.message ||
+          "Failed to resolve concept references in mapped message",
+        details: {},
+        plugin: pluginMeta,
+        cause: error,
+      });
     }
 
-    processedMessage =
-      await terminologyService.resolveConceptReferencesInMessage(
-        processedMessage,
-      );
     processedMessage = {
       ...processedMessage,
       _mapper: {
-        plugin_id: runtimePlugin.pluginId,
-        plugin_name: runtimePlugin.pluginName,
-        plugin_version: runtimePlugin.pluginVersion,
+        ...pluginMeta,
         mapped_at: new Date().toISOString(),
+      },
+      _plugin_selection: {
+        ...(processedMessage._plugin_selection || {}),
+        mapper: {
+          ...selection,
+          runtime_plugin_id: runtimePlugin.pluginId,
+          runtime_plugin_name: runtimePlugin.pluginName,
+          runtime_plugin_version: runtimePlugin.pluginVersion,
+        },
       },
     };
 
@@ -219,7 +245,7 @@ async function handleMessage(kafkaMessage: any) {
   } catch (error: any) {
     logger.error(
       { error: error.message, stack: error.stack },
-      "Error processing message",
+      "Mapping stage failed",
     );
     throw error;
   }

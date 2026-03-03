@@ -190,6 +190,30 @@ async function callWithTimeout<T>(work: Promise<T>, label: string, timeoutMs = 5
   ]);
 }
 
+function normalizeValidationResult(validationResult: any) {
+  if (typeof validationResult === 'boolean') {
+    return {
+      valid: validationResult,
+      reason: validationResult ? null : 'Schema plugin validate(message) returned false',
+      details: {},
+    };
+  }
+
+  if (validationResult && typeof validationResult === 'object') {
+    return {
+      valid: Boolean(validationResult.valid),
+      reason: validationResult.reason || (validationResult.valid ? null : 'Schema validation failed'),
+      details: validationResult.details || {},
+    };
+  }
+
+  return {
+    valid: false,
+    reason: `Schema plugin returned unsupported validation response type: ${typeof validationResult}`,
+    details: { returned_type: typeof validationResult },
+  };
+}
+
 export async function executeValidationPlugin(
   pluginSource: string,
   messageContent: any,
@@ -208,14 +232,27 @@ export async function executeValidationPlugin(
     'Plugin validation',
   );
 
-  if (!validationResult) {
-    return null;
+  const normalizedValidation = normalizeValidationResult(validationResult);
+  if (!normalizedValidation.valid) {
+    return {
+      ok: false,
+      reason: normalizedValidation.reason,
+      details: normalizedValidation.details,
+      converted: null,
+    };
   }
 
-  return await callWithTimeout(
+  const converted = await callWithTimeout(
     Promise.resolve(pluginFunctions.convert(messageContent)),
     'Plugin conversion',
   );
+
+  return {
+    ok: true,
+    reason: null,
+    details: {},
+    converted,
+  };
 }
 
 export async function executeMapperPlugin(
@@ -229,10 +266,16 @@ export async function executeMapperPlugin(
     throw new Error('Mapper plugin must export map or mapping function');
   }
 
-  return await callWithTimeout(
+  const result = await callWithTimeout(
     Promise.resolve(mapperFn(messageContent)),
     'Plugin mapping',
   );
+
+  if (result === undefined || result === null) {
+    throw new Error('Mapper plugin returned null/undefined');
+  }
+
+  return result;
 }
 
 export async function executeRecipientPlugin(
@@ -245,8 +288,14 @@ export async function executeRecipientPlugin(
     throw new Error('Recipient plugin must export process function');
   }
 
-  return await callWithTimeout(
+  const result = await callWithTimeout(
     Promise.resolve(pluginFunctions.process(messageContent)),
     'Plugin processing',
   );
+
+  if (result === undefined || result === null) {
+    throw new Error('Recipient plugin returned null/undefined');
+  }
+
+  return result;
 }
