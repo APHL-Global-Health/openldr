@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-import type { /*ReportFilters,*/ ReportConfig } from "../types";
+// import type { /*ReportFilters,*/ ReportConfig } from "../types";
 import { ContentLayout } from "@/components/admin-panel/content-layout";
 import { cn } from "@/lib/utils";
 import { Separator } from "@/components/ui/separator";
@@ -42,65 +42,78 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 
+import {
+  BarChart2,
+  AlertTriangle,
+  Shield,
+  Activity,
+  Globe,
+  Database,
+  ChevronRight,
+  Microscope,
+} from "lucide-react";
+
+import type { ReportQuery } from "../types/reports";
+import {
+  PriorityPathogens,
+  Surveillance,
+  Workload,
+  Geographic,
+  DataQuality,
+} from "@/components/reports/index";
+// import { C, GLOBAL_STYLES } from "./components/ui"
+import Antibiogram from "@/components/reports/Antibiogram";
+
 const ENV = import.meta.env;
 const apiUrl = ENV.VITE_API_BASE_URL || "";
 
-const reportTypes: ReportConfig[] = [
+interface ReportMeta {
+  id: string;
+  label: string;
+  Icon: React.ComponentType<{
+    size?: number;
+    color?: string;
+    style?: React.CSSProperties;
+  }>;
+  desc: string;
+}
+
+const REPORTS: ReportMeta[] = [
   {
-    id: "overview",
-    title: "Resistance Overview",
-    description: "Overall AMR statistics and summary",
-    icon: "Activity",
-    color: "text-blue-600",
-    bg: "bg-blue-50 dark:bg-blue-950/20",
+    id: "antibiogram",
+    label: "National Antibiogram",
+    Icon: BarChart2,
+    desc: "WHO GLASS · Resistance heatmap",
   },
   {
-    id: "susceptibility",
-    title: "Antibiotic Susceptibility",
-    description: "Susceptibility patterns by antibiotic class",
-    icon: "Pill",
-    color: "text-green-600",
-    bg: "bg-green-50 dark:bg-green-950/20",
+    id: "priority",
+    label: "Priority Pathogens",
+    Icon: AlertTriangle,
+    desc: "WHO Critical & High pathogens",
   },
   {
-    id: "organisms",
-    title: "Organism Distribution",
-    description: "Top organisms and resistance patterns",
-    icon: "Bug",
-    color: "text-purple-600",
-    bg: "bg-purple-50 dark:bg-purple-950/20",
+    id: "surveillance",
+    label: "MRSA & Carbapenem",
+    Icon: Shield,
+    desc: "Mechanism resistance tracking",
   },
   {
-    id: "trends",
-    title: "Trend Analysis",
-    description: "Resistance trends over time",
-    icon: "TrendingUp",
-    color: "text-orange-600",
-    bg: "bg-orange-50 dark:bg-orange-950/20",
+    id: "workload",
+    label: "Workload & TAT",
+    Icon: Activity,
+    desc: "Operations & turnaround time",
   },
   {
     id: "geographic",
-    title: "Geographic Distribution",
-    description: "AMR patterns by location",
-    icon: "MapPin",
-    color: "text-red-600",
-    bg: "bg-red-50 dark:bg-red-950/20",
+    label: "Geographic Distribution",
+    Icon: Globe,
+    desc: "Spatial resistance mapping",
   },
   {
-    id: "specimen",
-    title: "Specimen Type Analysis",
-    description: "Resistance by specimen source",
-    icon: "BarChart3",
-    color: "text-cyan-600",
-    bg: "bg-cyan-50 dark:bg-cyan-950/20",
-  },
-  {
-    id: "amr-for-r",
-    title: "AMR For R",
-    description: "AMR For R",
-    icon: "BarChart3",
-    color: "text-cyan-600",
-    bg: "bg-cyan-50 dark:bg-cyan-950/20",
+    id: "quality",
+    label: "Data Quality Audit",
+    Icon: Database,
+    desc: "Completeness & ingestion",
   },
 ];
 
@@ -204,8 +217,8 @@ function generateTestPDF(): string {
       status === "R"
         ? [231, 76, 60]
         : status === "I"
-          ? [241, 196, 15]
-          : [46, 204, 113];
+        ? [241, 196, 15]
+        : [46, 204, 113];
     doc.setFillColor(...(color as [number, number, number]));
     doc.circle(150, yPos - 3, 5, "F");
     doc.text(status, 170, yPos);
@@ -238,9 +251,7 @@ function ReportsPage() {
   const user = token?.preferred_username || token?.email || "Guest";
 
   const [pdfDataUrl, setPdfDataUrl] = useState<string | null>(null);
-  const [pdfReport, setPdfReport] = useState<ReportConfig | undefined>(
-    undefined,
-  );
+  const [pdfReport, setPdfReport] = useState<ReportMeta | undefined>(undefined);
   const [generating, setGenerating] = useState(false);
   const [date, setDate] = useState<DateRange | undefined>(
     undefined,
@@ -249,12 +260,23 @@ function ReportsPage() {
     //   to: addDays(new Date(new Date().getFullYear(), 0, 20), 20),
     // }
   );
+  const [activeId, setActiveId] = useState<string | undefined>(undefined);
+  const [guideline, setGuideline] = useState<"CLSI" | "EUCAST">("CLSI");
   // const [filters, setFilters] = useState<ReportFilters>({
   //   organism: "",
   //   specimenType: "",
   //   institution: "",
   //   wardType: "",
   // });
+
+  const report = REPORTS.find((r) => r.id === activeId);
+
+  const query: Partial<ReportQuery> = {
+    facility_id: undefined,
+    date_from: date?.from ? format(date.from, "yyyy-MM-dd") : undefined,
+    date_to: date?.to ? format(date.to, "yyyy-MM-dd") : undefined,
+    guideline,
+  };
 
   const handleGeneratePDF = async () => {
     if (!pdfReport /*|| !client.lab*/) {
@@ -263,11 +285,9 @@ function ReportsPage() {
 
     try {
       // setGenerating(true);
-
       // const labName = client.lab.lab_name;
       // const labCode = client.lab.lab_code;
       // const generatedBy = user;
-
       // // Prepare config
       // const config: HeaderFooterConfig = {
       //   organizationName: `${pdfReport.title} Report`,
@@ -280,7 +300,6 @@ function ReportsPage() {
       //   labCode,
       //   generatedBy,
       // };
-
       // // Generate PDF
       // const data = await fetchReportData(pdfReport.id, date /*, filters*/);
       // if (data !== null) {
@@ -291,10 +310,9 @@ function ReportsPage() {
       //     config,
       //   );
       //   // reportBase64 = generateReport(user, "Resistance Overview Report", data);
-
       //   setPdfDataUrl(reportBase64);
       // }
-      setPdfDataUrl(generateTestPDF());
+      // setPdfDataUrl(generateTestPDF());
     } catch (error: any) {
       console.error("PDF generation error:", error);
     } finally {
@@ -308,9 +326,9 @@ function ReportsPage() {
         <div className="flex flex-row items-center min-w-50 max-w-50">
           <Select
             // defaultValue={reportTypes[0].id}
-            onValueChange={(value) => {
-              const report = reportTypes.find((r: any) => r.id === value);
-              setPdfReport(report);
+            onValueChange={(value: any) => {
+              // const report = REPORTS.find((r: any) => r.id === value);
+              setActiveId(value);
             }}
           >
             <SelectTrigger className="w-full">
@@ -318,9 +336,9 @@ function ReportsPage() {
             </SelectTrigger>
             <SelectContent>
               <SelectGroup>
-                {reportTypes.map((report) => (
+                {REPORTS.map((report) => (
                   <SelectItem key={report.id} value={report.id}>
-                    {report.title}
+                    {report.label}
                   </SelectItem>
                 ))}
               </SelectGroup>
@@ -409,11 +427,19 @@ function ReportsPage() {
             <div className="flex flex-col min-h-[calc(100vh-26px-56px)] max-h-[calc(100vh-26px-56px)] items-center justify-center">
               <LoadingSpinner />
             </div>
-          ) : pdfDataUrl ? (
-            <PDFViewer
-              className="flex flex-col min-h-[calc(100vh-26px-56px)] max-h-[calc(100vh-26px-56px)] w-full"
-              base64Data={pdfDataUrl}
-            />
+          ) : activeId ? (
+            // <PDFViewer
+            //   className="flex flex-col min-h-[calc(100vh-26px-56px)] max-h-[calc(100vh-26px-56px)] w-full"
+            //   base64Data={pdfDataUrl}
+            // />
+            <div className="p-6">
+              {activeId === "antibiogram" && <Antibiogram query={query} />}
+              {activeId === "priority" && <PriorityPathogens query={query} />}
+              {activeId === "surveillance" && <Surveillance query={query} />}
+              {activeId === "workload" && <Workload query={query} />}
+              {activeId === "geographic" && <Geographic query={query} />}
+              {activeId === "quality" && <DataQuality query={query} />}
+            </div>
           ) : (
             <div className="flex flex-col items-center justify-center min-h-[calc(100vh-26px-56px)] max-h-[calc(100vh-26px-56px)] w-full relative">
               <div className="flex flex-1 h-full w-full relative">

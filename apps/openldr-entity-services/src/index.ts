@@ -28,6 +28,7 @@ import archiveRouter from "./controllers/archive.controller";
 import extensionRouter from "./controllers/extension.controller";
 import dashboardRouter from "./controllers/dashboard.controller";
 import queryEngineRouter from "./controllers/query.engine.controller";
+import reportRouter from "./controllers/report.controller";
 
 const IsDev = process.env.NODE_ENV === "development";
 
@@ -87,6 +88,7 @@ app.use("/api/v1/archives", archiveRouter);
 app.use("/api/v1/extensions", extensionRouter);
 app.use("/api/v1/dashboard", dashboardRouter);
 app.use("/api/v1/query/engine", queryEngineRouter);
+app.use("/api/v1/reports", reportRouter);
 
 // Health check
 app.get("/health", async (_req: Request, res: Response) => {
@@ -168,7 +170,9 @@ async function bootstrap(): Promise<void> {
     //   `Database:      \x1b[33m${process.env.DATABASE_URL || "postgresql://localhost:5432/openldr"}\x1b[0m`,
     // );
     console.log(
-      `MinIO:         \x1b[33m${process.env.MINIO_ENDPOINT || "localhost"}:${process.env.MINIO_PORT || 9000}\x1b[0m\n`,
+      `MinIO:         \x1b[33m${process.env.MINIO_ENDPOINT || "localhost"}:${
+        process.env.MINIO_PORT || 9000
+      }\x1b[0m\n`,
     );
   });
 }
