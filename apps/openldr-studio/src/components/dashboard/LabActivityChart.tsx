@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import * as d3 from "d3";
+import { useAppTranslation } from "@/i18n/hooks";
 import type { LabActivityPoint } from "@/types/database";
 
 interface LabActivityChartProps {
@@ -9,6 +10,7 @@ interface LabActivityChartProps {
 const MARGIN = { top: 20, right: 24, bottom: 40, left: 48 };
 
 export function LabActivityChart({ data }: LabActivityChartProps) {
+  const { t } = useAppTranslation();
   const containerRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
   const tooltipRef = useRef<HTMLDivElement>(null);
@@ -252,8 +254,8 @@ export function LabActivityChart({ data }: LabActivityChartProps) {
           .style("top", `${event.offsetY - 10}px`)
           .html(
             `<div class="text-xs font-medium mb-1">${d3.timeFormat("%b %d, %H:%M")(d.date)}</div>` +
-              `<div class="flex items-center gap-1.5 text-xs"><span class="inline-block h-2 w-2 rounded-full bg-blue-500"></span>Requests: <strong>${d.requests.toLocaleString()}</strong></div>` +
-              `<div class="flex items-center gap-1.5 text-xs"><span class="inline-block h-2 w-2 rounded-full bg-violet-500"></span>Results: <strong>${d.results.toLocaleString()}</strong></div>`,
+              `<div class="flex items-center gap-1.5 text-xs"><span class="inline-block h-2 w-2 rounded-full bg-blue-500"></span>${t("dashboard.requests")}: <strong>${d.requests.toLocaleString()}</strong></div>` +
+              `<div class="flex items-center gap-1.5 text-xs"><span class="inline-block h-2 w-2 rounded-full bg-violet-500"></span>${t("dashboard.results")}: <strong>${d.results.toLocaleString()}</strong></div>`,
           );
       })
       .on("mouseleave", () => {
@@ -267,7 +269,7 @@ export function LabActivityChart({ data }: LabActivityChartProps) {
   return (
     <div className="border-border border bg-card rounded-sm shadow w-full h-full relative">
       <div className="flex items-center min-h-10 max-h-10 text-xs py-2 px-4 border-border border-b">
-        LAB ACTIVITY
+        {t("dashboard.lab_activity")}
       </div>
       <div
         ref={containerRef}

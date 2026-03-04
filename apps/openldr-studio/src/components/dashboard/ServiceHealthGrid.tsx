@@ -11,6 +11,7 @@ import {
   Activity,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useMultiNamespaceTranslation } from "@/i18n/hooks";
 import type { ServiceHealth, ServiceStatus } from "@/types/database";
 
 interface ServiceHealthGridProps {
@@ -19,35 +20,36 @@ interface ServiceHealthGridProps {
 
 const STATUS_CONFIG: Record<
   ServiceStatus,
-  { icon: typeof CheckCircle2; color: string; bg: string; label: string }
+  { icon: typeof CheckCircle2; color: string; bg: string; labelKey: string }
 > = {
   healthy: {
     icon: CheckCircle2,
     color: "text-emerald-600 dark:text-emerald-400",
     bg: "bg-emerald-500",
-    label: "Healthy",
+    labelKey: "common:status.healthy",
   },
   degraded: {
     icon: AlertTriangle,
     color: "text-amber-600 dark:text-amber-400",
     bg: "bg-amber-500",
-    label: "Degraded",
+    labelKey: "common:status.degraded",
   },
   down: {
     icon: XCircle,
     color: "text-red-600 dark:text-red-400",
     bg: "bg-red-500",
-    label: "Down",
+    labelKey: "common:status.down",
   },
   unknown: {
     icon: CircleDashed,
     color: "text-muted-foreground",
     bg: "bg-muted-foreground",
-    label: "Unknown",
+    labelKey: "common:status.unknown",
   },
 };
 
 function ServiceCard({ service }: { service: ServiceHealth }) {
+  const { t } = useMultiNamespaceTranslation(["common", "app"]);
   const config = STATUS_CONFIG[service.status];
   const Icon = config.icon;
 
@@ -108,13 +110,13 @@ function ServiceCard({ service }: { service: ServiceHealth }) {
           <div className="flex items-center gap-1.5">
             <div className={cn("h-2 w-2 rounded-full", config.bg)} />
             <span className="font-medium text-xs">{service.displayName}</span>
-            <span>({config.label})</span>
+            <span>({t(config.labelKey)})</span>
           </div>
           {service.uptime && (
-            <p className="text-xs">Uptime: {service.uptime}</p>
+            <p className="text-xs">{t("app:dashboard.uptime")}: {service.uptime}</p>
           )}
           {service.responseTimeMs !== undefined && (
-            <p className="text-xs">Response: {service.responseTimeMs}ms</p>
+            <p className="text-xs">{t("app:dashboard.response")}: {service.responseTimeMs}ms</p>
           )}
           {service.details &&
             Object.entries(service.details).map(([key, val]) => (
@@ -129,6 +131,7 @@ function ServiceCard({ service }: { service: ServiceHealth }) {
 }
 
 export function ServiceHealthGrid({ services }: ServiceHealthGridProps) {
+  const { t } = useMultiNamespaceTranslation(["common", "app"]);
   const healthyCount = services.filter((s) => s.status === "healthy").length;
   const total = services.length;
 
@@ -136,7 +139,7 @@ export function ServiceHealthGrid({ services }: ServiceHealthGridProps) {
     <div className="h-full ">
       <div className="cursor-default border-border border bg-card rounded-sm shadow h-full">
         <div className="flex items-center min-h-10 max-h-10 text-xs py-2 px-4 border-border border-b">
-          SERVICE HEALTH
+          {t("app:dashboard.service_health")}
         </div>
         <div className="w-full min-h-[calc(100%-40px)] max-h-[calc(100%-40px)] p-2 h-full">
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4 h-full auto-rows-fr">

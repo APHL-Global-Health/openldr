@@ -1,4 +1,5 @@
 import { cn } from "@/lib/utils";
+import { useAppTranslation } from "@/i18n/hooks";
 import type { DashboardKPI } from "@/types/database";
 
 interface StatCardProps {
@@ -18,17 +19,19 @@ interface KPIGridProps {
 }
 
 export function KPIGrid({ kpi }: KPIGridProps) {
+  const { t } = useAppTranslation();
+
   const cards: StatCardProps[] = [
     {
-      label: "Patients",
+      label: t("dashboard.patients"),
       value: kpi.totalPatients,
     },
     {
-      label: "Requests",
+      label: t("dashboard.requests"),
       value: kpi.totalLabRequests,
     },
     {
-      label: "Results",
+      label: t("dashboard.results"),
       value: kpi.totalLabResults,
     },
   ];
@@ -37,7 +40,7 @@ export function KPIGrid({ kpi }: KPIGridProps) {
     <div>
       <div className="cursor-default border-border border bg-card rounded-sm shadow">
         <div className="flex items-center min-h-10 max-h-10 text-xs py-2 px-4 border-border border-b">
-          LAB DATA
+          {t("dashboard.lab_data")}
         </div>
         <div className="p-2 grid grid-cols-1 sm:grid-cols-3 md:grid-cols-3 xl:grid-cols-3">
           {cards.map((card, index) => (

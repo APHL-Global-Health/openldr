@@ -8,11 +8,13 @@ import enCommon from "@/locales/en/common.json";
 import enApp from "@/locales/en/app.json";
 import swCommon from "@/locales/sw/common.json";
 import swApp from "@/locales/sw/app.json";
+import ptCommon from "@/locales/pt/common.json";
+import ptApp from "@/locales/pt/app.json";
 
 const ENV = import.meta.env;
 
 // Define available languages
-export const SUPPORTED_LANGUAGES = ["en", "sw"] as const;
+export const SUPPORTED_LANGUAGES = ["en", "sw", "pt"] as const;
 export type SupportedLanguage = (typeof SUPPORTED_LANGUAGES)[number];
 
 // Define available namespaces
@@ -27,6 +29,10 @@ const resources = {
   sw: {
     common: swCommon,
     app: swApp,
+  },
+  pt: {
+    common: ptCommon,
+    app: ptApp,
   },
 };
 

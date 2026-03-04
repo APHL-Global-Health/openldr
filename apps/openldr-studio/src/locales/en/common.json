@@ -9,7 +9,17 @@
     "extensions": "Extensions",
     "settings": "Settings",
     "help": "Help",
-    "logout": "Logout"
+    "logout": "Logout",
+    "contents": "Contents",
+    "data_entry": "Data Entry",
+    "archives": "Archives",
+    "reports": "Reports",
+    "chats": "Chats",
+    "logs": "Logs",
+    "go_back": "Go Back",
+    "profile": "Profile",
+    "sign_out": "Sign out",
+    "command_palette": "Command Palette"
   },
   "actions": {
     "save": "Save",
@@ -29,7 +39,13 @@
     "back": "Back",
     "next": "Next",
     "previous": "Previous",
-    "finish": "Finish"
+    "finish": "Finish",
+    "retry": "Retry",
+    "reset": "Reset",
+    "upload": "Upload",
+    "clear": "Clear",
+    "publish": "Publish",
+    "copy": "Copy"
   },
   "status": {
     "loading": "Loading...",
@@ -41,7 +57,14 @@
     "active": "Active",
     "inactive": "Inactive",
     "enabled": "Enabled",
-    "disabled": "Disabled"
+    "disabled": "Disabled",
+    "healthy": "Healthy",
+    "degraded": "Degraded",
+    "down": "Down",
+    "unknown": "Unknown",
+    "connecting": "Connecting...",
+    "registry_ok": "Registry OK",
+    "unreachable": "Unreachable"
   },
   "validation": {
     "required": "This field is required",
@@ -58,7 +81,12 @@
     "no_data": "No data available",
     "no_results": "No results found",
     "try_again": "Please try again",
-    "contact_support": "If the problem persists, please contact support"
+    "contact_support": "If the problem persists, please contact support",
+    "pick_a_date": "Pick a date",
+    "reporting_period": "Reporting period",
+    "failed_to_load": "Failed to load dashboard data",
+    "select_report": "Select a report type from the options above to view its data",
+    "fetching_data": "Fetching report data…"
   },
   "time": {
     "just_now": "Just now",
@@ -75,5 +103,29 @@
     "showing": "Showing {{from}} to {{to}} of {{total}} results",
     "per_page": "Per page",
     "page": "Page {{current}} of {{total}}"
+  },
+  "table": {
+    "asc": "Asc",
+    "desc": "Desc",
+    "hide": "Hide",
+    "rows_per_page": "Rows per page",
+    "page_of": "Page {{current}} of {{total}}",
+    "go_first": "Go to first page",
+    "go_previous": "Go to previous page",
+    "go_next": "Go to next page",
+    "go_last": "Go to last page",
+    "rows_selected": "{{count}} of {{total}} row(s) selected",
+    "filter_placeholder": "Filter...",
+    "toggle_columns": "Toggle columns",
+    "view": "View",
+    "no_results": "No results found",
+    "clear_filters": "Clear filters",
+    "open_menu": "Open menu"
+  },
+  "theme": {
+    "choose_theme": "Choose a theme",
+    "light": "Light",
+    "dark": "Dark",
+    "system": "System"
   }
 }

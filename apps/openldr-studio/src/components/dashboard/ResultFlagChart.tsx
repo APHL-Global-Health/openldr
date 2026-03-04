@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import * as d3 from "d3";
+import { useAppTranslation } from "@/i18n/hooks";
 import type { ResultFlagCount } from "@/types/database";
 
 interface ResultFlagChartProps {
@@ -7,6 +8,7 @@ interface ResultFlagChartProps {
 }
 
 export function ResultFlagChart({ data }: ResultFlagChartProps) {
+  const { t } = useAppTranslation();
   const svgRef = useRef<SVGSVGElement>(null);
   const tooltipRef = useRef<HTMLDivElement>(null);
 
@@ -119,13 +121,13 @@ export function ResultFlagChart({ data }: ResultFlagChartProps) {
       .attr("font-size", "9px")
       .attr("fill", "currentColor")
       .attr("opacity", 0.45)
-      .text("Results");
+      .text(t("dashboard.results"));
   }, [data, size]);
 
   return (
     <div>
       <div className="flex items-center min-h-10 max-h-10 text-xs py-2 px-4 border-border border-b">
-        RESULT FLAGS
+        {t("dashboard.result_flags")}
       </div>
       <div className="flex flex-1 flex-col items-center gap-4 pt-0">
         <div className="relative">

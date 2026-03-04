@@ -7,12 +7,14 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
 import { Button } from "../ui/button";
 import { useExtensions } from "@/hooks/misc/useExtensions";
 import { Command } from "lucide-react";
+import { useCommonTranslation } from "@/i18n/hooks";
 
 interface NavbarProps {
   children: React.ReactNode;
 }
 
 export function Navbar({ children }: NavbarProps) {
+  const { t } = useCommonTranslation();
   const { state, dispatch } = useExtensions();
 
   return (
@@ -34,7 +36,7 @@ export function Navbar({ children }: NavbarProps) {
                 <Command className="h-3.5 w-3.5" />
               </Button>
             </TooltipTrigger>
-            <TooltipContent>Command Palette (⌘K)</TooltipContent>
+            <TooltipContent>{t("navigation.command_palette")} (⌘K)</TooltipContent>
           </Tooltip>
           <Separator orientation="vertical" className="mx-2 min-h-6" />
           <LanguageSwitcher />

@@ -63,6 +63,7 @@ import {
 } from "@/components/reports/index";
 // import { C, GLOBAL_STYLES } from "./components/ui"
 import Antibiogram from "@/components/reports/Antibiogram";
+import { useMultiNamespaceTranslation } from "@/i18n/hooks";
 
 const ENV = import.meta.env;
 const apiUrl = ENV.VITE_API_BASE_URL || "";
@@ -81,39 +82,39 @@ interface ReportMeta {
 const REPORTS: ReportMeta[] = [
   {
     id: "antibiogram",
-    label: "National Antibiogram",
+    label: "reports.national_antibiogram",
     Icon: BarChart2,
-    desc: "WHO GLASS · Resistance heatmap",
+    desc: "reports.who_glass",
   },
   {
     id: "priority",
-    label: "Priority Pathogens",
+    label: "reports.priority_pathogens",
     Icon: AlertTriangle,
-    desc: "WHO Critical & High pathogens",
+    desc: "reports.who_critical",
   },
   {
     id: "surveillance",
-    label: "MRSA & Carbapenem",
+    label: "reports.mrsa_carbapenem",
     Icon: Shield,
-    desc: "Mechanism resistance tracking",
+    desc: "reports.mechanism_resistance",
   },
   {
     id: "workload",
-    label: "Workload & TAT",
+    label: "reports.workload_tat",
     Icon: Activity,
-    desc: "Operations & turnaround time",
+    desc: "reports.operations_tat",
   },
   {
     id: "geographic",
-    label: "Geographic Distribution",
+    label: "reports.geographic_distribution",
     Icon: Globe,
-    desc: "Spatial resistance mapping",
+    desc: "reports.spatial_resistance",
   },
   {
     id: "quality",
-    label: "Data Quality Audit",
+    label: "reports.data_quality_audit",
     Icon: Database,
-    desc: "Completeness & ingestion",
+    desc: "reports.completeness_ingestion",
   },
 ];
 
@@ -246,6 +247,7 @@ function generateTestPDF(): string {
 }
 
 function ReportsPage() {
+  const { t } = useMultiNamespaceTranslation(["common", "app"]);
   const client = useKeycloakClient();
   const token = client.kc?.tokenParsed;
   const user = token?.preferred_username || token?.email || "Guest";
@@ -332,13 +334,13 @@ function ReportsPage() {
             }}
           >
             <SelectTrigger className="w-full">
-              <SelectValue placeholder="Reports" />
+              <SelectValue placeholder={t("app:reports.title")} />
             </SelectTrigger>
             <SelectContent>
               <SelectGroup>
                 {REPORTS.map((report) => (
                   <SelectItem key={report.id} value={report.id}>
-                    {report.label}
+                    {t(`app:${report.label}`)}
                   </SelectItem>
                 ))}
               </SelectGroup>
@@ -367,7 +369,7 @@ function ReportsPage() {
                   format(date.from, "LLL dd, y")
                 )
               ) : (
-                <span>Reporting period</span>
+                <span>{t("common:messages.reporting_period")}</span>
               )}
             </Button>
           </PopoverTrigger>
@@ -400,11 +402,11 @@ function ReportsPage() {
                   ) : (
                     <Search className="h-4 w-4" />
                   )}
-                  <span className="sr-only">Search</span>
+                  <span className="sr-only">{t("common:actions.search")}</span>
                 </Button>
               </TooltipTrigger>
               <TooltipContent>
-                <span className="ml-auto text-sm">Search</span>
+                <span className="ml-auto text-sm">{t("common:actions.search")}</span>
               </TooltipContent>
             </Tooltip>
           </div>
@@ -470,10 +472,10 @@ function ReportsPage() {
 
               <div className="w-75 cursor-default border border-gray-700 rounded-xs  bg-background absolute">
                 <div className="py-2 px-4 border-b border-gray-700">
-                  <div className="text-lg p-0 m-0">Reports</div>
+                  <div className="text-lg p-0 m-0">{t("app:reports.title")}</div>
                 </div>
                 <div className="text-sm py-4 px-4">
-                  Select a report type from the options above to view its data
+                  {t("app:reports.select_report_prompt")}
                 </div>
               </div>
             </div>

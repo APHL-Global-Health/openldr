@@ -5,6 +5,7 @@ import type {
   NameType,
   ValueType,
 } from "recharts/types/component/DefaultTooltipContent";
+import { useMultiNamespaceTranslation } from "@/i18n/hooks";
 
 // ── Design tokens ─────────────────────────────────────────────
 export const C = {
@@ -224,12 +225,13 @@ interface ExportsProps {
   onPDF?: () => void;
 }
 export function Exports({ onCSV, onExcel, onTXT, onPDF }: ExportsProps) {
+  const { t } = useMultiNamespaceTranslation(["common", "app"]);
   // Using inline SVG icons to avoid importing lucide icons for minimal buttons
   const btns = [
-    { l: "CSV", f: onCSV },
-    { l: "Excel", f: onExcel },
-    { l: "TXT", f: onTXT },
-    { l: "PDF / Print", f: onPDF },
+    { l: t("app:reports.csv"), f: onCSV },
+    { l: t("app:reports.excel"), f: onExcel },
+    { l: t("app:reports.txt"), f: onTXT },
+    { l: t("app:reports.pdf_print"), f: onPDF },
   ].filter((b) => b.f);
 
   return (
@@ -297,6 +299,7 @@ export function ChartTip({
 
 // ── Loading / Error states ────────────────────────────────────
 export function LoadingState() {
+  const { t } = useMultiNamespaceTranslation(["common", "app"]);
   return (
     <div
       style={{
@@ -325,7 +328,7 @@ export function LoadingState() {
           fontFamily: "'IBM Plex Mono',monospace",
         }}
       >
-        Fetching report data…
+        {t("app:reports.fetching_data")}
       </span>
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
@@ -337,6 +340,7 @@ interface ErrorStateProps {
   onRetry: () => void;
 }
 export function ErrorState({ message, onRetry }: ErrorStateProps) {
+  const { t } = useMultiNamespaceTranslation(["common", "app"]);
   return (
     <div
       style={{
@@ -370,7 +374,7 @@ export function ErrorState({ message, onRetry }: ErrorStateProps) {
           fontFamily: "'IBM Plex Mono',monospace",
         }}
       >
-        Retry
+        {t("common:actions.retry")}
       </button>
     </div>
   );

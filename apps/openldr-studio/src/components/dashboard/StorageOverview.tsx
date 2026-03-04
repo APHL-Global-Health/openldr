@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import * as d3 from "d3";
 import { cn } from "@/lib/utils";
+import { useAppTranslation } from "@/i18n/hooks";
 import type { StorageOverview as StorageOverviewType } from "@/types/database";
 
 interface StorageOverviewProps {
@@ -131,6 +132,7 @@ function BucketTreemap({
 }
 
 export function StorageOverviewCard({ storage }: StorageOverviewProps) {
+  const { t } = useAppTranslation();
   const usagePercent =
     storage.totalSizeBytes > 0
       ? (storage.usedSizeBytes / storage.totalSizeBytes) * 100
@@ -140,7 +142,7 @@ export function StorageOverviewCard({ storage }: StorageOverviewProps) {
     <div className="h-full ">
       <div className="cursor-default border-border border bg-card rounded-sm shadow h-full">
         <div className="flex items-center min-h-10 max-h-10 text-xs py-2 px-4 border-border border-b">
-          STORAGE
+          {t("dashboard.storage")}
         </div>
         <div className="w-full min-h-[calc(100%-40px)] max-h-[calc(100%-40px)] space-y-4">
           {/* Summary stats */}
@@ -149,19 +151,19 @@ export function StorageOverviewCard({ storage }: StorageOverviewProps) {
               <div className="text-md font-semibold leading-none">
                 {storage.totalBuckets}
               </div>
-              <div className="text-[10px] text-muted-foreground ">Buckets</div>
+              <div className="text-[10px] text-muted-foreground ">{t("dashboard.buckets")}</div>
             </div>
             <div className="flex flex-col items-center justify-center border-l border-r">
               <div className="text-md font-semibold leading-none">
                 {storage.totalObjects.toLocaleString()}
               </div>
-              <div className="text-[10px] text-muted-foreground">Objects</div>
+              <div className="text-[10px] text-muted-foreground">{t("dashboard.objects")}</div>
             </div>
             <div className="flex flex-col items-center justify-center">
               <div className="text-md font-semibold leading-none">
                 {formatBytes(storage.usedSizeBytes)}
               </div>
-              <div className="text-[10px] text-muted-foreground">Used</div>
+              <div className="text-[10px] text-muted-foreground">{t("dashboard.used")}</div>
             </div>
           </div>
 
@@ -169,7 +171,7 @@ export function StorageOverviewCard({ storage }: StorageOverviewProps) {
           {storage.totalSizeBytes > 0 && (
             <div className="border-b p-2">
               <div className="mb-1 flex justify-between text-xs text-muted-foreground">
-                <span>Storage Usage</span>
+                <span>{t("dashboard.storage_usage")}</span>
                 <span>{usagePercent.toFixed(1)}%</span>
               </div>
               <div className="h-2 w-full rounded-full bg-muted">
@@ -196,7 +198,7 @@ export function StorageOverviewCard({ storage }: StorageOverviewProps) {
           {storage.buckets.length > 0 && (
             <div className="px-2 pb-2">
               <p className="mb-2 text-xs font-medium text-muted-foreground">
-                Bucket Sizes
+                {t("dashboard.bucket_sizes")}
               </p>
               <BucketTreemap buckets={storage.buckets} />
             </div>

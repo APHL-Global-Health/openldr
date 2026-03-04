@@ -4,9 +4,11 @@ import { ChatSidebar } from "@/components/chat/chat-sidebar";
 import { GridPattern } from "@/components/grid-pattern";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
+import { useAppTranslation } from "@/i18n/hooks";
 import { ModelSelector } from "@/components/chat/chat-model-selector";
 
 function ChatPage() {
+  const { t } = useAppTranslation();
   const [resetKey, setResetKey] = useState(0);
 
   const handleNewChat = () => {
@@ -16,7 +18,7 @@ function ChatPage() {
   const navComponents = () => {
     return (
       <div className="flex min-h-13 max-h-13 w-full items-center px-2 py-2">
-        Chats
+        {t("chats.title")}
         {/* <div className="flex flex-1 min-h-13 max-h-13">hi</div> */}
         {/* <ModelSelector className="w-full max-w-sm" /> */}
       </div>

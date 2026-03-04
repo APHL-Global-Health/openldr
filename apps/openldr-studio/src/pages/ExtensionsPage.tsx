@@ -3,6 +3,7 @@ import { cn } from "@/lib/utils";
 import { ExtensionListPanel } from "@/components/extensions/extensions-listview";
 import ExtensionInfoPage from "./ExtensionInfoPage";
 import { useExtensions } from "@/hooks/misc/useExtensions";
+import { useMultiNamespaceTranslation } from "@/i18n/hooks";
 import {
   AlertTriangle,
   Check,
@@ -39,6 +40,7 @@ import { injectBridge } from "@/lib/extensions";
 const ENV = import.meta.env;
 
 function ExtensionsPage() {
+  const { t } = useMultiNamespaceTranslation(["common", "app"]);
   const client = useKeycloakClient();
   const { state, host, loader, dispatch } = useExtensions();
   const [isDialogOpened, setIsDialogOpened] = useState<boolean>(false);
@@ -61,7 +63,7 @@ function ExtensionsPage() {
       zip = await JSZip.loadAsync(file);
     } catch {
       setErrorMsg(
-        "Invalid ZIP file — make sure you upload a valid .zip bundle",
+        t("app:extensions.invalid_zip"),
       );
       setStep("error");
       return;
@@ -69,7 +71,7 @@ function ExtensionsPage() {
 
     const manifestFile = zip.file("manifest.json");
     if (!manifestFile) {
-      setErrorMsg("manifest.json not found in ZIP root");
+      setErrorMsg(t("app:extensions.manifest_not_found"));
       setStep("error");
       return;
     }
@@ -78,7 +80,7 @@ function ExtensionsPage() {
     try {
       manifest = JSON.parse(await manifestFile.async("string"));
     } catch {
-      setErrorMsg("manifest.json is not valid JSON");
+      setErrorMsg(t("app:extensions.manifest_invalid"));
       setStep("error");
       return;
     }
@@ -89,7 +91,7 @@ function ExtensionsPage() {
 
     if (!payloadFile) {
       setErrorMsg(
-        `${payloadFilename} not found in ZIP (required for kind: ${kind})`,
+        t("app:extensions.not_found_in_zip", { filename: payloadFilename, kind }),
       );
       setStep("error");
       return;
@@ -112,7 +114,7 @@ function ExtensionsPage() {
     const file = e.dataTransfer.files[0];
     if (file?.name.endsWith(".zip")) parseZip(file);
     else {
-      setErrorMsg("Please drop a .zip file");
+      setErrorMsg(t("app:extensions.please_drop_zip"));
       setStep("error");
     }
   }
@@ -261,13 +263,13 @@ function ExtensionsPage() {
   const navComponents = () => {
     return (
       <div className="flex min-h-13 max-h-13 w-full items-center px-2 py-2">
-        Extensions
+        {t("app:extensions.title")}
         <div className="flex-1" />
         {activeCount > 0 && (
           <div className="flex justify-center items-center px-2">
             <Separator orientation="vertical" className="mx-2 min-h-6" />
             <span className="text-[10px]hidden md:block">
-              {activeCount} active
+              {activeCount} {t("app:extensions.active")}
             </span>
           </div>
         )}
@@ -285,7 +287,7 @@ function ExtensionsPage() {
               <Upload className="h-3.5 w-3.5" />
             </Button>
           </TooltipTrigger>
-          <TooltipContent>Upload</TooltipContent>
+          <TooltipContent>{t("common:actions.upload")}</TooltipContent>
         </Tooltip>
         <Separator orientation="vertical" className="mx-2 min-h-6" />
         <Tooltip>
@@ -300,7 +302,7 @@ function ExtensionsPage() {
               <RefreshCw className="h-3.5 w-3.5" />
             </Button>
           </TooltipTrigger>
-          <TooltipContent>Broadcast data.refresh</TooltipContent>
+          <TooltipContent>{t("app:extensions.broadcast_refresh")}</TooltipContent>
         </Tooltip>
         <Separator orientation="vertical" className="mx-2 min-h-6" />
       </div>
@@ -397,10 +399,10 @@ function ExtensionsPage() {
                     <Upload className="h-10 w-10 " />
                     <div className="text-center">
                       <p className="text-[13px]  font-medium">
-                        Drop your extension ZIP here
+                        {t("app:extensions.drop_zip_here")}
                       </p>
                       <p className="text-[11px]  mt-1">
-                        or click to browse · max 5MB
+                        {t("app:extensions.or_click_browse")}
                       </p>
                     </div>
                     {/* <div className="text-[10px] text-center leading-relaxed">
@@ -457,10 +459,10 @@ function ExtensionsPage() {
 
                     <div className="px-4 py-3 border-b border-border flex flex-col gap-1.5">
                       <p className="text-[12px] uppercase tracking-wider">
-                        Permissions
+                        {t("app:extensions.permissions_label")}
                       </p>
                       {perms.length === 0 ? (
-                        <p className="text-[10px]">none</p>
+                        <p className="text-[10px]">{t("app:extensions.none")}</p>
                       ) : (
                         <div className="flex flex-wrap gap-1">
                           {perms.map((p) => (
@@ -480,10 +482,10 @@ function ExtensionsPage() {
 
                     <div className="px-4 py-3 grid grid-cols-2 gap-2 text-[14px] ">
                       <div>
-                        ID: <span>{manifest.id as string}</span>
+                        {t("app:extensions.id_label")}: <span>{manifest.id as string}</span>
                       </div>
                       <div>
-                        Payload:{" "}
+                        {t("app:extensions.payload_label")}:{" "}
                         <span>
                           {bundle.payloadFile} (
                           {(bundle.payloadSize / 1024).toFixed(1)} KB)
@@ -499,7 +501,7 @@ function ExtensionsPage() {
                         className="flex-1 gap-2"
                       >
                         {/* <Upload className="h-3 w-3" />  */}
-                        Publish
+                        {t("app:extensions.publish")}
                       </Button>
                       <Button
                         variant="destructive"
@@ -507,7 +509,7 @@ function ExtensionsPage() {
                         onClick={reset}
                         className="flex-1"
                       >
-                        Cancel
+                        {t("common:actions.cancel")}
                       </Button>
                     </div>
                   </div>
@@ -519,7 +521,7 @@ function ExtensionsPage() {
                     <div className="justify-center flex flex-col gap-4">
                       <div className="flex items-center gap-3">
                         <Loader2 className="h-4 w-4  animate-spin shrink-0" />
-                        <p className="text-[14px]">Uploading</p>
+                        <p className="text-[14px]">{t("app:extensions.uploading")}</p>
                       </div>
                       <div className="h-1.5 rounded-none bg-primary/30 border border-primary overflow-hidden">
                         <div
@@ -540,7 +542,7 @@ function ExtensionsPage() {
                         <Check className="h-5 w-5 text-[#34d399]" />
                       </div>
                       <p className="text-[13px] font-medium text-[#34d399]">
-                        Published successfully
+                        {t("app:extensions.published_successfully")}
                       </p>
                       {/* <p className="text-[10px]">Returning to extensions list…</p> */}
                     </div>
@@ -554,7 +556,7 @@ function ExtensionsPage() {
                       <div className="flex items-center gap-2">
                         {/* <AlertTriangle className="h-4 w-4 text-[#f87171] shrink-0" /> */}
                         <p className="font-medium text-[#f87171]">
-                          Publish failed
+                          {t("app:extensions.publish_failed")}
                         </p>
                       </div>
                       <p className="text-[11px] text-[#f87171]/70 leading-relaxed">
@@ -568,7 +570,7 @@ function ExtensionsPage() {
                           className="self-start gap-2"
                         >
                           {/* <RefreshCw className="h-3 w-3" />  */}
-                          Try again
+                          {t("app:extensions.try_again")}
                         </Button>
                       </div>
                     </div>
@@ -579,7 +581,7 @@ function ExtensionsPage() {
                 {step === "drop" && (
                   <div className="rounded-sm border border-border bg-card py-4 flex flex-col gap-2">
                     <p className="text-[10px] px-4 pb-2 font-bold border-b uppercase tracking-wider">
-                      ZIP bundle structure
+                      {t("app:extensions.zip_structure")}
                     </p>
                     <pre className="text-[10px] px-4  leading-relaxed">{`extension.zip
 ├── manifest.json    ← required
@@ -587,8 +589,7 @@ function ExtensionsPage() {
 │   OR index.html    ← iframe extensions
 └── README.md        ← optional`}</pre>
                     <p className="text-[10px] px-4  mt-1">
-                      See SDK docs for manifest.json schema and openldr.data API
-                      reference.
+                      {t("app:extensions.see_sdk_docs")}
                     </p>
                   </div>
                 )}

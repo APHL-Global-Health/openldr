@@ -9,7 +9,17 @@
     "extensions": "Viendelezi",
     "settings": "Mipangilio",
     "help": "Msaada",
-    "logout": "Toka"
+    "logout": "Toka",
+    "contents": "Maudhui",
+    "data_entry": "Uingizaji Data",
+    "archives": "Kumbukumbu",
+    "reports": "Ripoti",
+    "chats": "Mazungumzo",
+    "logs": "Kumbukumbu za Mfumo",
+    "go_back": "Rudi Nyuma",
+    "profile": "Wasifu",
+    "sign_out": "Ondoka",
+    "command_palette": "Paleti ya Amri"
   },
   "actions": {
     "save": "Hifadhi",
@@ -29,7 +39,13 @@
     "back": "Rudi",
     "next": "Ifuatayo",
     "previous": "Iliyotangulia",
-    "finish": "Maliza"
+    "finish": "Maliza",
+    "retry": "Jaribu Tena",
+    "reset": "Weka Upya",
+    "upload": "Pakia",
+    "clear": "Futa",
+    "publish": "Chapisha",
+    "copy": "Nakili"
   },
   "status": {
     "loading": "Inapakia...",
@@ -41,7 +57,14 @@
     "active": "Inafanya Kazi",
     "inactive": "Haifanyi Kazi",
     "enabled": "Imewezeshwa",
-    "disabled": "Imezimwa"
+    "disabled": "Imezimwa",
+    "healthy": "Ina Afya",
+    "degraded": "Imepungua",
+    "down": "Imesimama",
+    "unknown": "Haijulikani",
+    "connecting": "Inaunganisha...",
+    "registry_ok": "Rejista sawa",
+    "unreachable": "Haifikiiki"
   },
   "validation": {
     "required": "Sehemu hii inahitajika",
@@ -58,7 +81,12 @@
     "no_data": "Hakuna data inayopatikana",
     "no_results": "Hakuna matokeo yaliyopatikana",
     "try_again": "Tafadhali jaribu tena",
-    "contact_support": "Kama tatizo linaendelea, tafadhali wasiliana na msaada"
+    "contact_support": "Kama tatizo linaendelea, tafadhali wasiliana na msaada",
+    "pick_a_date": "Chagua tarehe",
+    "reporting_period": "Kipindi cha ripoti",
+    "failed_to_load": "Imeshindwa kupakia data ya dashibodi",
+    "select_report": "Chagua aina ya ripoti kutoka chaguo hapo juu ili kuona data yake",
+    "fetching_data": "Inapata data ya ripoti…"
   },
   "time": {
     "just_now": "Sasa hivi",
@@ -75,5 +103,29 @@
     "showing": "Inaonyesha {{from}} hadi {{to}} kati ya matokeo {{total}}",
     "per_page": "Kwa kila ukurasa",
     "page": "Ukurasa {{current}} kati ya {{total}}"
+  },
+  "table": {
+    "asc": "Kupanda",
+    "desc": "Kushuka",
+    "hide": "Ficha",
+    "rows_per_page": "Safu kwa ukurasa",
+    "page_of": "Ukurasa {{current}} kati ya {{total}}",
+    "go_first": "Nenda ukurasa wa kwanza",
+    "go_previous": "Nenda ukurasa uliotangulia",
+    "go_next": "Nenda ukurasa unaofuata",
+    "go_last": "Nenda ukurasa wa mwisho",
+    "rows_selected": "Safu {{count}} kati ya {{total}} zimechaguliwa",
+    "filter_placeholder": "Chuja...",
+    "toggle_columns": "Badilisha safu wima",
+    "view": "Angalia",
+    "no_results": "Hakuna matokeo yaliyopatikana",
+    "clear_filters": "Futa vichujio",
+    "open_menu": "Fungua menyu"
+  },
+  "theme": {
+    "choose_theme": "Chagua mandhari",
+    "light": "Mwangaza",
+    "dark": "Giza",
+    "system": "Mfumo"
   }
 }

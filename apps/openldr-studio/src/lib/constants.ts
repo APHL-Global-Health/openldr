@@ -857,4 +857,5 @@ export const Op = {
 export const SUPPORTED_LANGUAGES: LanguageConfig[] = [
   { code: "en", name: "English", nativeName: "English", flag: "🇬🇧" },
   { code: "sw", name: "Swahili", nativeName: "Kiswahili", flag: "🇹🇿" },
+  { code: "pt", name: "Portuguese", nativeName: "Português", flag: "🇧🇷" },
 ];

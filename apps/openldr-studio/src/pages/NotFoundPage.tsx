@@ -1,10 +1,12 @@
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import logoImage from "@/assets/OpenODRv2Logo.png";
+import { useMultiNamespaceTranslation } from "@/i18n/hooks";
 
 function NotFoundPage() {
+  const { t } = useMultiNamespaceTranslation(["common", "app"]);
   const statusCode = 404;
-  const title = "Page not found";
+  const title = t("app:errors.page_not_found");
 
   const navigate = useNavigate();
 
@@ -40,7 +42,7 @@ function NotFoundPage() {
             {title}
           </h1>
           <Button variant="outline" className="mt-8" onClick={handleBack}>
-            Go Back
+            {t("common:navigation.go_back")}
           </Button>
         </div>
       </div>

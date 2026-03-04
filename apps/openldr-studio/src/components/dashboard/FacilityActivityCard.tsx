@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/table";
 import { BarChart3, Map } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useAppTranslation } from "@/i18n/hooks";
 import type { FacilityActivity } from "@/types/database";
 import { Button } from "../ui/button";
 
@@ -33,6 +34,7 @@ const COLORS = [
 ];
 
 function FacilityBubbleChart({ data }: { data: FacilityActivity[] }) {
+  const { t } = useAppTranslation();
   const svgRef = useRef<SVGSVGElement>(null);
   const tooltipRef = useRef<HTMLDivElement>(null);
 
@@ -80,9 +82,9 @@ function FacilityBubbleChart({ data }: { data: FacilityActivity[] }) {
           .style("display", "block")
           .html(
             `<div class="font-medium text-xs text-nowrap">${fac.facilityName || fac.facilityCode}</div>` +
-              `<div class="text-xs text-nowrap text-foreground">Requests: ${fac.requestCount.toLocaleString()}</div>` +
-              `<div class="text-xs text-nowrap text-foreground">Results: ${fac.resultCount.toLocaleString()}</div>` +
-              `<div class="text-xs text-nowrap text-foreground">Patients: ${fac.patientCount.toLocaleString()}</div>`,
+              `<div class="text-xs text-nowrap text-foreground">${t("dashboard.requests")}: ${fac.requestCount.toLocaleString()}</div>` +
+              `<div class="text-xs text-nowrap text-foreground">${t("dashboard.results")}: ${fac.resultCount.toLocaleString()}</div>` +
+              `<div class="text-xs text-nowrap text-foreground">${t("dashboard.patients")}: ${fac.patientCount.toLocaleString()}</div>`,
           );
       })
       .on("mousemove", (event: MouseEvent) => {
@@ -130,6 +132,7 @@ function FacilityBubbleChart({ data }: { data: FacilityActivity[] }) {
 }
 
 export function FacilityActivityCard({ data }: FacilityActivityCardProps) {
+  const { t } = useAppTranslation();
   const [view, setView] = useState<ViewMode>("chart");
   const sorted = [...data].sort((a, b) => b.requestCount - a.requestCount);
 
@@ -137,7 +140,7 @@ export function FacilityActivityCard({ data }: FacilityActivityCardProps) {
     <div className="h-full ">
       <div className="cursor-default border-border border bg-card rounded-sm shadow h-full relative">
         <div className="flex items-center min-h-10 max-h-10 text-xs py-2 pl-4 pr-2 border-border border-b justify-between">
-          <div>FACILITY ACTIVITY</div>
+          <div>{t("dashboard.facility_activity")}</div>
 
           <div className="flex items-center gap-0.5 ">
             <Button
@@ -172,15 +175,15 @@ export function FacilityActivityCard({ data }: FacilityActivityCardProps) {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="text-[10px]">Facility</TableHead>
+                    <TableHead className="text-[10px]">{t("dashboard.facility")}</TableHead>
                     <TableHead className="text-[10px] text-right">
-                      Requests
+                      {t("dashboard.requests")}
                     </TableHead>
                     <TableHead className="text-[10px] text-right">
-                      Results
+                      {t("dashboard.results")}
                     </TableHead>
                     <TableHead className="text-[10px] text-right">
-                      Patients
+                      {t("dashboard.patients")}
                     </TableHead>
                   </TableRow>
                 </TableHeader>

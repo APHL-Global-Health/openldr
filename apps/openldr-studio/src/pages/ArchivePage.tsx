@@ -733,7 +733,7 @@ function ArchivePage() {
                         </Select>
 
                         <Input
-                          placeholder="Enter value"
+                          placeholder={t("app:archive.enter_value")}
                           key={
                             Math.floor(Math.random() * 1000) + "-filter-input"
                           }
@@ -897,7 +897,7 @@ function ArchivePage() {
                   }}
                 >
                   <SelectTrigger className="min-w-49 rounded-xs max-w-49 h-8 flex flex-1 border border-default m-1 text-[12px]">
-                    <SelectValue placeholder="Pick a column to sort by" />
+                    <SelectValue placeholder={t("app:archive.pick_sort_column")} />
                   </SelectTrigger>
                   <SelectContent
                     align="start"
@@ -1016,7 +1016,7 @@ function ArchivePage() {
                   }}
                 >
                   <SelectTrigger className="min-w-49 max-w-49 rounded-xs h-8 flex flex-1 border border-default m-1 text-[12px]">
-                    <SelectValue placeholder="Pick a columns to project" />
+                    <SelectValue placeholder={t("app:archive.pick_project_column")} />
                   </SelectTrigger>
                   <SelectContent
                     align="start"
@@ -1201,8 +1201,8 @@ function ArchivePage() {
                   </CardHeader>
                   <CardContent className="text-sm border py-4">
                     {schema && _table.getRowModel().rows?.length === 0
-                      ? `"${table?.toUpperCase()}" table found in "${schema?.toUpperCase()}" database, has no data`
-                      : "Select a database table from the panel above to view its data"}
+                      ? t("app:archive.table_no_data", { table: table?.toUpperCase(), schema: schema?.toUpperCase() })
+                      : t("app:archive.select_table_prompt")}
                   </CardContent>
                 </Card>
               </div>

@@ -23,11 +23,13 @@ import {
 import { CheckIcon, CopyIcon, ExternalLinkIcon } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import { cn } from "@/lib/utils";
+import { useMultiNamespaceTranslation } from "@/i18n/hooks";
 
 const ENV = import.meta.env;
 const baseUrl = ENV.VITE_BASE_URL || "/";
 
 export function SettingsGeneral() {
+  const { t } = useMultiNamespaceTranslation(["common", "app"]);
   const client = useKeycloakClient();
   const keycloak = client.kc;
   const hasPriviledges = keycloak.hasRealmRole(
@@ -41,13 +43,13 @@ export function SettingsGeneral() {
       <div className="flex flex-col space-y-10">
         <Card className="w-3xl h-auto rounded-sm">
           <CardHeader>
-            <CardTitle>General</CardTitle>
+            <CardTitle>{t("app:settings.general")}</CardTitle>
             <CardDescription></CardDescription>
           </CardHeader>
           <Separator />
           <CardContent className="flex flex-col py-2">
             <div className="grid grid-cols-2 py-2 space-y-2 w-full">
-              <div className="flex items-center text-sm">Entity API URL</div>
+              <div className="flex items-center text-sm">{t("app:settings.entity_api_url")}</div>
               <InputGroup className="rounded-xs">
                 <InputGroupInput value={ENV.VITE_API_BASE_URL} readOnly />
                 <InputGroupAddon align="inline-end">
@@ -79,7 +81,7 @@ export function SettingsGeneral() {
               </InputGroup>
             </div>
             <div className="grid grid-cols-2 py-2 space-y-2 w-full">
-              <div className="flex items-center text-sm">Processor API URL</div>
+              <div className="flex items-center text-sm">{t("app:settings.processor_api_url")}</div>
               <InputGroup className="rounded-xs">
                 <InputGroupInput value={ENV.VITE_PROCESSOR_BASE_URL} readOnly />
                 <InputGroupAddon align="inline-end">
@@ -111,7 +113,7 @@ export function SettingsGeneral() {
               </InputGroup>
             </div>
             <div className="grid grid-cols-2 py-2 space-y-2 w-full">
-              <div className="flex items-center text-sm">Relative Path</div>
+              <div className="flex items-center text-sm">{t("app:settings.relative_path")}</div>
               <InputGroup className="rounded-xs">
                 <InputGroupInput value={ENV.VITE_BASE_URL} readOnly />
                 <InputGroupAddon align="inline-end">
@@ -129,7 +131,7 @@ export function SettingsGeneral() {
               </InputGroup>
             </div>
             <div className="grid grid-cols-2 py-2 space-y-2 w-full">
-              <div className="flex items-center text-sm">Internal Port</div>
+              <div className="flex items-center text-sm">{t("app:settings.internal_port")}</div>
               <InputGroup className="rounded-xs">
                 <InputGroupInput value={ENV.VITE_BASE_PORT} readOnly />
                 <InputGroupAddon align="inline-end">
@@ -151,7 +153,7 @@ export function SettingsGeneral() {
 
         <Card className="w-3xl h-auto rounded-sm">
           <CardHeader>
-            <CardTitle>Web Consoles</CardTitle>
+            <CardTitle>{t("app:settings.web_consoles")}</CardTitle>
             <CardDescription></CardDescription>
           </CardHeader>
           <Separator />

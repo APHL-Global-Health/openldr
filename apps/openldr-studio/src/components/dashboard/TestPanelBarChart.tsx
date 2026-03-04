@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import * as d3 from "d3";
+import { useAppTranslation } from "@/i18n/hooks";
 import type { TestPanelVolume } from "@/types/database";
 
 interface TestPanelBarChartProps {
@@ -13,6 +14,7 @@ export function TestPanelBarChart({
   data,
   maxItems = 10,
 }: TestPanelBarChartProps) {
+  const { t } = useAppTranslation();
   const containerRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
   const tooltipRef = useRef<HTMLDivElement>(null);
@@ -101,7 +103,7 @@ export function TestPanelBarChart({
           .style("top", `${event.offsetY - 10}px`)
           .html(
             `<div class="font-medium text-xs">${d.panelDesc || d.panelCode}</div>` +
-              `<div class="text-xs text-foreground">${d.count.toLocaleString()} tests</div>`,
+              `<div class="text-xs text-foreground">${d.count.toLocaleString()} ${t("dashboard.tests")}</div>`,
           );
       })
       .on("mousemove", (event: MouseEvent) => {
@@ -157,7 +159,7 @@ export function TestPanelBarChart({
     <div className="h-full ">
       <div className="cursor-default border-border border bg-card rounded-sm shadow h-full">
         <div className="flex items-center min-h-10 max-h-10 text-xs py-2 px-4 border-border border-b">
-          TEST PANELS
+          {t("dashboard.test_panels")}
         </div>
         <div className="p-0 w-full min-h-[calc(100%-40px)] max-h-[calc(100%-40px)] items-center flex relative">
           <div ref={containerRef} className="relative w-full mt-6 flex">

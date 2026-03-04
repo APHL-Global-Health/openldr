@@ -2,12 +2,14 @@ import { ContentLayout } from "@/components/admin-panel/content-layout";
 
 import { useExtensions } from "@/hooks/misc/useExtensions";
 import { useState } from "react";
+import { useAppTranslation } from "@/i18n/hooks";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Terminal, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 function LogsPage() {
+  const { t } = useAppTranslation();
   const { state, dispatch } = useExtensions();
   const [filter, setFilter] = useState("all");
 
@@ -21,7 +23,7 @@ function LogsPage() {
   };
 
   const navComponents = () => {
-    return <h1 className="font-bold">Logs</h1>;
+    return <h1 className="font-bold">{t("logs.title")}</h1>;
   };
   return (
     <ContentLayout nav={navComponents()}>
@@ -57,7 +59,7 @@ function LogsPage() {
             <div className="font-mono text-[10px]">
               {logs.length === 0 && (
                 <p className="py-6 text-center ">
-                  No IPC messages yet — enable an extension to start
+                  {t("logs.no_messages")}
                 </p>
               )}
               {logs.slice(0, 120).map((log) => (

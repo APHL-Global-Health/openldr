@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import * as d3 from "d3";
+import { useAppTranslation } from "@/i18n/hooks";
 import type { SpecimenTypeCount } from "@/types/database";
 
 interface SpecimenDonutChartProps {
@@ -22,6 +23,7 @@ const COLORS = [
 ];
 
 export function SpecimenDonutChart({ data }: SpecimenDonutChartProps) {
+  const { t } = useAppTranslation();
   const svgRef = useRef<SVGSVGElement>(null);
   const tooltipRef = useRef<HTMLDivElement>(null);
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
@@ -126,13 +128,13 @@ export function SpecimenDonutChart({ data }: SpecimenDonutChartProps) {
       .attr("dy", "1.2em")
       .attr("class", "fill-current text-muted-foreground")
       .attr("font-size", "10px")
-      .text("Specimens");
+      .text(t("dashboard.specimens"));
   }, [data, size]);
 
   return (
     <div>
       <div className="flex items-center min-h-10 max-h-10 text-xs py-2 px-4 border-border border-b">
-        SPECIMEN DISTRIBUTION
+        {t("dashboard.specimen_distribution")}
       </div>
       <div className="flex flex-1 flex-col items-center gap-4 pt-0">
         <div className="relative">

@@ -1,4 +1,5 @@
 import { ContentLayout } from "@/components/admin-panel/content-layout";
+import { useMultiNamespaceTranslation } from "@/i18n/hooks";
 
 import { useState, useEffect, useRef } from "react";
 
@@ -89,6 +90,7 @@ import {
 import { useSQLiteClient } from "@/components/sqlite-client-provider";
 
 function DataEntryPage() {
+  const { t } = useMultiNamespaceTranslation(["common", "app"]);
   const sql = useSQLiteClient();
   const client = useKeycloakClient();
 
@@ -178,12 +180,12 @@ function DataEntryPage() {
         if (client.kc.token) {
           await processFeedEntry(values, selectedFeed.feed, client.kc.token);
 
-          toast.success(`Submitted successfully`, {
+          toast.success(t("app:data_entry.submitted_successfully"), {
             className: "bg-card text-card-foreground border-border",
           });
         }
       } catch (error: any) {
-        toast.error(`Failed to submit. Please try again.`, {
+        toast.error(t("app:data_entry.failed_to_submit"), {
           className: "bg-card text-card-foreground border-border",
         });
       } finally {
@@ -213,13 +215,13 @@ function DataEntryPage() {
             }
           }
 
-          toast.success("Data imported successfully", {
+          toast.success(t("app:data_entry.data_imported"), {
             className: "bg-card text-card-foreground border-border",
-            description: `${importDialog.data.length} records imported`,
+            description: t("app:data_entry.records_imported", { count: importDialog.data.length }),
           });
         }
       } catch (error: any) {
-        toast.error(`Failed to submit. Please try again.`, {
+        toast.error(t("app:data_entry.failed_to_submit"), {
           className: "bg-card text-card-foreground border-border",
         });
       } finally {
@@ -291,7 +293,7 @@ function DataEntryPage() {
             });
             data = result.data;
           } else {
-            throw new Error("No supported file found in ZIP");
+            throw new Error(t("app:data_entry.no_supported_file"));
           }
         } else if (ext === ".json") {
           const text = await f.text();
@@ -384,7 +386,7 @@ function DataEntryPage() {
             }}
           >
             <SelectTrigger className="focus:ring-0 w-50 h-8 justify-between ">
-              <SelectValue placeholder="Forms" />
+              <SelectValue placeholder={t("app:data_entry.forms")} />
             </SelectTrigger>
             <SelectContent className="flex bg-background">
               {(entryForms || []).map((value) => {
@@ -447,7 +449,7 @@ function DataEntryPage() {
                   </label>
                 </div>
               </TooltipTrigger>
-              <TooltipContent>Bulk Import</TooltipContent>
+              <TooltipContent>{t("app:data_entry.bulk_import")}</TooltipContent>
             </Tooltip>
             <Tooltip>
               <TooltipTrigger asChild>
@@ -463,11 +465,11 @@ function DataEntryPage() {
                   size="icon"
                 >
                   <ListRestart className="h-4 w-4" />
-                  <span className="sr-only">Clear</span>
+                  <span className="sr-only">{t("common:actions.clear")}</span>
                 </Button>
               </TooltipTrigger>
               <TooltipContent>
-                <span className="ml-auto text-muted text-sm">Clear</span>
+                <span className="ml-auto text-muted text-sm">{t("common:actions.clear")}</span>
               </TooltipContent>
             </Tooltip>
             <Tooltip>
@@ -489,11 +491,11 @@ function DataEntryPage() {
                   }}
                 >
                   <Save className="h-4 w-4" />
-                  <span className="sr-only">Save</span>
+                  <span className="sr-only">{t("common:actions.save")}</span>
                 </Button>
               </TooltipTrigger>
               <TooltipContent>
-                <span className="ml-auto text-muted text-sm">Save</span>
+                <span className="ml-auto text-muted text-sm">{t("common:actions.save")}</span>
               </TooltipContent>
             </Tooltip>
           </div>
@@ -547,11 +549,10 @@ function DataEntryPage() {
 
                 <Card className="w-75 cursor-default p-0 m-0 gap-0 rounded-sm bg-background absolute">
                   <CardHeader className="pb-0 py-2">
-                    <CardTitle>Data Entry</CardTitle>
+                    <CardTitle>{t("app:data_entry.title")}</CardTitle>
                   </CardHeader>
                   <CardContent className="text-sm border py-4">
-                    Select a data entry form from the panel above to view its
-                    form.
+                    {t("app:data_entry.select_form_prompt")}
                   </CardContent>
                 </Card>
               </div>
@@ -607,13 +608,13 @@ function DataEntryPage() {
                       value="form"
                       className="text-sm items-center px-4"
                     >
-                      Form
+                      {t("app:data_entry.form")}
                     </ToggleGroupItem>
                     <ToggleGroupItem
                       value="schema"
                       className="text-sm items-center px-4"
                     >
-                      Schema
+                      {t("app:data_entry.schema")}
                     </ToggleGroupItem>
                   </ToggleGroup>
                 </div>
@@ -670,7 +671,7 @@ function DataEntryPage() {
                     </InputGroupAddon> */}
                       <InputGroupAddon align="block-start" className="border-b">
                         <InputGroupText className="font-mono font-medium">
-                          Json schema
+                          {t("app:data_entry.json_schema")}
                         </InputGroupText>
                         <InputGroupButton className="ml-auto" size="icon-xs">
                           <RefreshCwIcon />
@@ -693,7 +694,7 @@ function DataEntryPage() {
         >
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Import Data</DialogTitle>
+              <DialogTitle>{t("app:data_entry.import_data")}</DialogTitle>
               <DialogDescription>
                 Are you sure you want to import {importDialog.data.length}{" "}
                 record
@@ -703,9 +704,9 @@ function DataEntryPage() {
             </DialogHeader>
             <DialogFooter>
               <Button variant="outline" onClick={handleCancel}>
-                Cancel
+                {t("common:actions.cancel")}
               </Button>
-              <Button onClick={handleImport}>Import</Button>
+              <Button onClick={handleImport}>{t("app:data_entry.confirm_import")}</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>

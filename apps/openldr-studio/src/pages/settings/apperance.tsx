@@ -11,6 +11,7 @@ import { Circle, CircleDot } from "lucide-react";
 
 import { Separator } from "@/components/ui/separator";
 import { useId } from "react";
+import { useMultiNamespaceTranslation } from "@/i18n/hooks";
 
 import ui_light from "@/assets/images/ui-light.png";
 import ui_dark from "@/assets/images/ui-dark.png";
@@ -23,17 +24,18 @@ const getCurrentTheme = () => {
 };
 
 export function SettingsAppearance() {
+  const { t } = useMultiNamespaceTranslation(["common", "app"]);
   const items = [
     {
       id: "radio-appearance-light",
       value: "light",
-      label: "Light",
+      label: t("common:theme.light"),
       image: ui_light,
     },
     {
       id: "radio-appearance-dark",
       value: "dark",
-      label: "Dark",
+      label: t("common:theme.dark"),
       image: ui_dark,
     },
     // {
@@ -72,14 +74,14 @@ export function SettingsAppearance() {
     <div className="flex w-full h-full justify-center overflow-y-auto pt-4">
       <Card className="w-3xl h-60 rounded-sm">
         <CardHeader>
-          <CardTitle>Appearance</CardTitle>
+          <CardTitle>{t("app:settings.appearance")}</CardTitle>
           <CardDescription></CardDescription>
         </CardHeader>
         <Separator />
         <CardContent className="flex py-4">
           <div className="flex flex-1 flex-row justify-between space-x-4">
             <div className="text-sm font-medium leading-none text-foreground">
-              Choose a theme
+              {t("common:theme.choose_theme")}
             </div>
             <RadioGroup
               className="flex gap-3"

@@ -20,6 +20,7 @@ import { useEffect, useState } from "react";
 import { extensionEvents } from "@/lib/extensionEvents";
 import { DynamicIcon } from "@/components/dynamicIcon";
 import { useExtensions } from "@/hooks/misc/useExtensions";
+import { useCommonTranslation } from "@/i18n/hooks";
 
 interface MenuProps {
   isOpen: boolean | undefined;
@@ -32,6 +33,7 @@ export function Menu({ isOpen }: MenuProps) {
   const client = useKeycloakClient();
   const location = useLocation();
   const pathname = location.pathname;
+  const { t } = useCommonTranslation();
 
   // const extensionsHook = useExtensions(client.kc.token);
   const { state, dispatch } = useExtensions();
@@ -102,7 +104,7 @@ export function Menu({ isOpen }: MenuProps) {
             <li className={cn("w-full", groupLabel ? "pt-5" : "")} key={index}>
               {(isOpen && groupLabel) || isOpen === undefined ? (
                 <p className="text-sm font-medium text-muted-foreground px-4 pb-2 max-w-62 truncate">
-                  {groupLabel}
+                  {t(groupLabel)}
                 </p>
               ) : !isOpen && isOpen !== undefined && groupLabel ? (
                 <TooltipProvider>
@@ -113,7 +115,7 @@ export function Menu({ isOpen }: MenuProps) {
                       </div>
                     </TooltipTrigger>
                     <TooltipContent side="right">
-                      <p>{groupLabel}</p>
+                      <p>{t(groupLabel)}</p>
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
@@ -153,13 +155,13 @@ export function Menu({ isOpen }: MenuProps) {
                                     : "translate-x-0 opacity-100",
                                 )}
                               >
-                                {label}
+                                {t(label)}
                               </p>
                             </NavLink>
                           </Button>
                         </TooltipTrigger>
                         {isOpen === false && (
-                          <TooltipContent side="right">{label}</TooltipContent>
+                          <TooltipContent side="right">{t(label)}</TooltipContent>
                         )}
                       </Tooltip>
                     </TooltipProvider>

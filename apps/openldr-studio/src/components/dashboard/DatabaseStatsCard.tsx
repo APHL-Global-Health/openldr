@@ -9,6 +9,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
+import { useAppTranslation } from "@/i18n/hooks";
 import type { DatabaseStats as DatabaseStatsType } from "@/types/database";
 
 interface DatabaseStatsCardProps {
@@ -87,10 +88,12 @@ function ConnectionGauge({ active, max }: { active: number; max: number }) {
 }
 
 export function DatabaseStatsCard({ databases }: DatabaseStatsCardProps) {
+  const { t } = useAppTranslation();
+
   return (
     <div className="cursor-default border-border border bg-card rounded-sm shadow h-full">
       <div className="flex items-center min-h-10 max-h-10 text-xs py-2 px-4 border-border border-b">
-        DATABASES
+        {t("dashboard.databases")}
       </div>
 
       <div className="w-full min-h-[calc(100%-40px)] max-h-[calc(100%-40px)] grid grid-cols-1 lg:grid-cols-2">
@@ -135,7 +138,7 @@ export function DatabaseStatsCard({ databases }: DatabaseStatsCardProps) {
                     />
                     <div>
                       <p className="text-[10px] text-muted-foreground leading-tight">
-                        Connections
+                        {t("dashboard.connections")}
                       </p>
                       <p className="text-xs font-medium">
                         {db.activeConnections}/{db.maxConnections}
@@ -146,20 +149,20 @@ export function DatabaseStatsCard({ databases }: DatabaseStatsCardProps) {
                     <p className="text-lg font-semibold leading-none">
                       {db.tableCount}
                     </p>
-                    <p className="text-[10px] text-muted-foreground">Tables</p>
+                    <p className="text-[10px] text-muted-foreground">{t("dashboard.tables")}</p>
                   </div>
                   <div className="flex flex-col items-center justify-center rounded-lg border p-2">
                     <p className="ttext-lg font-semibold leading-none">
                       {db.uptime}
                     </p>
-                    <p className="text-[10px] text-muted-foreground">Uptime</p>
+                    <p className="text-[10px] text-muted-foreground">{t("dashboard.uptime")}</p>
                   </div>
                 </div>
 
                 {/* Connection bar */}
                 <div className="border-border border-b pb-4 px-2">
                   <div className="mb-1 flex justify-between text-[10px] text-muted-foreground">
-                    <span>Connection Pool</span>
+                    <span>{t("dashboard.connection_pool")}</span>
                     <span>{connPct.toFixed(0)}%</span>
                   </div>
                   <div className="h-1.5 w-full rounded-full bg-muted">

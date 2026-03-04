@@ -22,11 +22,13 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useKeycloakClient } from "../react-keycloak-provider";
 import { useExtensions } from "@/hooks/misc/useExtensions";
+import { useCommonTranslation } from "@/i18n/hooks";
 
 const ENV = import.meta.env;
 const baseUrl = ENV.VITE_BASE_URL || "/";
 
 export function UserNav() {
+  const { t } = useCommonTranslation();
   const client = useKeycloakClient();
 
   const token = client.kc?.tokenParsed;
@@ -70,7 +72,7 @@ export function UserNav() {
               </Button>
             </DropdownMenuTrigger>
           </TooltipTrigger>
-          <TooltipContent side="bottom">Profile</TooltipContent>
+          <TooltipContent side="bottom">{t("navigation.profile")}</TooltipContent>
         </Tooltip>
       </TooltipProvider>
 
@@ -99,7 +101,7 @@ export function UserNav() {
         <DropdownMenuSeparator /> */}
         <DropdownMenuItem className="hover:cursor-pointer" onClick={onLogout}>
           <LogOut className="w-4 h-4 mr-3 text-muted-foreground" />
-          Sign out
+          {t("navigation.sign_out")}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

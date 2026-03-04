@@ -1,4 +1,5 @@
 import { cn } from "@/lib/utils";
+import { useAppTranslation } from "@/i18n/hooks";
 import type { PipelineStageCount } from "@/types/database";
 
 interface DataPipelineProps {
@@ -20,11 +21,13 @@ const STAGE_META: Record<string, { icon: string; gradient: string }> = {
 };
 
 export function DataPipeline({ stages }: DataPipelineProps) {
+  const { t } = useAppTranslation();
+
   return (
     <div>
       <div className="cursor-default border-border border bg-card rounded-sm shadow">
         <div className="flex items-center min-h-10 max-h-10 text-xs py-2 px-4 border-border border-b">
-          DATA PIPELINE
+          {t("dashboard.data_pipeline")}
         </div>
         <div className="p-2 grid grid-cols-1 sm:grid-cols-4 md:grid-cols-4 xl:grid-cols-4">
           {stages.map((stage, index) => (

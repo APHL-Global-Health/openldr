@@ -17,6 +17,7 @@ import {
   FacilityActivityCard,
 } from "@/components/dashboard";
 import { useDashboard } from "@/hooks/misc/useDashboard";
+import { useMultiNamespaceTranslation } from "@/i18n/hooks";
 
 import {
   Select,
@@ -52,6 +53,7 @@ function DashboardPage() {
     setActiveTab,
     refresh,
   } = useDashboard();
+  const { t } = useMultiNamespaceTranslation(["common", "app"]);
 
   const navComponents = () => {
     return (
@@ -65,11 +67,11 @@ function DashboardPage() {
             }}
           >
             <SelectTrigger className="focus:ring-0 w-40 h-8 justify-between ">
-              <SelectValue placeholder="Dashboards" />
+              <SelectValue placeholder={t("app:dashboard.title")} />
             </SelectTrigger>
             <SelectContent className="flex bg-background">
-              <SelectItem value="laboratory">Laboratory</SelectItem>
-              <SelectItem value="infrastructure">Infrastructure</SelectItem>
+              <SelectItem value="laboratory">{t("app:dashboard.laboratory")}</SelectItem>
+              <SelectItem value="infrastructure">{t("app:dashboard.infrastructure")}</SelectItem>
             </SelectContent>
           </Select>
           <Separator orientation="vertical" className=" h-6" />
@@ -95,7 +97,7 @@ function DashboardPage() {
                   format(new Date(filters.dateRange.from), "yyyy-MM-dd")
                 )
               ) : (
-                <span>Pick a date</span>
+                <span>{t("common:messages.pick_a_date")}</span>
               )}
             </Button>
           </PopoverTrigger>
@@ -138,11 +140,11 @@ function DashboardPage() {
                   <RefreshCw
                     className={cn("h-3.5 w-3.5", loading && "animate-spin")}
                   />
-                  <span className="sr-only">Refresh</span>
+                  <span className="sr-only">{t("common:actions.refresh")}</span>
                 </Button>
               </TooltipTrigger>
               <TooltipContent>
-                <span className="ml-auto text-sm">Refresh</span>
+                <span className="ml-auto text-sm">{t("common:actions.refresh")}</span>
               </TooltipContent>
             </Tooltip>
           </div>
@@ -180,14 +182,14 @@ function DashboardPage() {
                 <AlertTriangle className="h-5 w-5 text-red-500" />
                 <div className="flex-1">
                   <p className="text-sm font-medium text-red-700 dark:text-red-400">
-                    Failed to load dashboard data
+                    {t("common:messages.failed_to_load")}
                   </p>
                   <p className="text-xs text-red-600/70 dark:text-red-400/70">
                     {error}
                   </p>
                 </div>
                 <Button variant="outline" size="sm" onClick={refresh}>
-                  Retry
+                  {t("common:actions.retry")}
                 </Button>
               </div>
             </div>

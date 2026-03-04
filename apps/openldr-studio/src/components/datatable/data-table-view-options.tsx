@@ -5,6 +5,7 @@ import { MixerHorizontalIcon } from "@radix-ui/react-icons";
 import { type Table } from "@tanstack/react-table";
 
 import { Button } from "@/components/ui/button";
+import { useCommonTranslation } from "@/i18n/hooks";
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -20,6 +21,8 @@ interface DataTableViewOptionsProps<TData> {
 export function DataTableViewOptions<TData>({
   table,
 }: DataTableViewOptionsProps<TData>) {
+  const { t } = useCommonTranslation();
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -29,11 +32,11 @@ export function DataTableViewOptions<TData>({
           className="ml-auto hidden h-8 lg:flex"
         >
           <MixerHorizontalIcon className="mr-2 h-4 w-4" />
-          View
+          {t("table.view")}
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-[150px]">
-        <DropdownMenuLabel>Toggle columns</DropdownMenuLabel>
+        <DropdownMenuLabel>{t("table.toggle_columns")}</DropdownMenuLabel>
         <DropdownMenuSeparator />
         {table
           .getAllColumns()

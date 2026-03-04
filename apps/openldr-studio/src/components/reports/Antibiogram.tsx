@@ -1,6 +1,7 @@
 import { AlertTriangle, Layers, Zap, Microscope } from "lucide-react";
 import type { ReportQuery, AntibiogramRow } from "../../types/reports";
 import { useAntibiogram } from "../../hooks/misc/useReports";
+import { useMultiNamespaceTranslation } from "@/i18n/hooks";
 import {
   exportCSV,
   exportExcel,
@@ -23,6 +24,7 @@ interface Props {
 }
 
 export default function Antibiogram({ query }: Props) {
+  const { t } = useMultiNamespaceTranslation(["common", "app"]);
   const client = useKeycloakClient();
   const { data, loading, error, refetch } = useAntibiogram(
     client.kc.token!,
@@ -31,7 +33,7 @@ export default function Antibiogram({ query }: Props) {
 
   if (loading) return <LoadingState />;
   if (error || !data)
-    return <ErrorState message={error ?? "No data"} onRetry={refetch} />;
+    return <ErrorState message={error ?? t("app:reports.no_data")} onRetry={refetch} />;
 
   const organisms = [...new Set(data.data.map((d) => d.organism_code))];
   const antibiotics = [...new Set(data.data.map((d) => d.antibiotic_code))];
@@ -90,32 +92,32 @@ export default function Antibiogram({ query }: Props) {
         }}
       >
         <Stat
-          label="Total Isolates"
+          label={t("app:reports.total_isolates")}
           value={data.data
             .reduce((s, d) => s + d.total_tested, 0)
             .toLocaleString()}
-          sub="Across all organisms"
+          sub={t("app:reports.across_all_organisms")}
           // Icon={Microscope}
         />
         <Stat
-          label="Organisms"
+          label={t("app:reports.organisms")}
           value={String(organisms.length)}
-          sub="Pathogen species"
+          sub={t("app:reports.pathogen_species")}
           // Icon={Layers}
         />
         <Stat
-          label="Antibiotics"
+          label={t("app:reports.antibiotics")}
           value={String(antibiotics.length)}
-          sub="Drug classes tested"
+          sub={t("app:reports.drug_classes")}
           // Icon={Zap}
         />
         <Stat
-          label="Avg Resistance"
+          label={t("app:reports.avg_resistance")}
           value={`${Math.round(
             data.data.reduce((s, d) => s + d.resistance_pct, 0) /
               data.data.length,
           )}%`}
-          sub="All organism-drug pairs"
+          sub={t("app:reports.all_pairs")}
           color={C.warning}
           // Icon={AlertTriangle}
           trend={3.2}
@@ -139,7 +141,7 @@ export default function Antibiogram({ query }: Props) {
             letterSpacing: ".08em",
           }}
         >
-          RESISTANCE %
+          {t("app:reports.resistance_pct")}
         </span>
         {(
           [
@@ -240,7 +242,7 @@ export default function Antibiogram({ query }: Props) {
                       title={
                         cell
                           ? `${orgNames[org]} · ${abxNames[abx]}\n${pct}% resistant (n=${cell.total_tested})`
-                          : "Not tested"
+                          : t("app:reports.not_tested")
                       }
                     >
                       <div
@@ -283,8 +285,7 @@ export default function Antibiogram({ query }: Props) {
           fontFamily: "'IBM Plex Mono',monospace",
         }}
       >
-        * — = not tested or {"<"}30 isolates. Hover cells for isolate counts.
-        Breakpoints: {data.metadata.guideline}.
+        {t("app:reports.footnote")} Breakpoints: {data.metadata.guideline}.
       </p>
     </div>
   );

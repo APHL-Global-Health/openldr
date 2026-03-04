@@ -20,6 +20,7 @@ import {
   ErrorState,
   ChartTip,
 } from "./ui";
+import { useMultiNamespaceTranslation } from "@/i18n/hooks";
 
 interface Props {
   query: Partial<ReportQuery>;
@@ -27,13 +28,14 @@ interface Props {
 
 export function PriorityPathogens({ query }: Props) {
   const client = useKeycloakClient();
+  const { t } = useMultiNamespaceTranslation(["common", "app"]);
   const { data, loading, error, refetch } = usePriorityPathogens(
     client.kc.token!,
     query,
   );
   if (loading) return <LoadingState />;
   if (error || !data)
-    return <ErrorState message={error ?? "No data"} onRetry={refetch} />;
+    return <ErrorState message={error ?? t("app:reports.no_data")} onRetry={refetch} />;
 
   const flat: ExportRow[] = data.pathogens.map((p) => ({
     "WHO Priority": p.who_priority,
@@ -142,7 +144,7 @@ export function PriorityPathogens({ query }: Props) {
                       marginBottom: 2,
                     }}
                   >
-                    ISOLATES
+                    {t("app:reports.isolates")}
                   </div>
                   <div
                     style={{
@@ -163,7 +165,7 @@ export function PriorityPathogens({ query }: Props) {
                       marginBottom: 2,
                     }}
                   >
-                    6-MONTH TREND
+                    {t("app:reports.six_month_trend")}
                   </div>
                   <div
                     style={{
@@ -256,13 +258,14 @@ import { Stat as S } from "./ui";
 
 export function Surveillance({ query }: Props) {
   const client = useKeycloakClient();
+  const { t } = useMultiNamespaceTranslation(["common", "app"]);
   const { data, loading, error, refetch } = useSurveillance(
     client.kc.token!,
     query,
   );
   if (loading) return <LoadingState />;
   if (error || !data)
-    return <ErrorState message={error ?? "No data"} onRetry={refetch} />;
+    return <ErrorState message={error ?? t("app:reports.no_data")} onRetry={refetch} />;
 
   const flatM: ExportRow[] = data.mrsa.trend.map((d) => ({
     Month: d.month,
@@ -319,33 +322,33 @@ export function Surveillance({ query }: Props) {
         }}
       >
         <S
-          label="MRSA Rate"
+          label={t("app:reports.mrsa_rate_label")}
           value={`${data.mrsa.trend.at(-1)?.rate ?? 0}%`}
-          sub="S. aureus isolates"
+          sub={t("app:reports.s_aureus_isolates")}
           color={C.critical}
           // Icon={AlertTriangle}
           trend={1.2}
         />
         <S
-          label="Carbapenem-R K. pneu."
+          label={t("app:reports.carbapenem_r_kpneu")}
           value={`${data.carbapenem.trend.at(-1)?.kpneu_cre ?? 0}%`}
-          sub="Of K. pneumoniae"
+          sub={t("app:reports.of_kpneumoniae")}
           color={C.high}
           // Icon={Shield}
           trend={0.8}
         />
         <S
-          label="Carbapenem-R A. baum."
+          label={t("app:reports.carbapenem_r_abaum")}
           value={`${data.carbapenem.trend.at(-1)?.abaum_cr ?? 0}%`}
-          sub="Of A. baumannii"
+          sub={t("app:reports.of_abaumannii")}
           color={C.critical}
           // Icon={AlertTriangle}
           trend={2.1}
         />
         <S
-          label="ESBL E. coli"
+          label={t("app:reports.esbl_ecoli")}
           value={`${data.esbl.trend.at(-1)?.ecoli ?? 0}%`}
-          sub="Of E. coli isolates"
+          sub={t("app:reports.of_ecoli_isolates")}
           color={C.warning}
           // Icon={AlertCircle}
           trend={1.5}
@@ -368,7 +371,7 @@ export function Surveillance({ query }: Props) {
               marginBottom: 3,
             }}
           >
-            MRSA Rate by Ward Type
+            {t("app:reports.mrsa_rate_by_ward")}
           </div>
           <div
             style={{
@@ -377,7 +380,7 @@ export function Surveillance({ query }: Props) {
               marginBottom: 16,
             }}
           >
-            % of S. aureus isolates that are methicillin-resistant
+            {t("app:reports.mrsa_ward_subtitle")}
           </div>
           <RC width="100%" height={195}>
             <LineChart data={data.mrsa.trend}>
@@ -416,7 +419,7 @@ export function Surveillance({ query }: Props) {
               <Line
                 type="monotone"
                 dataKey="rate"
-                name="Overall"
+                name={t("app:reports.overall")}
                 stroke={C.critical}
                 strokeWidth={2.5}
                 dot={{ r: 3, fill: C.critical }}
@@ -424,7 +427,7 @@ export function Surveillance({ query }: Props) {
               <Line
                 type="monotone"
                 dataKey="icu"
-                name="ICU"
+                name={t("app:reports.icu")}
                 stroke={C.high}
                 strokeWidth={1.5}
                 dot={false}
@@ -433,7 +436,7 @@ export function Surveillance({ query }: Props) {
               <Line
                 type="monotone"
                 dataKey="general"
-                name="General Ward"
+                name={t("app:reports.general_ward")}
                 stroke={C.warning}
                 strokeWidth={1.5}
                 dot={false}
@@ -442,7 +445,7 @@ export function Surveillance({ query }: Props) {
               <Line
                 type="monotone"
                 dataKey="outpatient"
-                name="Outpatient"
+                name={t("app:reports.outpatient")}
                 stroke={C.success}
                 strokeWidth={1.5}
                 dot={false}
@@ -460,7 +463,7 @@ export function Surveillance({ query }: Props) {
               marginBottom: 3,
             }}
           >
-            Carbapenem Resistance Trends
+            {t("app:reports.carbapenem_trends")}
           </div>
           <div
             style={{
@@ -469,7 +472,7 @@ export function Surveillance({ query }: Props) {
               marginBottom: 16,
             }}
           >
-            % carbapenem resistance by species
+            {t("app:reports.carbapenem_trends_subtitle")}
           </div>
           <RC width="100%" height={195}>
             <AC data={data.carbapenem.trend}>
@@ -550,7 +553,7 @@ export function Surveillance({ query }: Props) {
               marginBottom: 16,
             }}
           >
-            Carbapenem Resistance by Mechanism
+            {t("app:reports.carbapenem_by_mechanism")}
           </div>
           <RC width="100%" height={175}>
             <BarChart data={data.carbapenem.by_mechanism} layout="vertical">
@@ -581,7 +584,7 @@ export function Surveillance({ query }: Props) {
                 width={75}
               />
               <TT content={<ChartTip />} />
-              <Bar dataKey="pct" name="Resistance %" radius={[0, 4, 4, 0]}>
+              <Bar dataKey="pct" name={t("app:reports.resistance_pct")} radius={[0, 4, 4, 0]}>
                 {data.carbapenem.by_mechanism.map((e, i) => (
                   <Cell key={i} fill={rc(e.pct)} />
                 ))}
@@ -598,7 +601,7 @@ export function Surveillance({ query }: Props) {
               marginBottom: 3,
             }}
           >
-            ESBL Prevalence Trend
+            {t("app:reports.esbl_prevalence_trend")}
           </div>
           <div
             style={{
@@ -607,7 +610,7 @@ export function Surveillance({ query }: Props) {
               marginBottom: 16,
             }}
           >
-            Extended-Spectrum β-Lactamase producers
+            {t("app:reports.esbl_subtitle")}
           </div>
           <RC width="100%" height={175}>
             <LineChart data={data.esbl.trend}>
@@ -640,7 +643,7 @@ export function Surveillance({ query }: Props) {
               <Line
                 type="monotone"
                 dataKey="ecoli"
-                name="E. coli ESBL %"
+                name={t("app:reports.ecoli_esbl_pct")}
                 stroke={C.accentBlue}
                 strokeWidth={2}
                 dot={{ r: 3, fill: C.accentBlue }}
@@ -648,7 +651,7 @@ export function Surveillance({ query }: Props) {
               <Line
                 type="monotone"
                 dataKey="kpneu"
-                name="K. pneumoniae ESBL %"
+                name={t("app:reports.kpneu_esbl_pct")}
                 stroke={C.warning}
                 strokeWidth={2}
                 dot={{ r: 3, fill: C.warning }}
@@ -682,13 +685,14 @@ import { useWorkload } from "../../hooks/misc/useReports";
 
 export function Workload({ query }: Props) {
   const client = useKeycloakClient();
+  const { t } = useMultiNamespaceTranslation(["common", "app"]);
   const { data, loading, error, refetch } = useWorkload(
     client.kc.token!,
     query,
   );
   if (loading) return <LoadingState />;
   if (error || !data)
-    return <ErrorState message={error ?? "No data"} onRetry={refetch} />;
+    return <ErrorState message={error ?? t("app:reports.no_data")} onRetry={refetch} />;
 
   const flatV: ExportRow[] = data.monthly_volumes.map((d) => ({
     Month: d.month,
@@ -746,37 +750,37 @@ export function Workload({ query }: Props) {
         }}
       >
         <S
-          label="Total Requests"
+          label={t("app:reports.total_requests")}
           value={data.monthly_volumes
             .reduce((s, d) => s + d.total, 0)
             .toLocaleString()}
-          sub="Period total"
+          sub={t("app:reports.period_total")}
           // Icon={Activity}
         />
         <S
-          label="Monthly Average"
+          label={t("app:reports.monthly_average")}
           value={Math.round(
             data.monthly_volumes.reduce((s, d) => s + d.total, 0) /
               data.monthly_volumes.length,
           ).toLocaleString()}
-          sub="Requests per month"
+          sub={t("app:reports.requests_per_month")}
           // Icon={BarChart2}
         />
         <S
-          label="Microbiology"
+          label={t("app:reports.microbiology")}
           value={data.monthly_volumes
             .reduce((s, d) => s + d.MB, 0)
             .toLocaleString()}
-          sub="Culture & sensitivity"
+          sub={t("app:reports.culture_sensitivity")}
           color={C.accentBlue}
           // Icon={Activity}
         />
         <S
-          label="TAT Targets Met"
+          label={t("app:reports.tat_targets_met")}
           value={`${
             data.tat_by_section.filter((t) => t.p90 <= t.target).length
           }/${data.tat_by_section.length}`}
-          sub="Sections within target"
+          sub={t("app:reports.sections_within_target")}
           color={C.warning}
           // Icon={Clock}
           // trend={-1}
@@ -799,7 +803,7 @@ export function Workload({ query }: Props) {
               marginBottom: 16,
             }}
           >
-            Monthly Test Volume by Section
+            {t("app:reports.monthly_test_volume")}
           </div>
           <R2 width="100%" height={215}>
             <BC data={data.monthly_volumes}>
@@ -830,15 +834,15 @@ export function Workload({ query }: Props) {
               />
               <B
                 dataKey="CH"
-                name="Chemistry"
+                name={t("app:reports.chemistry")}
                 stackId="a"
                 fill={C.accentBlue}
               />
-              <B dataKey="HM" name="Haematology" stackId="a" fill={C.accent} />
-              <B dataKey="MB" name="Microbiology" stackId="a" fill={C.purple} />
+              <B dataKey="HM" name={t("app:reports.haematology")} stackId="a" fill={C.accent} />
+              <B dataKey="MB" name={t("app:reports.microbiology")} stackId="a" fill={C.purple} />
               <B
                 dataKey="SE"
-                name="Serology"
+                name={t("app:reports.serology")}
                 stackId="a"
                 fill={C.warning}
                 radius={[4, 4, 0, 0]}
@@ -855,7 +859,7 @@ export function Workload({ query }: Props) {
               marginBottom: 12,
             }}
           >
-            Specimen Distribution
+            {t("app:dashboard.specimen_distribution")}
           </div>
           <R2 width="100%" height={155}>
             <PieChart>
@@ -919,17 +923,17 @@ export function Workload({ query }: Props) {
             marginBottom: 16,
           }}
         >
-          Turnaround Time Performance
+          {t("app:reports.tat_performance")}
         </div>
         <table style={{ width: "100%", borderCollapse: "collapse" }}>
           <thead>
             <tr className="border-border border-b">
               {[
-                "Section",
-                "Median (P50)",
-                "90th Pct. (P90)",
-                "Target",
-                "Status",
+                t("app:reports.section_col"),
+                t("app:reports.median_p50"),
+                t("app:reports.pct_p90"),
+                t("app:reports.target_col"),
+                t("app:reports.status_col"),
               ].map((h) => (
                 <th
                   key={h}
@@ -1016,7 +1020,7 @@ export function Workload({ query }: Props) {
                           fontFamily: "'IBM Plex Mono',monospace",
                         }}
                       >
-                        {ok ? "Within target" : "Exceeds target"}
+                        {ok ? t("app:reports.within_target") : t("app:reports.exceeds_target")}
                       </span>
                     </div>
                   </td>
@@ -1041,6 +1045,7 @@ type MetricKey = "mrsa_rate" | "cre_rate" | "esbl_rate";
 
 export function Geographic({ query }: Props) {
   const client = useKeycloakClient();
+  const { t } = useMultiNamespaceTranslation(["common", "app"]);
   const { data, loading, error, refetch } = useGeographic(
     client.kc.token!,
     query,
@@ -1048,12 +1053,12 @@ export function Geographic({ query }: Props) {
   const [metric, setMetric] = useState<MetricKey>("mrsa_rate");
   if (loading) return <LoadingState />;
   if (error || !data)
-    return <ErrorState message={error ?? "No data"} onRetry={refetch} />;
+    return <ErrorState message={error ?? t("app:reports.no_data")} onRetry={refetch} />;
 
   const labels: Record<MetricKey, string> = {
-    mrsa_rate: "MRSA Rate %",
-    cre_rate: "CRE Rate %",
-    esbl_rate: "ESBL Rate %",
+    mrsa_rate: t("app:reports.mrsa_rate_pct"),
+    cre_rate: t("app:reports.cre_rate_pct"),
+    esbl_rate: t("app:reports.esbl_rate_pct"),
   };
   const colors: Record<MetricKey, string> = {
     mrsa_rate: C.critical,
@@ -1150,7 +1155,7 @@ export function Geographic({ query }: Props) {
               marginBottom: 16,
             }}
           >
-            Facility Map — {labels[metric]}
+            {t("app:reports.facility_map")} — {labels[metric]}
           </div>
           <div style={{ display: "flex", justifyContent: "center" }}>
             <svg
@@ -1296,7 +1301,7 @@ export function Geographic({ query }: Props) {
               marginTop: 6,
             }}
           >
-            Bubble size ∝ total isolate count
+            {t("app:reports.bubble_size_note")}
           </div>
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
@@ -1309,7 +1314,7 @@ export function Geographic({ query }: Props) {
                 marginBottom: 18,
               }}
             >
-              Facilities Ranked — {labels[metric]}
+              {t("app:reports.facilities_ranked")} — {labels[metric]}
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
               {sorted.map((f, i) => {
@@ -1402,7 +1407,7 @@ export function Geographic({ query }: Props) {
                 marginBottom: 4,
               }}
             >
-              NATIONAL AVERAGE · {labels[metric]}
+              {t("app:reports.national_average")} · {labels[metric]}
             </div>
             <div
               style={{
@@ -1421,7 +1426,7 @@ export function Geographic({ query }: Props) {
                 marginTop: 2,
               }}
             >
-              Across {data.facilities.length} reporting facilities
+              {t("app:reports.across_facilities", { count: data.facilities.length })}
             </div>
           </div>
         </div>
@@ -1452,13 +1457,14 @@ import { useKeycloakClient } from "../react-keycloak-provider";
 
 export function DataQuality({ query }: Props) {
   const client = useKeycloakClient();
+  const { t } = useMultiNamespaceTranslation(["common", "app"]);
   const { data, loading, error, refetch } = useDataQuality(
     client.kc.token!,
     query,
   );
   if (loading) return <LoadingState />;
   if (error || !data)
-    return <ErrorState message={error ?? "No data"} onRetry={refetch} />;
+    return <ErrorState message={error ?? t("app:reports.no_data")} onRetry={refetch} />;
 
   const flat: ExportRow[] = data.facilities.map((f) => ({
     Facility: f.facility,
@@ -1491,10 +1497,10 @@ export function DataQuality({ query }: Props) {
     );
   };
   const completeness: { label: string; key: keyof FacilityQuality }[] = [
-    { label: "Patient Demographics", key: "completeness_demo" },
-    { label: "Organism Identification", key: "completeness_organism" },
-    { label: "AST Results", key: "completeness_ast" },
-    { label: "Specimen Info", key: "completeness_specimen" },
+    { label: t("app:reports.patient_demographics"), key: "completeness_demo" },
+    { label: t("app:reports.organism_identification"), key: "completeness_organism" },
+    { label: t("app:reports.ast_results"), key: "completeness_ast" },
+    { label: t("app:reports.specimen_info"), key: "completeness_specimen" },
   ];
 
   return (
@@ -1532,34 +1538,34 @@ export function DataQuality({ query }: Props) {
         }}
       >
         <S
-          label="Total Batches"
+          label={t("app:reports.total_batches")}
           value={data.summary.total_batches.toLocaleString()}
-          sub="Import batches"
+          sub={t("app:reports.import_batches")}
           // Icon={Database}
         />
         <S
-          label="Total Records"
+          label={t("app:reports.total_records")}
           value={data.summary.total_records.toLocaleString()}
-          sub="Laboratory records"
+          sub={t("app:reports.laboratory_records")}
           // Icon={Layers}
         />
         <S
-          label="Success Rate"
+          label={t("app:reports.success_rate_label")}
           value={`${data.summary.success_rate}%`}
-          sub="Records processed OK"
+          sub={t("app:reports.records_processed_ok")}
           // color={C.success}
           // Icon={CheckCircle}
         />
         <S
-          label="Active Facilities"
+          label={t("app:reports.active_facilities")}
           value={String(data.summary.facilities_active)}
-          sub="Reporting facilities"
+          sub={t("app:reports.reporting_facilities")}
           // Icon={Building2}
         />
         <S
-          label="Last Import"
+          label={t("app:reports.last_import")}
           value={data.summary.last_import}
-          sub="Most recent batch"
+          sub={t("app:reports.most_recent_batch")}
           // color={C.accent}
           // Icon={RefreshCw}
         />
@@ -1581,7 +1587,7 @@ export function DataQuality({ query }: Props) {
               marginBottom: 16,
             }}
           >
-            Monthly Record Ingestion & Success Rate
+            {t("app:reports.monthly_ingestion")}
           </div>
           <BQR width="100%" height={195}>
             <BQL data={data.monthly_ingestion}>
@@ -1619,7 +1625,7 @@ export function DataQuality({ query }: Props) {
               <BQB
                 yAxisId="l"
                 dataKey="records"
-                name="Records"
+                name={t("app:reports.records_label")}
                 fill={C.accentBlue}
                 fillOpacity={0.45}
                 radius={[4, 4, 0, 0]}
@@ -1628,7 +1634,7 @@ export function DataQuality({ query }: Props) {
                 yAxisId="r"
                 type="monotone"
                 dataKey="success_rate"
-                name="Success %"
+                name={t("app:reports.success_pct")}
                 stroke={C.accent}
                 strokeWidth={2.5}
                 dot={{ r: 3, fill: C.accent }}
@@ -1645,7 +1651,7 @@ export function DataQuality({ query }: Props) {
               marginBottom: 18,
             }}
           >
-            Avg. Field Completeness
+            {t("app:reports.avg_field_completeness")}
           </div>
           {completeness.map((item) => {
             const v = avgComp(item.key);
@@ -1705,21 +1711,21 @@ export function DataQuality({ query }: Props) {
             marginBottom: 16,
           }}
         >
-          Completeness Matrix by Facility
+          {t("app:reports.completeness_matrix")}
         </div>
         <div style={{ overflowX: "auto" }}>
           <table style={{ width: "100%", borderCollapse: "collapse" }}>
             <thead>
               <tr style={{ borderBottom: `1px solid ${C.border}` }}>
                 {[
-                  "Facility",
-                  "Batches",
-                  "Records",
-                  "Success Rate",
-                  "Demographics",
-                  "Organism ID",
-                  "AST Results",
-                  "Specimen",
+                  t("app:dashboard.facility"),
+                  t("app:reports.batches_col"),
+                  t("app:reports.records_col"),
+                  t("app:reports.success_rate_label"),
+                  t("app:reports.demographics_col"),
+                  t("app:reports.organism_id_col"),
+                  t("app:reports.ast_results"),
+                  t("app:reports.specimen_col"),
                 ].map((h) => (
                   <th
                     key={h}
@@ -1802,9 +1808,9 @@ export function DataQuality({ query }: Props) {
         >
           {(
             [
-              [C.success, "≥90%", "Good"],
-              [C.warning, "80–89%", "Needs attention"],
-              [C.critical, "<80%", "Action required"],
+              [C.success, "≥90%", t("app:reports.good")],
+              [C.warning, "80–89%", t("app:reports.needs_attention")],
+              [C.critical, "<80%", t("app:reports.action_required")],
             ] as [string, string, string][]
           ).map(([c, r, l]) => (
             <div

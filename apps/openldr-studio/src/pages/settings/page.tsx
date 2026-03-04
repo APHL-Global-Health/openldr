@@ -9,14 +9,17 @@ import { ArrowRight } from "lucide-react";
 import { useState } from "react";
 import { SettingsAppearance } from "./apperance";
 import { SettingsGeneral } from "./general";
+import { useAppTranslation } from "@/i18n/hooks";
 
 type Page = {
   id: string;
   name: string;
+  key: string;
   selected: string;
 };
 
 function SettingsPage() {
+  const { t } = useAppTranslation();
   const client = useKeycloakClient();
   const keycloak = client.kc;
   const hasPriviledges = keycloak.hasRealmRole(
@@ -24,14 +27,14 @@ function SettingsPage() {
   );
 
   let links: any = [
-    { id: "6c84fb90-12c4-11e1-840d-7b25c5ee775a", name: "General" },
-    { id: "110e8400-e29b-11d4-a716-446655440000", name: "Appearance" },
+    { id: "6c84fb90-12c4-11e1-840d-7b25c5ee775a", name: t("settings.general"), key: "General" },
+    { id: "110e8400-e29b-11d4-a716-446655440000", name: t("settings.appearance"), key: "Appearance" },
   ];
 
   if (hasPriviledges) {
     links = [
-      { id: "6c84fb90-12c4-11e1-840d-7b25c5ee775a", name: "General" },
-      { id: "110e8400-e29b-11d4-a716-446655440000", name: "Appearance" },
+      { id: "6c84fb90-12c4-11e1-840d-7b25c5ee775a", name: t("settings.general"), key: "General" },
+      { id: "110e8400-e29b-11d4-a716-446655440000", name: t("settings.appearance"), key: "Appearance" },
       // { id: "3e7c3f6d-bdf5-46ae-8d90-171300f27ae2", name: "Services" },
       // { id: "3e7c3f6d-bdf5-46ae-8d90-171300f27ae2", name: "Database" },
       // { id: "8f7b5db9-d935-4e42-8e05-1f1d0a3dfb97", name: "Storage" },
@@ -48,7 +51,7 @@ function SettingsPage() {
   });
 
   const navComponents = () => {
-    return <h1 className="font-bold">Settings</h1>;
+    return <h1 className="font-bold">{t("settings.title")}</h1>;
   };
 
   return (
@@ -98,8 +101,8 @@ function SettingsPage() {
             </ScrollArea>
           </div>
           <div className="flex flex-1  min-h-[calc(100vh-26px-56px)] max-h-[calc(100vh-26px-56px)] border-l border-border">
-            {page?.name === "General" && <SettingsGeneral />}
-            {page?.name === "Appearance" && <SettingsAppearance />}
+            {page?.key === "General" && <SettingsGeneral />}
+            {page?.key === "Appearance" && <SettingsAppearance />}
             {/* {page?.name === "Services" && <ServicesDatabase />} */}
             {/* {page?.name === "Database" && <SettingsDatabase />}
             {page?.name === "Storage" && <SettingsStorage />} */}

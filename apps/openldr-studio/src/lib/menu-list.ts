@@ -53,11 +53,11 @@ export function getMenuList(
 ): Group[] {
   const extenstionsOptions = [
     {
-      groupLabel: "Extensions",
+      groupLabel: "navigation.extensions",
       menus: [
         {
           href: `${baseUrl}extensions`,
-          label: "Extensions",
+          label: "navigation.extensions",
           // icon: Unplug,
           icon: Box,
         },
@@ -72,33 +72,33 @@ export function getMenuList(
       menus: [
         {
           href: baseUrl,
-          label: "Dashboard",
+          label: "navigation.dashboard",
           icon: LayoutGrid,
           submenus: [],
         },
       ],
     },
     {
-      groupLabel: "Contents",
+      groupLabel: "navigation.contents",
       menus: [
         {
           href: `${baseUrl}data-entry`,
-          label: "Data Entry",
+          label: "navigation.data_entry",
           icon: SquareLibrary,
         },
         {
           href: `${baseUrl}archives`,
-          label: "Archives",
+          label: "navigation.archives",
           icon: Archive,
         },
         {
           href: `${baseUrl}reports`,
-          label: "Reports",
+          label: "navigation.reports",
           icon: FileText,
         },
         {
           href: `${baseUrl}chats`,
-          label: "chats",
+          label: "navigation.chats",
           icon: Bot,
         },
         //TODO add later
@@ -111,16 +111,16 @@ export function getMenuList(
     },
     ...extenstionsOptions,
     {
-      groupLabel: "Settings",
+      groupLabel: "navigation.settings",
       menus: [
         {
           href: `${baseUrl}logs`,
-          label: "logs",
+          label: "navigation.logs",
           icon: Terminal,
         },
         {
           href: `${baseUrl}settings`,
-          label: "Settings",
+          label: "navigation.settings",
           icon: Settings,
         },
         // {
