@@ -353,9 +353,9 @@ router.get("/priority-pathogens", async (req: Request, res: Response) => {
 // mrsa_screen / esbl / carbapenemase are free-text VARCHAR fields;
 // posFlag() handles the full WHONET export value range.
 //
-router.get("/amr-surveillance", async (req: Request, res: Response) => {
+router.get("/surveillance", async (req: Request, res: Response) => {
   const q = parseQuery(req);
-  console.log("[amr-surveillance]", q);
+  console.log("[surveillance]", q);
 
   const fFilter = "$1::uuid IS NULL OR lr.facility_id = $1::uuid";
   const p = [q.facility_id, q.date_from, q.date_to];
