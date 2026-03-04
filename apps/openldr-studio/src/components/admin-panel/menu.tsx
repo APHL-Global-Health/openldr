@@ -104,7 +104,7 @@ export function Menu({ isOpen }: MenuProps) {
             <li className={cn("w-full", groupLabel ? "pt-5" : "")} key={index}>
               {(isOpen && groupLabel) || isOpen === undefined ? (
                 <p className="text-sm font-medium text-muted-foreground px-4 pb-2 max-w-62 truncate">
-                  {t(groupLabel)}
+                  {t(groupLabel as any)}
                 </p>
               ) : !isOpen && isOpen !== undefined && groupLabel ? (
                 <TooltipProvider>
@@ -115,7 +115,7 @@ export function Menu({ isOpen }: MenuProps) {
                       </div>
                     </TooltipTrigger>
                     <TooltipContent side="right">
-                      <p>{t(groupLabel)}</p>
+                      <p>{t(groupLabel as any)}</p>
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
@@ -155,13 +155,15 @@ export function Menu({ isOpen }: MenuProps) {
                                     : "translate-x-0 opacity-100",
                                 )}
                               >
-                                {t(label)}
+                                {t(label as any)}
                               </p>
                             </NavLink>
                           </Button>
                         </TooltipTrigger>
                         {isOpen === false && (
-                          <TooltipContent side="right">{t(label)}</TooltipContent>
+                          <TooltipContent side="right">
+                            {t(label as any)}
+                          </TooltipContent>
                         )}
                       </Tooltip>
                     </TooltipProvider>

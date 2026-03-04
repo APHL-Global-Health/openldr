@@ -75,8 +75,8 @@ function ServiceCard({ service }: { service: ServiceHealth }) {
                     service.status === "healthy"
                       ? "0 0 6px rgba(34,197,94,0.4)"
                       : service.status === "down"
-                        ? "0 0 6px rgba(239,68,68,0.4)"
-                        : "none",
+                      ? "0 0 6px rgba(239,68,68,0.4)"
+                      : "none",
                 }}
               />
               <span className="text-xs font-medium truncate">
@@ -110,13 +110,17 @@ function ServiceCard({ service }: { service: ServiceHealth }) {
           <div className="flex items-center gap-1.5">
             <div className={cn("h-2 w-2 rounded-full", config.bg)} />
             <span className="font-medium text-xs">{service.displayName}</span>
-            <span>({t(config.labelKey)})</span>
+            <span>({t(config.labelKey as any)})</span>
           </div>
           {service.uptime && (
-            <p className="text-xs">{t("app:dashboard.uptime")}: {service.uptime}</p>
+            <p className="text-xs">
+              {t("app:dashboard.uptime")}: {service.uptime}
+            </p>
           )}
           {service.responseTimeMs !== undefined && (
-            <p className="text-xs">{t("app:dashboard.response")}: {service.responseTimeMs}ms</p>
+            <p className="text-xs">
+              {t("app:dashboard.response")}: {service.responseTimeMs}ms
+            </p>
           )}
           {service.details &&
             Object.entries(service.details).map(([key, val]) => (

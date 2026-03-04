@@ -340,7 +340,7 @@ function ReportsPage() {
               <SelectGroup>
                 {REPORTS.map((report) => (
                   <SelectItem key={report.id} value={report.id}>
-                    {t(`app:${report.label}`)}
+                    {t(`app:${report.label}` as any)}
                   </SelectItem>
                 ))}
               </SelectGroup>
@@ -406,7 +406,9 @@ function ReportsPage() {
                 </Button>
               </TooltipTrigger>
               <TooltipContent>
-                <span className="ml-auto text-sm">{t("common:actions.search")}</span>
+                <span className="ml-auto text-sm">
+                  {t("common:actions.search")}
+                </span>
               </TooltipContent>
             </Tooltip>
           </div>
@@ -472,7 +474,9 @@ function ReportsPage() {
 
               <div className="w-75 cursor-default border border-gray-700 rounded-xs  bg-background absolute">
                 <div className="py-2 px-4 border-b border-gray-700">
-                  <div className="text-lg p-0 m-0">{t("app:reports.title")}</div>
+                  <div className="text-lg p-0 m-0">
+                    {t("app:reports.title")}
+                  </div>
                 </div>
                 <div className="text-sm py-4 px-4">
                   {t("app:reports.select_report_prompt")}
