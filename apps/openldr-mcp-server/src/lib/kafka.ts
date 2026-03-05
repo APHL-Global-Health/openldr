@@ -1,7 +1,7 @@
 import { Kafka, type Consumer, type Admin, type KafkaMessage } from "kafkajs";
 
-const ENV = process.env;
-const IsDev = ENV.MODE === "development";
+// const ENV = process.env;
+// const IsDev = ENV.MODE === "development";
 
 interface KafkaConfig {
   brokers: string[];
