@@ -105,7 +105,7 @@ export const aiClient = {
         messages,
         max_new_tokens: options?.maxNewTokens ?? 512,
         temperature: 0,
-        stream: false,
+        stream: true,
       }),
     });
 
@@ -163,7 +163,7 @@ export async function* agentChat(
       messages,
       max_new_tokens: options?.maxNewTokens ?? 512,
       temperature: 0,
-      stream: false,
+      stream: true,
     }),
   });
 

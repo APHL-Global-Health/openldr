@@ -19,36 +19,6 @@ const SUGGESTED_MODELS = [
     description: "",
     tag: null,
   },
-  // {
-  //   id: "Qwen/Qwen2.5-0.5B-Instruct",
-  //   label: "Qwen 2.5 0.5B",
-  //   description: "",
-  //   tag: null,
-  // },
-  // {
-  //   id: "Qwen/Qwen2.5-1.5B-Instruct",
-  //   label: "Qwen 2.5 1.5B",
-  //   description: "",
-  //   tag: null,
-  // },
-  // {
-  //   id: "Qwen/Qwen2.5-3B-Instruct",
-  //   label: "Qwen 2.5 3B",
-  //   description: "",
-  //   tag: null,
-  // },
-  // {
-  //   id: "microsoft/Phi-3.5-mini-instruct",
-  //   label: "Phi 3.5 Mini",
-  //   description: "",
-  //   tag: null,
-  // },
-  // {
-  //   id: "HuggingFaceTB/SmolLM2-1.7B-Instruct",
-  //   label: "SmolLM2 1.7B",
-  //   description: "",
-  //   tag: null,
-  // },
 ];
 
 interface ModelSelectorProps {
