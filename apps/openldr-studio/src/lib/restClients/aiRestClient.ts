@@ -104,8 +104,8 @@ export const aiClient = {
       body: JSON.stringify({
         messages,
         max_new_tokens: options?.maxNewTokens ?? 512,
-        temperature: options?.temperature ?? 0.7,
-        stream: true,
+        temperature: 0,
+        stream: false,
       }),
     });
 
@@ -162,8 +162,8 @@ export async function* agentChat(
     body: JSON.stringify({
       messages,
       max_new_tokens: options?.maxNewTokens ?? 512,
-      temperature: options?.temperature ?? 0.7,
-      stream: true,
+      temperature: 0,
+      stream: false,
     }),
   });
 
