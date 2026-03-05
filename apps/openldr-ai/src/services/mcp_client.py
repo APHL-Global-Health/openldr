@@ -176,7 +176,7 @@ def format_tools_for_prompt(tools: list[dict]) -> str:
     lines = []
     for tool in tools:
         name = tool.get("name", "")
-        desc = tool.get("description", "").split("\n")[0]
+        desc = tool.get("description", "").split("\n")[0][:180]
         schema = tool.get("inputSchema", {})
         props = schema.get("properties", {})
         required = schema.get("required", [])

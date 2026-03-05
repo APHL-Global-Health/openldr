@@ -10,10 +10,10 @@ class Settings(BaseSettings):
     AI_DEBUG: bool = False
 
     # Models storage - maps to the Docker volume mount
-    AI_MODELS_DIR: str = "/app/ai"
+    AI_MODELS_DIR: str = "../ai"
 
     # HuggingFace cache dir
-    AI_HF_HOME: str = "/app/ai"
+    AI_HF_HOME: str = "../ai"
 
     # CORS - accepts comma-separated: "http://localhost,http://localhost:3000"
     # or JSON array: '["http://localhost","http://localhost:3000"]'
@@ -26,10 +26,17 @@ class Settings(BaseSettings):
     AI_MAX_NEW_TOKENS: int = 512
 
     # MCP server URL (internal Docker network URL)
-    AI_MCP_URL: str = "http://openldr-mcp-server:6060"
+    AI_MCP_URL: str = "http://127.0.0.1:6060"
 
     # Max tool calls per agentic turn (prevents infinite loops)
     AI_MAX_TOOL_CALLS: int = 3
+
+    # Prompt budgeting / small-model safety
+    AI_MAX_INPUT_TOKENS: int = 4096
+    AI_RESERVED_OUTPUT_TOKENS: int = 768
+    AI_CONTEXT_SAFETY_MARGIN_TOKENS: int = 256
+    AI_MAX_HISTORY_MESSAGES: int = 6
+    AI_TOOL_RESULT_CHAR_LIMIT: int = 3500
 
     @property
     def cors_origins_list(self) -> list[str]:

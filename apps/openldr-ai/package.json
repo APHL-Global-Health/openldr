@@ -4,8 +4,8 @@
   "version": "1.2.0",
   "scripts": {
     "copy:env": "tsx ../../environments/merge-env.ts ../../environments/.env.base ../../environments/.env.openldr-ai .env",
-    "docker:build:off": "npm run copy:env && tsx ./docker-compose.ts build",
-    "docker:start:off": "npm run copy:env && tsx ./docker-compose.ts up -d --force-recreate",
+    "docker:build": "npm run copy:env && tsx ./docker-compose.ts build",
+    "docker:start": "npm run copy:env && tsx ./docker-compose.ts up -d --force-recreate",
     "docker:stop": "npm run copy:env && tsx ./docker-compose.ts stop",
     "docker:reset": "npm run copy:env && tsx ./docker-compose.ts down --rmi all -v --remove-orphans && rimraf ./.env"
   },

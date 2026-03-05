@@ -64,23 +64,20 @@ async def chat_stream(req: ChatRequest):
 
 @router.post("/agent")
 async def chat_agent(req: ChatRequest):
-    """
-    Agentic streaming chat - model can call MCP tools to fetch live lab data.
-
-    The SSE stream yields:
-    - {"token": "..."} - text tokens as they generate
-    - {"status": "Querying search_lab_results..."} - while tool executes
-    - {"tool_call": {"tool": "...", "args": {...}}} - what tool was called
-    - {"done": true} - stream complete
-    - {"error": "..."} - if something went wrong
-
-    Frontend should show a "Querying data..." indicator on status events
-    and optionally show which tool was called.
-    """
     if not is_model_loaded():
         raise HTTPException(status_code=503, detail="No model loaded.")
-
+    
     messages = [m.model_dump() for m in req.messages]
+    
+    # ← honour stream: false
+    if not req.stream:
+        result = ""
+        async for event in agentic_stream(messages, req.max_new_tokens, req.temperature):
+            parsed = json.loads(event)
+            if "token" in parsed:
+                result += parsed["token"]
+        return ChatResponse(content=result)
+    
     return StreamingResponse(
         _agentic_sse_generator(messages, req.max_new_tokens, req.temperature),
         media_type="text/event-stream",

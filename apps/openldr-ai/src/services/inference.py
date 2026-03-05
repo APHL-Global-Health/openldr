@@ -6,9 +6,9 @@ import threading
 from typing import AsyncGenerator
 
 from transformers import TextIteratorStreamer
-import torch
 
 from core.state import loaded_model
+from services.context_budget import build_budgeted_prompt, tokenize_budgeted_prompt
 
 
 def is_model_loaded() -> bool:
@@ -17,6 +17,12 @@ def is_model_loaded() -> bool:
 
 def get_loaded_model_id() -> str | None:
     return loaded_model.get("model_id")
+
+
+def _prepare_inputs(model, tokenizer, messages: list[dict]) -> dict:
+    device = next(model.parameters()).device
+    budgeted = build_budgeted_prompt(tokenizer, messages)
+    return tokenize_budgeted_prompt(tokenizer, budgeted.prompt, device)
 
 
 async def generate_stream(
@@ -36,24 +42,7 @@ async def generate_stream(
         yield "[ERROR: No model loaded]"
         return
 
-    # Apply chat template if available (most instruct models have one)
-    try:
-        prompt = tokenizer.apply_chat_template(
-            messages,
-            tokenize=False,
-            add_generation_prompt=True,
-        )
-    except Exception:
-        # Fallback: simple concatenation for models without chat template
-        prompt = "\n".join(
-            f"{m['role'].upper()}: {m['content']}" for m in messages
-        ) + "\nASSISTANT:"
-
-    inputs = tokenizer(prompt, return_tensors="pt")
-
-    # Move inputs to same device as model
-    device = next(model.parameters()).device
-    inputs = {k: v.to(device) for k, v in inputs.items()}
+    inputs = _prepare_inputs(model, tokenizer, messages)
 
     streamer = TextIteratorStreamer(
         tokenizer,
@@ -70,11 +59,9 @@ async def generate_stream(
         "pad_token_id": tokenizer.eos_token_id,
     }
 
-    # Run generation in background thread
     thread = threading.Thread(target=model.generate, kwargs=generation_kwargs)
     thread.start()
 
-    # Yield tokens as they come in
     for token in streamer:
         yield token
 

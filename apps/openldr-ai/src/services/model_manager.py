@@ -147,7 +147,9 @@ def load_model(model_id: str) -> tuple[bool, Optional[str]]:
             or str(Path(settings.AI_MODELS_DIR) / "downloads" / model_id.replace("/", "--"))
         )
 
-        tokenizer = AutoTokenizer.from_pretrained(resolve_path)
+        tokenizer = AutoTokenizer.from_pretrained(resolve_path, use_fast=True)
+        if tokenizer.pad_token_id is None and tokenizer.eos_token_id is not None:
+            tokenizer.pad_token = tokenizer.eos_token
         model = AutoModelForCausalLM.from_pretrained(
             resolve_path,
             torch_dtype=torch.float16 if torch.cuda.is_available() else torch.float32,
@@ -157,6 +159,9 @@ def load_model(model_id: str) -> tuple[bool, Optional[str]]:
 
         if not torch.cuda.is_available():
             model = model.to("cpu")
+
+        if hasattr(model.config, "use_cache"):
+            model.config.use_cache = True
 
         loaded_model["model_id"] = model_id
         loaded_model["model"] = model

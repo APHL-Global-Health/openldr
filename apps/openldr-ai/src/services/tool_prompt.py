@@ -5,11 +5,26 @@ import json
 import re
 from typing import Optional
 
+THINK_PATTERN = re.compile(r"<think>.*?</think>", re.DOTALL)
+
+def strip_thinking(text: str) -> str:
+    return THINK_PATTERN.sub("", text).strip()
+
+
+
+FINAL_ANSWER_SYSTEM_PROMPT = (
+    "You are answering a user with evidence returned from OpenLDR tools. "
+    "Use ONLY the tool result provided in the conversation. "
+    "If the answer is missing, say you do not have enough data from the tool result. "
+    "Do not invent records, counts, dates, or IDs. "
+    "Prefer short factual answers."
+)
+
 
 SYSTEM_PROMPT_TEMPLATE = """\
 You are an AI assistant embedded in OpenLDR, an open-source Laboratory \
 Information Management System for antimicrobial resistance (AMR) surveillance \
-and WHONET data processing.
+and data processing.
 
 You help laboratory staff query live data, track test requests and results, \
 and monitor system health.
@@ -51,6 +66,8 @@ explicitly returned an error.
 5. If no tool is needed, answer from general medical/lab knowledge.
 
 6. Dates: ISO format YYYY-MM-DD. Default limit: 20 unless user specifies.
+
+7. Never wrap your final answer in markdown code blocks or backticks. Plain text only.
 
 Today: {today}
 System: OpenLDR v{version}
@@ -119,6 +136,7 @@ def extract_tool_call(text: str) -> Optional[tuple[str, dict]]:
     3. bare {...} with "tool" key   (last resort)
     """
     # Try primary format first
+    text = strip_thinking(text)  # ← add this
     match = TOOL_CALL_PATTERN.search(text)
     if match:
         result = _parse_tool_json(match.group(1))
@@ -143,19 +161,26 @@ def extract_tool_call(text: str) -> Optional[tuple[str, dict]]:
 
 
 def format_tool_result(tool_name: str, result: str) -> str:
-    """Strict fill-in template - leaves no room for hallucination."""
+    """Strict fill-in template - leaves as little room for hallucination as possible."""
     return (
         f"<tool_result tool=\"{tool_name}\">\n"
         f"{result}\n"
         f"</tool_result>\n\n"
-        f"INSTRUCTION: Using ONLY the data above, answer the user. "
-        f"Copy values directly from the result. "
-        f"Do not mention ports, errors, or issues unless they appear in the result. "
-        f"If a boolean field is true, say it is working. If false, say it is down.\n\n"
+        f"INSTRUCTION: Answer using ONLY the tool_result above. "
+        f"If the answer is missing, say: I do not have enough data from the tool result. "
+        f"Copy values directly when available. "
+        f"Do not invent rows, counts, dates, IDs, or conclusions.\n\n"
         f"Answer: "
     )
 
+CODE_FENCE_PATTERN = re.compile(r"^```(?:\w+)?\n?(.*?)```$", re.DOTALL)
 
 def strip_tool_call(text: str) -> str:
     """Remove <tool_call> block from text."""
-    return TOOL_CALL_PATTERN.sub("", text).strip()
+    text = strip_thinking(text)
+    text = TOOL_CALL_PATTERN.sub("", text).strip()
+    # Strip markdown code fences
+    match = CODE_FENCE_PATTERN.match(text)
+    if match:
+        text = match.group(1).strip()
+    return text
