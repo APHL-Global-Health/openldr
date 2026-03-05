@@ -55,7 +55,9 @@ class KafkaManager {
   ): Promise<KafkaMessage[]> {
     // Generate unique consumer group ID for each call
     const consumer = this.kafka.consumer({
-      groupId: `mcp-reader-${topic}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      groupId: `mcp-reader-${topic}-${Date.now()}-${Math.random()
+        .toString(36)
+        .substr(2, 9)}`,
       sessionTimeout: 10000,
       heartbeatInterval: 3000,
     });
@@ -155,9 +157,10 @@ let kafkaManager: KafkaManager | null = null;
 
 export function getKafkaManager(): KafkaManager {
   if (!kafkaManager) {
-    const brokers = IsDev
-      ? [process.env.KAFKA_BROKERS || "localhost:29092"]
-      : [`${process.env.KAFKA_HOSTNAME}:19092`];
+    const brokers = [`${process.env.KAFKA_HOSTNAME}:19092`];
+    // IsDev
+    //   ? [process.env.KAFKA_BROKERS || "localhost:29092"]
+    //   : [`${process.env.KAFKA_HOSTNAME}:19092`];
 
     kafkaManager = new KafkaManager({
       brokers,
