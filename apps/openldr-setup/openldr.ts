@@ -68,60 +68,99 @@ async function init() {
       process.stdin.setRawMode(true);
     }
 
-    const DEFAULT_HTTP_PORT = 8090;
-    const DEFAULT_HTTPS_PORT = 443;
+    const { select } = prompts;
 
-    const { httpPort } = await prompts
-      .input({
-        message: "Default HTTP port for openldr-gateway",
-        default: DEFAULT_HTTP_PORT.toString(),
-        validate: (input: string) => {
-          const value = parseInt(input, 10);
-          return isNaN(value) || value < 1
-            ? "Please enter a number greater than 0"
-            : true;
-        },
-      })
-      .then((answer) => ({ httpPort: parseInt(answer, 10) }));
-
-    const { httpsPort } = await prompts
-      .input({
-        message: "Default HTTPS port for openldr-gateway",
-        default: DEFAULT_HTTPS_PORT.toString(),
-        validate: (input: string) => {
-          const value = parseInt(input, 10);
-          return isNaN(value) || value < 1
-            ? "Please enter a number greater than 0"
-            : true;
-        },
-      })
-      .then((answer) => ({ httpsPort: parseInt(answer, 10) }));
-
-    // Get system information
-    const systemInfo = await services.getSystemInfo();
-
-    // Display IP options and get user selection
     let hostIp: string = "";
-    if (systemInfo.ipAddresses.length > 0) {
-      if (systemInfo.ipAddresses.length > 1) {
-        // await this.logMessage("TASK", "Available IP addresses:");
+    let httpPort: number = 8090;
+    let httpsPort: number = 443;
 
-        const { select } = prompts;
-        const ipChoices = systemInfo.ipAddresses.map((ip, index) => ({
-          title: `${ip} - ${systemInfo.ipDescriptions[index]}`,
-          value: ip,
-        }));
+    const networkChoices = [
+      {
+        title: `IP address`,
+        value: "ip",
+      },
+      {
+        title: `Domain name`,
+        value: "domain",
+      },
+    ];
 
-        const selectedIndex = await select({
-          message: "Select the IP address for the host",
-          choices: ipChoices.map((choice, idx) => ({
-            name: choice.value,
-            value: idx,
-          })),
-        });
-        hostIp = systemInfo.ipAddresses[selectedIndex] || "";
-      } else {
-        hostIp = systemInfo.ipAddresses[0] || "";
+    const selectedNetworkIndex = await select({
+      message: "Select the network configuration method",
+      choices: networkChoices.map((choice, idx) => ({
+        name: choice.value,
+        value: idx,
+      })),
+    });
+
+    const selectedNetwork = networkChoices[selectedNetworkIndex];
+    if (selectedNetwork.value === "domain") {
+      const { domainName } = await prompts
+        .input({
+          message: "Enter the domain name for the host (e.g., openldr.local)",
+          validate: (input: string) => {
+            const domainPattern = /^[a-zA-Z0-9.-]+$/;
+            return domainPattern.test(input)
+              ? true
+              : "Please enter a valid domain name (only letters, numbers, dots, and hyphens are allowed)";
+          },
+        })
+        .then((answer) => ({ domainName: answer }));
+
+      hostIp = domainName.trim();
+    } else if (selectedNetwork.value === "ip") {
+      const { _httpPort } = await prompts
+        .input({
+          message: "Default HTTP port for openldr-gateway",
+          default: httpPort.toString(),
+          validate: (input: string) => {
+            const value = parseInt(input, 10);
+            return isNaN(value) || value < 1
+              ? "Please enter a number greater than 0"
+              : true;
+          },
+        })
+        .then((answer) => ({ _httpPort: parseInt(answer, 10) }));
+
+      const { _httpsPort } = await prompts
+        .input({
+          message: "Default HTTPS port for openldr-gateway",
+          default: httpsPort.toString(),
+          validate: (input: string) => {
+            const value = parseInt(input, 10);
+            return isNaN(value) || value < 1
+              ? "Please enter a number greater than 0"
+              : true;
+          },
+        })
+        .then((answer) => ({ _httpsPort: parseInt(answer, 10) }));
+
+      httpPort = _httpPort;
+      httpsPort = _httpsPort;
+
+      // Get system information
+      const systemInfo = await services.getSystemInfo();
+
+      if (systemInfo.ipAddresses.length > 0) {
+        if (systemInfo.ipAddresses.length > 1) {
+          // await this.logMessage("TASK", "Available IP addresses:");
+
+          const ipChoices = systemInfo.ipAddresses.map((ip, index) => ({
+            title: `${ip} - ${systemInfo.ipDescriptions[index]}`,
+            value: ip,
+          }));
+
+          const selectedIndex = await select({
+            message: "Select the IP address for the host",
+            choices: ipChoices.map((choice, idx) => ({
+              name: choice.value,
+              value: idx,
+            })),
+          });
+          hostIp = systemInfo.ipAddresses[selectedIndex] || "";
+        } else {
+          hostIp = systemInfo.ipAddresses[0] || "";
+        }
       }
     }
 
