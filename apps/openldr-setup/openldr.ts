@@ -309,6 +309,11 @@ async function init() {
       "VITE_OCL_URL",
       `https://${hostIp}:${httpsPort}/ocl-api`,
     );
+    await updateEnvFile(
+      env_studio_vite,
+      "VITE_POSTGRES_CONSOLE_URL",
+      `https://${hostIp}:${httpsPort}/postgres-console`,
+    );
 
     //Update web environments
     const env_web_vite = path.join(env_path, ".env.openldr-web-vite");
