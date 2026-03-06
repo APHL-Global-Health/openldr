@@ -72,24 +72,29 @@ export const helmetMiddleware = helmet({
 
 export const corsMiddleware = cors({
   origin: (origin, callback) => {
-    // // Allow server-to-server requests (no origin header)
-    // if (!origin) {
-    return callback(null, true);
-    // }
-    // // Allow all origins when wildcard is configured (development default)
-    // if (CONFIG.allowedOrigins.includes("*")) {
-    //   return callback(null, true);
-    // }
-    // if (CONFIG.allowedOrigins.includes(origin)) {
-    //   return callback(null, true);
-    // }
-    // console.warn(`[CORS] Blocked origin: ${origin}`);
-    // callback(new Error(`Origin ${origin} not allowed by CORS policy`));
+    // Allow server-to-server requests (no origin header)
+    if (!origin) {
+      return callback(null, true);
+    }
+    // Allow all origins when wildcard is configured (development default)
+    if (CONFIG.allowedOrigins.includes("*")) {
+      return callback(null, true);
+    }
+    if (CONFIG.allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+    console.warn(`[CORS] Blocked origin: ${origin}`);
+    callback(new Error(`Origin ${origin} not allowed by CORS policy`));
   },
-  // methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-  // allowedHeaders: ["Content-Type", "Authorization", "X-API-Key", "X-Request-ID"],
-  // exposedHeaders: ["X-RateLimit-Limit", "X-RateLimit-Remaining", "X-Integrity"],
-  // maxAge: 600,
+  methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+  allowedHeaders: [
+    "Content-Type",
+    "Authorization",
+    "X-API-Key",
+    "X-Request-ID",
+  ],
+  exposedHeaders: ["X-RateLimit-Limit", "X-RateLimit-Remaining", "X-Integrity"],
+  maxAge: 600,
 });
 
 // ── 3. Rate limiters ──────────────────────────────────────────────────────
