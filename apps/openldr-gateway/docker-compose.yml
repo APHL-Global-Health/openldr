@@ -10,10 +10,10 @@ services:
       - .env
     volumes:
       # For development, uncomment this line to use local certs.
-      - ../../packages/openldr-core/certs:/etc/nginx/certs
+      # - ../../packages/openldr-core/certs:/etc/nginx/certs
       # In production, uncomment the following lines to use certbot for automatic certificate management.
-      # - ./certbot/www:/var/www/certbot # for HTTP challenge
-      # - ./certbot/conf:/etc/letsencrypt # shared certs
+      - ./certbot/www:/var/www/certbot # for HTTP challenge
+      - ./certbot/conf:/etc/letsencrypt # shared certs
     networks:
       - openldr-network
     ports:
@@ -21,14 +21,14 @@ services:
       - 443:443
 
   # In production, you can use certbot to automatically manage SSL certificates. Uncomment the following service definition to enable certbot.
-  # certbot:
-  #   image: certbot/certbot
-  #   networks:
-  #     - openldr-network
-  #   volumes:
-  #     - ./certbot/www:/var/www/certbot
-  #     - ./certbot/conf:/etc/letsencrypt
-  #   entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
+  certbot:
+    image: certbot/certbot
+    networks:
+      - openldr-network
+    volumes:
+      - ./certbot/www:/var/www/certbot
+      - ./certbot/conf:/etc/letsencrypt
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
 
 networks:
   openldr-network:
