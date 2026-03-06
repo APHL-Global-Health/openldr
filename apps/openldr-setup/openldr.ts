@@ -84,7 +84,7 @@ async function init() {
       })
       .then((answer) => ({ httpPort: parseInt(answer, 10) }));
 
-      const { httpsPort } = await prompts
+    const { httpsPort } = await prompts
       .input({
         message: "Default HTTPS port for openldr-gateway",
         default: DEFAULT_HTTPS_PORT.toString(),
@@ -96,8 +96,6 @@ async function init() {
         },
       })
       .then((answer) => ({ httpsPort: parseInt(answer, 10) }));
-
-
 
     // Get system information
     const systemInfo = await services.getSystemInfo();
@@ -181,7 +179,11 @@ async function init() {
 
     //Update openconceptlab environments
     const env_ocl = path.join(env_path, ".env.openldr-openconceptlab");
-    await updateEnvFile(env_ocl, "OCL_PUBLIC_URL", `https://${hostIp}:${httpsPort}/ocl-api`);
+    await updateEnvFile(
+      env_ocl,
+      "OCL_PUBLIC_URL",
+      `https://${hostIp}:${httpsPort}/ocl-api`,
+    );
 
     //Update keycloak environments
     const env_keycloak = path.join(env_path, ".env.openldr-keycloak");
@@ -271,7 +273,11 @@ async function init() {
 
     //Update studio environments
     const env_web_vite = path.join(env_path, ".env.openldr-web-vite");
-    await updateEnvFile(env_web_vite, "VITE_APP_URL", `https://${hostIp}:${httpsPort}/web`);
+    await updateEnvFile(
+      env_web_vite,
+      "VITE_APP_URL",
+      `https://${hostIp}:${httpsPort}/studio`,
+    );
   } catch (error) {
     throw new Error(
       `Failed to create openldr configuration: ${
