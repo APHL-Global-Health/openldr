@@ -271,7 +271,7 @@ async function init() {
       `https://${hostIp}:${httpsPort}/ocl-api`,
     );
 
-    //Update studio environments
+    //Update web environments
     const env_web_vite = path.join(env_path, ".env.openldr-web-vite");
     await updateEnvFile(
       env_web_vite,
