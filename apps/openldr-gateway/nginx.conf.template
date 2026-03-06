@@ -28,8 +28,6 @@ http {
         location / {
             return 301 https://$host:${GATEWAY_HTTPS_PORT}$request_uri;
         }
-
-        #return 301 https://$host:${GATEWAY_HTTPS_PORT}$request_uri;
     }
 
     server {
@@ -45,10 +43,10 @@ http {
         proxy_buffering off;
         proxy_request_buffering off;
 
-        #ssl_certificate /etc/nginx/certs/domain.crt;
-        #ssl_certificate_key /etc/nginx/certs/domain.key;
-        ssl_certificate /etc/letsencrypt/live/openldr.online/fullchain.pem;
-        ssl_certificate_key /etc/letsencrypt/live/openldr.online/privkey.pem;
+        ssl_certificate /etc/nginx/certs/domain.crt;
+        ssl_certificate_key /etc/nginx/certs/domain.key;
+        #ssl_certificate /etc/letsencrypt/live/openldr.online/fullchain.pem;
+        #ssl_certificate_key /etc/letsencrypt/live/openldr.online/privkey.pem;
 
         # These will be substituted at container startup
         set $keycloak_hostname "${KEYCLOAK_HOSTNAME}:8443";
