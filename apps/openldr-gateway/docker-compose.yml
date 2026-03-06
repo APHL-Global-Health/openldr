@@ -1,41 +1,52 @@
 name: openldr
 services:
-  # openldr-nginx:
+  openldr-nginx:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: openldr-nginx
+    restart: unless-stopped
+    env_file:
+      - .env
+    volumes:
+      # - ../../packages/openldr-core/certs:/etc/nginx/certs
+      - ./certbot/www:/var/www/certbot # for HTTP challenge
+      - ./certbot/conf:/etc/letsencrypt # shared certs
+    networks:
+      - openldr-network
+    ports:
+      - 80:80
+      - 443:443
+
+  certbot:
+    image: certbot/certbot
+    networks:
+      - openldr-network
+    volumes:
+      - ./certbot/www:/var/www/certbot
+      - ./certbot/conf:/etc/letsencrypt
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
+
+  # openldr-nginx-ui:
+  #   stdin_open: true
+  #   tty: true
   #   build:
   #     context: .
   #     dockerfile: Dockerfile
-  #   container_name: openldr-nginx
+  #   container_name: openldr-nginx-ui
   #   restart: unless-stopped
   #   env_file:
   #     - .env
   #   volumes:
   #     - ../../packages/openldr-core/certs:/etc/nginx/certs
+  #     - ./nginx-ui:/etc/nginx-ui
+  #     - /var/run/docker.sock:/var/run/docker.sock
   #   networks:
   #     - openldr-network
   #   ports:
-  #     # - 8090:80
-  #     - 443:443
-
-  openldr-nginx-ui:
-    stdin_open: true
-    tty: true
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: openldr-nginx-ui
-    restart: unless-stopped
-    env_file:
-      - .env
-    volumes:
-      - ../../packages/openldr-core/certs:/etc/nginx/certs
-      - ./nginx-ui:/etc/nginx-ui
-      - /var/run/docker.sock:/var/run/docker.sock
-    networks:
-      - openldr-network
-    ports:
-      - "${GATEWAY_HTTP_PORT}:9000"
-      # - "9081:9081"
-      - "${GATEWAY_HTTPS_PORT}:443"
+  #     - "${GATEWAY_HTTP_PORT}:9000"
+  #     # - "9081:9081"
+  #     - "${GATEWAY_HTTPS_PORT}:443"
 
 networks:
   openldr-network:

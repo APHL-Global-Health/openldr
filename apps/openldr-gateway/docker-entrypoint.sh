@@ -10,6 +10,8 @@ envsubst '${KEYCLOAK_HOSTNAME} ${KEYCLOAK_BASE_URL} ${KEYCLOAK_REALM} ${KEYCLOAK
 nginx -t
 
 # Start nginx
-nginx
+# nginx
 
-exec nginx-ui -config /etc/nginx-ui/app.ini
+# exec nginx-ui -config /etc/nginx-ui/app.ini
+
+exec nginx -g 'daemon off;'
