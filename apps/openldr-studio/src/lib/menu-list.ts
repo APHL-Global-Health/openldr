@@ -93,6 +93,11 @@ export function getMenuList(
           icon: Archive,
         },
         {
+          href: `${baseUrl}projects`,
+          label: "navigation.projects",
+          icon: Layers,
+        },
+        {
           href: `${baseUrl}forms`,
           label: "navigation.forms",
           icon: Form,

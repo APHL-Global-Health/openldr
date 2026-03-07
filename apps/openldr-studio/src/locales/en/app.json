@@ -325,5 +325,8 @@
   },
   "forms": {
     "title": "Forms"
+  },
+  "projects": {
+    "title": "Projects"
   }
 }

@@ -14,7 +14,9 @@ import * as mapper from "./events/mapper";
 import * as storage from "./events/storage";
 import * as validation from "./events/validation";
 import * as outpost from "./events/outpost";
+
 import dataProcessingRouter from "./controllers/data.processing.controller";
+import projectsController from "./controllers/projects.controller";
 
 const IsDev = process.env.NODE_ENV === "development";
 const app = express();
@@ -34,6 +36,7 @@ else
   );
 
 app.use("/api/v1", dataProcessingRouter);
+app.use("/api/v1", projectsController);
 
 app.get("/health", (_req: Request, res: Response) => {
   res.json({
