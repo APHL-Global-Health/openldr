@@ -170,10 +170,10 @@ export const FormPreview: React.FC<FormPreviewProps> = ({ form }) => {
     <div className="max-w-lg mx-auto w-full py-6 px-4">
       {/* Form header */}
       <div className="mb-8">
-        <div className="inline-flex items-center gap-1.5 text-[#6EE7B7] text-[10px] font-bold uppercase tracking-widest mb-2">
+        {/* <div className="inline-flex items-center gap-1.5 text-[#6EE7B7] text-[10px] font-bold uppercase tracking-widest mb-2">
           <div className="w-1 h-1 rounded-full bg-[#6EE7B7]" />
           Live Preview
-        </div>
+        </div> */}
         <h2 className="text-2xl font-bold text-[#E2EAF4] leading-tight">
           {form.name}
         </h2>
