@@ -11,7 +11,9 @@ export async function manualDataEntry(
 ) {
   try {
     const response = await fetch(
-      `${import.meta.env.VITE_PROCESSOR_BASE_URL}/api/v1/manual-data-entry`,
+      `${
+        import.meta.env.VITE_PROCESSOR_BASE_URL
+      }/api/v1/processor/manual-data-entry`,
       {
         method: "POST",
         headers: {
@@ -27,7 +29,9 @@ export async function manualDataEntry(
 
     if (!response.ok) {
       throw new Error(
-        `HTTP error ${response.status}: ${response.statusText}${IsDev ? ` - ${await response.text()}` : ""}`,
+        `HTTP error ${response.status}: ${response.statusText}${
+          IsDev ? ` - ${await response.text()}` : ""
+        }`,
       );
     }
 
@@ -45,7 +49,9 @@ export async function sendMessageEntry(
 ) {
   try {
     const response = await fetch(
-      `${import.meta.env.VITE_PROCESSOR_BASE_URL}/api/v1/send-message`,
+      `${
+        import.meta.env.VITE_PROCESSOR_BASE_URL
+      }/api/v1/processor/send-message`,
       {
         method: "POST",
         headers: {
@@ -59,7 +65,9 @@ export async function sendMessageEntry(
 
     if (!response.ok) {
       throw new Error(
-        `HTTP error ${response.status}: ${response.statusText}${IsDev ? ` - ${await response.text()}` : ""}`,
+        `HTTP error ${response.status}: ${response.statusText}${
+          IsDev ? ` - ${await response.text()}` : ""
+        }`,
       );
     }
 
@@ -78,7 +86,9 @@ export async function processFeedEntry(
 ) {
   try {
     const response = await fetch(
-      `${import.meta.env.VITE_PROCESSOR_BASE_URL}/api/v1/process-feed`,
+      `${
+        import.meta.env.VITE_PROCESSOR_BASE_URL
+      }/api/v1/processor/process-feed`,
       {
         method: "POST",
         headers: {
@@ -93,7 +103,9 @@ export async function processFeedEntry(
 
     if (!response.ok) {
       throw new Error(
-        `HTTP error ${response.status}: ${response.statusText}${IsDev ? ` - ${await response.text()}` : ""}`,
+        `HTTP error ${response.status}: ${response.statusText}${
+          IsDev ? ` - ${await response.text()}` : ""
+        }`,
       );
     }
 

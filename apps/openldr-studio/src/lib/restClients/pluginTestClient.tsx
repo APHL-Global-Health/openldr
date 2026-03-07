@@ -21,11 +21,24 @@ import type {
 const ENV = import.meta.env;
 // const IsDev = ENV.MODE === "development";
 
-async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(`${ENV.VITE_PROCESSOR_BASE_URL}/api/v1${path}`, {
-    headers: { "Content-Type": "application/json", ...(init?.headers ?? {}) },
-    ...init,
-  });
+async function request<T>(
+  token: any,
+  path: string,
+  init?: RequestInit,
+  signal?: AbortSignal,
+): Promise<T> {
+  const res = await fetch(
+    `${ENV.VITE_PROCESSOR_BASE_URL}/api/v1/projects${path}`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+        ...(init?.headers ?? {}),
+      },
+      signal,
+      ...init,
+    },
+  );
   const json = await res.json();
   if (!res.ok || json.ok === false)
     throw new Error(json.error ?? `HTTP ${res.status}`);
@@ -35,72 +48,135 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 // ── Context ───────────────────────────────────────────────────────────────────
 
 export const pluginTestApi = {
-  getProjects: () =>
-    request<{ projects: Project[] }>("/projects").then((r) => r.projects),
-
-  createProject: (name: string) =>
-    request<{ project: Project }>("/projects", {
-      method: "POST",
-      body: JSON.stringify({ name } satisfies CreateProjectRequest),
-    }).then((r) => r.project),
-
-  getUseCases: (projectId: string) =>
-    request<{ useCases: UseCase[] }>(`/projects/${projectId}/use-cases`).then(
-      (r) => r.useCases,
+  getProjects: (token: any, signal?: AbortSignal) =>
+    request<{ projects: Project[] }>(token, "", undefined, signal).then(
+      (r) => r.projects,
     ),
 
-  createUseCase: (name: string, projectId: string) =>
-    request<{ useCase: UseCase }>("/use-cases", {
-      method: "POST",
-      body: JSON.stringify({ name, projectId } satisfies CreateUseCaseRequest),
-    }).then((r) => r.useCase),
+  createProject: (token: any, name: string, signal?: AbortSignal) =>
+    request<{ project: Project }>(
+      token,
+      "",
+      {
+        method: "POST",
+        body: JSON.stringify({ name } satisfies CreateProjectRequest),
+      },
+      signal,
+    ).then((r) => r.project),
 
-  getDataFeeds: (useCaseId: string) =>
-    request<{ feeds: DataFeed[] }>(`/use-cases/${useCaseId}/feeds`).then(
-      (r) => r.feeds,
-    ),
+  getUseCases: (token: any, projectId: string, signal?: AbortSignal) =>
+    request<{ useCases: UseCase[] }>(
+      token,
+      `/${projectId}/use-cases`,
+      undefined,
+      signal,
+    ).then((r) => r.useCases),
 
-  createDataFeed: (name: string, useCaseId: string) =>
-    request<{ feed: DataFeed }>("/feeds", {
-      method: "POST",
-      body: JSON.stringify({ name, useCaseId } satisfies CreateDataFeedRequest),
-    }).then((r) => r.feed),
+  createUseCase: (
+    token: any,
+    name: string,
+    projectId: string,
+    signal?: AbortSignal,
+  ) =>
+    request<{ useCase: UseCase }>(
+      token,
+      "/use-cases",
+      {
+        method: "POST",
+        body: JSON.stringify({
+          name,
+          projectId,
+        } satisfies CreateUseCaseRequest),
+      },
+      signal,
+    ).then((r) => r.useCase),
+
+  getDataFeeds: (token: any, useCaseId: string, signal?: AbortSignal) =>
+    request<{ feeds: DataFeed[] }>(
+      token,
+      `/use-cases/${useCaseId}/feeds`,
+      undefined,
+      signal,
+    ).then((r) => r.feeds),
+
+  createDataFeed: (
+    token: any,
+    name: string,
+    useCaseId: string,
+    signal?: AbortSignal,
+  ) =>
+    request<{ feed: DataFeed }>(
+      token,
+      "/feeds",
+      {
+        method: "POST",
+        body: JSON.stringify({
+          name,
+          useCaseId,
+        } satisfies CreateDataFeedRequest),
+      },
+      signal,
+    ).then((r) => r.feed),
 
   // ── Plugins ──
 
-  getPlugins: (slot: PluginSlotType) =>
-    request<{ plugins: Plugin[] }>(`/plugins?slot=${slot}`).then(
-      (r) => r.plugins,
-    ),
+  getPlugins: (token: any, slot: PluginSlotType, signal?: AbortSignal) =>
+    request<{ plugins: Plugin[] }>(
+      token,
+      `/plugins?slot=${slot}`,
+      undefined,
+      signal,
+    ).then((r) => r.plugins),
 
-  createPlugin: (data: CreatePluginRequest) =>
-    request<{ plugin: Plugin }>("/plugins", {
-      method: "POST",
-      body: JSON.stringify(data),
-    }).then((r) => r.plugin),
+  createPlugin: (token: any, data: CreatePluginRequest, signal?: AbortSignal) =>
+    request<{ plugin: Plugin }>(
+      token,
+      "/plugins",
+      {
+        method: "POST",
+        body: JSON.stringify(data),
+      },
+      signal,
+    ).then((r) => r.plugin),
 
   // ── Test runner ──
 
-  runTest: (data: RunPluginTestRequest): Promise<RunPluginTestResponse> =>
-    request<RunPluginTestResponse>("/run", {
-      method: "POST",
-      body: JSON.stringify(data),
-    }),
+  runTest: (
+    token: any,
+    data: RunPluginTestRequest,
+    signal?: AbortSignal,
+  ): Promise<RunPluginTestResponse> =>
+    request<RunPluginTestResponse>(
+      token,
+      "/run",
+      {
+        method: "POST",
+        body: JSON.stringify(data),
+      },
+      signal,
+    ),
 
   // ── Assignments ──
 
   saveAssignment: (
+    token: any,
     data: SavePluginAssignmentRequest,
+    signal?: AbortSignal,
   ): Promise<SavePluginAssignmentResponse> =>
-    request<SavePluginAssignmentResponse>("/assignments", {
-      method: "POST",
-      body: JSON.stringify(data),
-    }),
+    request<SavePluginAssignmentResponse>(
+      token,
+      "/assignments",
+      {
+        method: "POST",
+        body: JSON.stringify(data),
+      },
+      signal,
+    ),
 
-  getAssignment: (feedId: string) =>
+  getAssignment: (token: any, feedId: string, signal?: AbortSignal) =>
     request<{
       assignment: ReturnType<
         typeof import("@/lib/restClients/pluginTestClient").pluginTestApi.getAssignment
       >;
-    }>(`/assignments/${feedId}`),
+    }>(token, `/assignments/${feedId}`, undefined, signal),
 };

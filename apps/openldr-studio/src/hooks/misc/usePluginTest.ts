@@ -202,19 +202,19 @@ function reducer(s: State, a: Action): State {
 
 // ── Hook ──────────────────────────────────────────────────────────────────────
 
-export function usePluginTest() {
+export function usePluginTest(token: any, signal?: AbortSignal) {
   const [state, dispatch] = useReducer(reducer, initialState);
   const abortRef = useRef<AbortController | null>(null);
 
   // ── Boot: load projects + all plugin lists ──
   useEffect(() => {
     pluginTestApi
-      .getProjects()
+      .getProjects(token, signal)
       .then((p) => dispatch({ type: "SET_PROJECTS", projects: p }))
       .catch(() => {});
     (["validation", "mapping", "outpost"] as PluginSlotType[]).forEach((slot) =>
       pluginTestApi
-        .getPlugins(slot)
+        .getPlugins(token, slot, signal)
         .then((p) => dispatch({ type: "SET_PLUGINS", slot, plugins: p }))
         .catch(() => {}),
     );
@@ -225,7 +225,7 @@ export function usePluginTest() {
     if (!state.selectedProjectId) return;
     dispatch({ type: "SET_LOADING_CTX", loading: true });
     pluginTestApi
-      .getUseCases(state.selectedProjectId)
+      .getUseCases(token, state.selectedProjectId, signal)
       .then((u) => dispatch({ type: "SET_USE_CASES", useCases: u }))
       .finally(() => dispatch({ type: "SET_LOADING_CTX", loading: false }));
   }, [state.selectedProjectId]);
@@ -234,14 +234,14 @@ export function usePluginTest() {
   useEffect(() => {
     if (!state.selectedUseCaseId) return;
     pluginTestApi
-      .getDataFeeds(state.selectedUseCaseId)
+      .getDataFeeds(token, state.selectedUseCaseId, signal)
       .then((f) => dispatch({ type: "SET_FEEDS", feeds: f }));
   }, [state.selectedUseCaseId]);
 
   // ── Actions ──────────────────────────────────────────────────────────────────
 
   const createProject = useCallback(async (name: string) => {
-    const p = await pluginTestApi.createProject(name);
+    const p = await pluginTestApi.createProject(token, name, signal);
     dispatch({ type: "ADD_PROJECT", project: p });
   }, []);
 
@@ -249,8 +249,10 @@ export function usePluginTest() {
     async (name: string) => {
       if (!state.selectedProjectId) return;
       const u = await pluginTestApi.createUseCase(
+        token,
         name,
         state.selectedProjectId,
+        signal,
       );
       dispatch({ type: "ADD_USE_CASE", useCase: u });
     },
@@ -261,8 +263,10 @@ export function usePluginTest() {
     async (name: string) => {
       if (!state.selectedUseCaseId) return;
       const f = await pluginTestApi.createDataFeed(
+        token,
         name,
         state.selectedUseCaseId,
+        signal,
       );
       dispatch({ type: "ADD_FEED", feed: f });
     },
@@ -271,7 +275,7 @@ export function usePluginTest() {
 
   const createPlugin = useCallback(
     async (name: string, slot: PluginSlotType) => {
-      const p = await pluginTestApi.createPlugin({ name, slot });
+      const p = await pluginTestApi.createPlugin(token, { name, slot }, signal);
       dispatch({ type: "ADD_PLUGIN", slot, plugin: p });
     },
     [],
@@ -286,12 +290,16 @@ export function usePluginTest() {
     dispatch({ type: "RUN_START" });
 
     try {
-      const result = await pluginTestApi.runTest({
-        payload,
-        validationPluginId: selectedPlugins.validation,
-        mappingPluginId: selectedPlugins.mapping,
-        outpostPluginId: selectedPlugins.outpost,
-      });
+      const result = await pluginTestApi.runTest(
+        token,
+        {
+          payload,
+          validationPluginId: selectedPlugins.validation,
+          mappingPluginId: selectedPlugins.mapping,
+          outpostPluginId: selectedPlugins.outpost,
+        },
+        signal,
+      );
       dispatch({ type: "RUN_DONE", result });
     } catch (e) {
       dispatch({ type: "RUN_ERROR", error: (e as Error).message });
@@ -303,12 +311,16 @@ export function usePluginTest() {
     if (!selectedFeedId) return;
     dispatch({ type: "SAVE_START" });
     try {
-      await pluginTestApi.saveAssignment({
-        feedId: selectedFeedId,
-        validationPluginId: selectedPlugins.validation,
-        mappingPluginId: selectedPlugins.mapping,
-        outpostPluginId: selectedPlugins.outpost,
-      });
+      await pluginTestApi.saveAssignment(
+        token,
+        {
+          feedId: selectedFeedId,
+          validationPluginId: selectedPlugins.validation,
+          mappingPluginId: selectedPlugins.mapping,
+          outpostPluginId: selectedPlugins.outpost,
+        },
+        signal,
+      );
       dispatch({ type: "SAVE_DONE" });
     } catch (e) {
       dispatch({ type: "SAVE_ERROR", error: (e as Error).message });

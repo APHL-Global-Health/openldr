@@ -30,19 +30,19 @@ const err = (res: Response, msg: string, status = 400) =>
 // ─────────────────────────────────────────────────────────────────────────────
 
 /** GET /api/plugin-tests/projects */
-router.get("/projects", (_req, res) => {
+router.get("", (_req, res) => {
   ok(res, { projects: db.getProjects() });
 });
 
 /** POST /api/plugin-tests/projects */
-router.post("/projects", (req: Request<{}, {}, CreateProjectRequest>, res) => {
+router.post("", (req: Request<{}, {}, CreateProjectRequest>, res) => {
   const { name } = req.body;
   if (!name?.trim()) return err(res, "name is required");
   ok(res, { project: db.createProject(name.trim()) });
 });
 
 /** GET /api/plugin-tests/projects/:projectId/use-cases */
-router.get("/projects/:projectId/use-cases", (req, res) => {
+router.get("/:projectId/use-cases", (req, res) => {
   const { projectId } = req.params;
   if (!db.getProject(projectId)) return err(res, "Project not found", 404);
   ok(res, { useCases: db.getUseCases(projectId) });

@@ -35,8 +35,8 @@ else
     }),
   );
 
-app.use("/api/v1", dataProcessingRouter);
-app.use("/api/v1", projectsController);
+app.use("/api/v1/processor", dataProcessingRouter);
+app.use("/api/v1/projects", projectsController);
 
 app.get("/health", (_req: Request, res: Response) => {
   res.json({

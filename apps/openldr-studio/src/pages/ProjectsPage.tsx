@@ -3,6 +3,7 @@ import { ContextDropdown } from "@/components/projects/ContextDropdown";
 import { CreateModal } from "@/components/projects/CreateModal";
 import { PluginSlot } from "@/components/projects/PluginSlot";
 import { StageOutput } from "@/components/projects/StageOutput";
+import { useKeycloakClient } from "@/components/react-keycloak-provider";
 import { Button } from "@/components/ui/button";
 import { usePluginTest } from "@/hooks/misc/usePluginTest";
 import { useAppTranslation } from "@/i18n/hooks";
@@ -34,7 +35,8 @@ const SAMPLE_PAYLOAD = JSON.stringify(
 function ProjectsPage() {
   const { t } = useAppTranslation();
 
-  const { state, actions } = usePluginTest();
+  const client = useKeycloakClient();
+  const { state, actions } = usePluginTest(client.kc.token);
   const [modal, setModal] = useState<ModalState | null>(null);
 
   const {
