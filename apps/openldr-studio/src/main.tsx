@@ -20,6 +20,7 @@ const SettingsPage = React.lazy(() => import("@/pages/settings/page"));
 const ReportsPage = React.lazy(() => import("@/pages/ReportsPage"));
 const ChatPage = React.lazy(() => import("@/pages/ChatPage"));
 const LogsPage = React.lazy(() => import("@/pages/LogsPage"));
+const FormBuilderPage = React.lazy(() => import("@/pages/FormBuilderPage"));
 
 import { Toaster } from "@/components/ui/sonner";
 import {
@@ -56,6 +57,7 @@ const router = createBrowserRouter([
       { path: `${baseUrl}reports`, element: <ReportsPage /> },
       { path: `${baseUrl}chats`, element: <ChatPage /> },
       { path: `${baseUrl}logs`, element: <LogsPage /> },
+      { path: `${baseUrl}forms`, element: <FormBuilderPage /> },
       { path: `${baseUrl}settings`, element: <SettingsPage /> },
     ],
   },

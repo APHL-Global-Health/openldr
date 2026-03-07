@@ -322,5 +322,8 @@
   },
   "chats": {
     "title": "Chats"
+  },
+  "forms": {
+    "title": "Forms"
   }
 }

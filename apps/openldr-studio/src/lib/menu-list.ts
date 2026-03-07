@@ -17,6 +17,7 @@ import {
   Bot,
   Box,
   Terminal,
+  Form,
 } from "lucide-react";
 
 type Submenu = {
@@ -90,6 +91,11 @@ export function getMenuList(
           href: `${baseUrl}archives`,
           label: "navigation.archives",
           icon: Archive,
+        },
+        {
+          href: `${baseUrl}forms`,
+          label: "navigation.forms",
+          icon: Form,
         },
         {
           href: `${baseUrl}reports`,

@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { type LanguageConfig } from "@/types/languages";
+import type { FieldTypeMeta, FormDefinition } from "@/types/forms";
 
 // Set IS_PLATFORM to true if you have the api keys and urls
 export const VITE_PUBLIC_IS_PLATFORM = true;
@@ -858,4 +859,183 @@ export const SUPPORTED_LANGUAGES: LanguageConfig[] = [
   { code: "en", name: "English", nativeName: "English", flag: "🇬🇧" },
   { code: "sw", name: "Swahili", nativeName: "Kiswahili", flag: "🇹🇿" },
   { code: "pt", name: "Portuguese", nativeName: "Português", flag: "🇧🇷" },
+];
+
+//-- Forms and Validation
+
+export const FIELD_TYPE_META: FieldTypeMeta[] = [
+  {
+    type: "string",
+    label: "Text",
+    icon: "T",
+    color: "#6EE7B7",
+    description: "Single line text input",
+  },
+  {
+    type: "textarea",
+    label: "Textarea",
+    icon: "¶",
+    color: "#F9A8D4",
+    description: "Multi-line text input",
+  },
+  {
+    type: "number",
+    label: "Number",
+    icon: "#",
+    color: "#93C5FD",
+    description: "Numeric input",
+  },
+  {
+    type: "boolean",
+    label: "Toggle",
+    icon: "◎",
+    color: "#FCA5A5",
+    description: "True/false toggle",
+  },
+  {
+    type: "select",
+    label: "Select",
+    icon: "≡",
+    color: "#FCD34D",
+    description: "Single option dropdown",
+  },
+  {
+    type: "multiselect",
+    label: "Multi Select",
+    icon: "⊞",
+    color: "#C4B5FD",
+    description: "Multiple option select",
+  },
+  {
+    type: "date",
+    label: "Date",
+    icon: "⊡",
+    color: "#6EE7B7",
+    description: "Date picker",
+  },
+  {
+    type: "email",
+    label: "Email",
+    icon: "@",
+    color: "#FCD34D",
+    description: "Email address input",
+  },
+  {
+    type: "object",
+    label: "Group",
+    icon: "{}",
+    color: "#93C5FD",
+    description: "Nested field group",
+  },
+];
+
+export const SAMPLE_FORMS: FormDefinition[] = [
+  {
+    id: "patient-reg",
+    name: "Patient Registration",
+    description: "Register a new patient in the system",
+    createdAt: Date.now(),
+    updatedAt: Date.now(),
+    fields: [
+      {
+        id: "f1",
+        type: "string",
+        label: "Full Name",
+        key: "full_name",
+        required: true,
+        placeholder: "Enter full name",
+        expanded: false,
+      },
+      {
+        id: "f2",
+        type: "date",
+        label: "Date of Birth",
+        key: "date_of_birth",
+        required: true,
+        placeholder: "",
+        expanded: false,
+      },
+      {
+        id: "f3",
+        type: "select",
+        label: "Sex",
+        key: "sex",
+        required: true,
+        options: "Male,Female,Unknown",
+        expanded: false,
+      },
+      {
+        id: "f4",
+        type: "string",
+        label: "Patient ID",
+        key: "patient_id",
+        required: false,
+        placeholder: "Hospital ID / MRN",
+        expanded: false,
+      },
+      {
+        id: "f5",
+        type: "string",
+        label: "Phone",
+        key: "phone",
+        required: false,
+        placeholder: "+255 700 000 000",
+        expanded: false,
+      },
+    ],
+  },
+  {
+    id: "lab-request",
+    name: "Lab Request",
+    description: "Submit a laboratory test request",
+    createdAt: Date.now(),
+    updatedAt: Date.now(),
+    fields: [
+      {
+        id: "f1",
+        type: "string",
+        label: "Requesting Clinician",
+        key: "clinician",
+        required: true,
+        placeholder: "",
+        expanded: false,
+      },
+      {
+        id: "f2",
+        type: "select",
+        label: "Specimen Type",
+        key: "specimen_type",
+        required: true,
+        options: "Blood,Urine,Stool,Swab,CSF,Sputum",
+        expanded: false,
+      },
+      {
+        id: "f3",
+        type: "date",
+        label: "Collection Date",
+        key: "collection_date",
+        required: true,
+        placeholder: "",
+        expanded: false,
+      },
+      {
+        id: "f4",
+        type: "select",
+        label: "Priority",
+        key: "priority",
+        required: false,
+        options: "Routine,Urgent,STAT",
+        expanded: false,
+      },
+      {
+        id: "f5",
+        type: "textarea",
+        label: "Clinical Notes",
+        key: "clinical_notes",
+        required: false,
+        placeholder: "Relevant clinical information...",
+        expanded: false,
+      },
+    ],
+  },
 ];
