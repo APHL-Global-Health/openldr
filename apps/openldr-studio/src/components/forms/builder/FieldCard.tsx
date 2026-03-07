@@ -3,7 +3,12 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import type { FormField, FieldType } from "@/types/forms";
 import { FIELD_TYPE_META } from "@/lib/constants";
-import { Input, Select, Toggle, IconButton, Badge } from "./ui";
+import { IconButton, Badge } from "./ui";
+import { Input } from "@/components/ui/input";
+import { Select } from "@/components/ui/select";
+import { Toggle } from "@/components/ui/toggle";
+// import {IconButton} from "@/components/ui/icon-button";
+// import { Badge } from "@/components/ui/badge";
 import { generateKey } from "@/lib/schema";
 
 interface FieldCardProps {
