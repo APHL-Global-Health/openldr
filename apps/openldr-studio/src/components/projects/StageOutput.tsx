@@ -29,7 +29,7 @@ export function StageOutput({
 
   return (
     <div
-      className={`overflow-hidden rounded-xl border bg-[#080d14] transition-colors duration-300 ${
+      className={`overflow-hidden rounded-sm border bg-card transition-colors duration-300 ${
         done ? headerClass : "border-slate-800"
       }`}
     >
@@ -44,20 +44,18 @@ export function StageOutput({
         <div className="flex items-center gap-2">
           <span
             className={`h-2 w-2 rounded-sm transition-colors duration-300 ${
-              done ? dotActiveClass : "bg-slate-800"
+              done ? dotActiveClass : "bg-border"
             }`}
           />
           <span
-            className={`font-mono text-[10px] uppercase tracking-[2px] transition-colors duration-300 ${
-              done ? "text-slate-300" : "text-slate-700"
+            className={` text-[10px] uppercase tracking-[2px] transition-colors duration-300 ${
+              done ? "" : ""
             }`}
           >
             {label} Output
           </span>
           {durationMs !== undefined && done && (
-            <span className="font-mono text-[9px] text-slate-600">
-              {durationMs}ms
-            </span>
+            <span className=" text-[9px] ">{durationMs}ms</span>
           )}
         </div>
         <div className="flex items-center gap-3">
@@ -73,7 +71,7 @@ export function StageOutput({
             </div>
           )}
           {done && checks && (
-            <div className="flex gap-2 font-mono text-[10px]">
+            <div className="flex gap-2  text-[10px]">
               {passCount > 0 && (
                 <span className="text-green-400">✓ {passCount}</span>
               )}
@@ -99,7 +97,7 @@ export function StageOutput({
               }`}
             >
               <span
-                className={`mt-px font-mono text-[11px] ${
+                className={`mt-px  text-[11px] ${
                   c.status === "pass"
                     ? "text-green-400"
                     : c.status === "warn"
@@ -109,23 +107,19 @@ export function StageOutput({
               >
                 {c.status === "pass" ? "✓" : c.status === "warn" ? "⚠" : "✗"}
               </span>
-              <span className="font-mono text-[10px] text-slate-500">
-                {c.rule}
-              </span>
-              <span className="ml-auto font-mono text-[10px] text-slate-600">
-                {c.message}
-              </span>
+              <span className=" text-[10px] ">{c.rule}</span>
+              <span className="ml-auto  text-[10px] ">{c.message}</span>
             </div>
           ))}
         </div>
       )}
 
       {/* JSON output */}
-      <div className="min-h-[60px] p-4 font-mono text-[11px] leading-relaxed text-slate-400">
+      <div className="min-h-[60px] p-4  text-[11px] leading-relaxed ">
         {!done && !running && (
-          <span className="text-slate-700">— awaiting run —</span>
+          <span className="text-muted-foreground">— awaiting run —</span>
         )}
-        {running && <span className="italic text-slate-600">Processing…</span>}
+        {running && <span className="italic ">Processing…</span>}
         {done && data && <JsonTree data={data} />}
       </div>
     </div>

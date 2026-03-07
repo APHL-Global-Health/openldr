@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState } from "react";
+import { Button } from "../ui/button";
+import { Input } from "../ui/input";
 
 // ── Create Modal ──────────────────────────────────────────────────────────────
 interface CreateModalProps {
@@ -25,13 +27,13 @@ export function CreateModal({
       onClick={onClose}
     >
       <div
-        className="w-72 rounded-xl border border-slate-700 bg-slate-900 p-5 shadow-2xl"
+        className="w-72 rounded-sm border border-border bg-card p-5 shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
-        <p className="mb-4 font-mono text-[10px] uppercase tracking-[3px] text-slate-400">
+        <p className="mb-4  text-[10px] uppercase tracking-[3px] text-slate-400">
           {title}
         </p>
-        <input
+        <Input
           ref={inputRef}
           value={val}
           onChange={(e) => setVal(e.target.value)}
@@ -40,22 +42,24 @@ export function CreateModal({
             if (e.key === "Escape") onClose();
           }}
           placeholder={placeholder}
-          className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 font-mono text-xs text-slate-200 placeholder-slate-600 outline-none focus:border-sky-500"
+          className="w-full rounded-sm border border-border bg-slate-950 px-3 py-2  text-xs"
         />
         <div className="mt-3 flex gap-2">
-          <button
+          <Button
+            variant="ghost"
             onClick={onClose}
-            className="flex-1 rounded-lg border border-slate-700 py-2 font-mono text-[11px] text-slate-500 transition hover:border-slate-500"
+            className="flex-1 rounded-sm border border-border  py-2  text-[11px]"
           >
             Cancel
-          </button>
-          <button
+          </Button>
+          <Button
+            variant="default"
             onClick={() => val.trim() && onConfirm(val.trim())}
             disabled={!val.trim()}
-            className="flex-1 rounded-lg bg-gradient-to-r from-sky-600 to-violet-600 py-2 font-mono text-[11px] text-white transition disabled:cursor-not-allowed disabled:opacity-30"
+            className="flex-1 rounded-sm border border-border py-2  text-[11px]  transition disabled:cursor-not-allowed disabled:opacity-30"
           >
             Create
-          </button>
+          </Button>
         </div>
       </div>
     </div>

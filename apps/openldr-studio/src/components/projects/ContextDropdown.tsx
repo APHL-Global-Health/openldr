@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { Button } from "../ui/button";
 
 // ── Context Dropdown ──────────────────────────────────────────────────────────
 interface ContextItem {
@@ -40,13 +41,14 @@ export function ContextDropdown({
 
   return (
     <div className="mb-1 px-2">
-      <p className="mb-1 px-1 font-mono text-[9px] uppercase tracking-[2px] text-slate-600">
+      <p className="mb-1 px-1 font-mono text-[9px] uppercase tracking-[2px]">
         {label}
       </p>
       <div className="flex gap-1" ref={ref}>
         <div className="relative flex-1">
-          <button
+          <Button
             disabled={disabled}
+            variant="ghost"
             onClick={() => !disabled && setOpen((o) => !o)}
             className={`flex w-full items-center justify-between rounded-md border px-2.5 py-1.5 text-left transition
               ${
@@ -54,36 +56,31 @@ export function ContextDropdown({
                   ? "cursor-not-allowed opacity-30"
                   : "cursor-pointer hover:border-slate-600"
               }
-              ${
-                selected
-                  ? `border-slate-700 bg-slate-900`
-                  : "border-slate-800 bg-[#080d14]"
-              }`}
+              ${selected ? `border-slate-700` : "border-border "}`}
           >
             <span
               className={`font-mono text-[11px] ${
-                selected ? "text-slate-200" : "italic text-slate-600"
+                selected ? "text-slate-200" : "italic"
               }`}
             >
               {selected?.name ??
                 (disabled ? "— select parent first —" : "Select…")}
             </span>
             {!disabled && (
-              <span className="ml-1 text-[8px] text-slate-600">
-                {open ? "▲" : "▼"}
-              </span>
+              <span className="ml-1 text-[8px]">{open ? "▲" : "▼"}</span>
             )}
-          </button>
+          </Button>
 
           {open && (
-            <div className="absolute left-0 right-0 top-[calc(100%+4px)] z-30 overflow-hidden rounded-lg border border-slate-800 bg-slate-900 shadow-xl">
+            <div className="absolute left-0 right-0 top-[calc(100%+4px)] z-30 overflow-hidden rounded-lg border border-border bg-slate-900 shadow-xl">
               {items.length === 0 ? (
-                <p className="px-3 py-2.5 font-mono text-[11px] italic text-slate-600">
+                <p className="px-3 py-2.5 font-mono text-[11px] italic">
                   No items — create one →
                 </p>
               ) : (
                 items.map((item) => (
-                  <button
+                  <Button
+                    variant="ghost"
                     key={item.id}
                     onClick={() => {
                       onSelect(item.id);
@@ -99,26 +96,23 @@ export function ContextDropdown({
                     <span className="font-mono text-[12px] text-slate-300">
                       {item.name}
                     </span>
-                  </button>
+                  </Button>
                 ))
               )}
             </div>
           )}
         </div>
 
-        <button
+        <Button
+          variant="ghost"
           onClick={onAdd}
           disabled={disabled}
           title={`New ${label}`}
-          className={`flex w-7 shrink-0 items-center justify-center rounded-md border border-slate-800 bg-[#080d14] text-base text-slate-600 transition
-            ${
-              disabled
-                ? "cursor-not-allowed opacity-20"
-                : `hover:border-sky-500 hover:text-sky-400`
-            }`}
+          className={`flex w-7 shrink-0 items-center justify-center rounded-md border border-border text-base transition
+            ${disabled ? "cursor-not-allowed opacity-20" : ``}`}
         >
           +
-        </button>
+        </Button>
       </div>
     </div>
   );

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { Plugin } from "@/types/plugin-test.types";
 import { StatusBadge } from "./StatusBadge";
+import { Button } from "../ui/button";
 
 // ── Plugin Slot ───────────────────────────────────────────────────────────────
 interface PluginSlotProps {
@@ -41,89 +42,81 @@ export function PluginSlot({
     <div className="mb-1.5 px-2" ref={ref}>
       {/* Slot header */}
       <div className="mb-1 flex items-center gap-1.5 px-1">
-        <span className="font-mono text-[9px] text-slate-700">
+        <span className="font-mono text-[9px]">
           {String(index).padStart(2, "0")}
         </span>
-        <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${dotClass}`} />
-        <span className="flex-1 font-mono text-[9px] uppercase tracking-[2px] text-slate-500">
+        {/* <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${dotClass}`} /> */}
+        <span className="flex-1 font-mono text-[9px] uppercase tracking-[2px] ">
           {label}
         </span>
       </div>
 
       <div className="flex gap-1">
         <div className="relative flex-1">
-          <button
+          <Button
+            variant="ghost"
             onClick={() => setOpen((o) => !o)}
-            className={`flex w-full items-center justify-between rounded-md border px-2.5 py-1.5 text-left transition hover:border-slate-600
+            className={`flex w-full items-center justify-between rounded-md border px-2.5 py-1.5 text-left transition
               ${
-                selected
-                  ? `border-slate-700 ${borderSelectedClass} bg-slate-900`
-                  : "border-slate-800 bg-[#080d14]"
+                ""
+                // selected
+                //   ? `border-slate-700 ${borderSelectedClass} bg-slate-900`
+                //   : "border-border bg-[#080d14]"
               }`}
           >
             {selected ? (
               <div>
-                <p className="font-mono text-[11px] text-slate-200">
-                  {selected.name}
-                </p>
-                <p className="font-mono text-[9px] text-slate-500">
-                  v{selected.version}
-                </p>
+                <p className="font-mono text-[11px] ">{selected.name}</p>
+                <p className="font-mono text-[9px] ">v{selected.version}</p>
               </div>
             ) : (
-              <span className="font-mono text-[11px] italic text-slate-600">
+              <span className="font-mono text-[11px] italic ">
                 No plugin selected
               </span>
             )}
             <div className="flex items-center gap-2">
               {selected && <StatusBadge status={selected.status} />}
-              <span className="text-[8px] text-slate-600">
-                {open ? "▲" : "▼"}
-              </span>
+              <span className="text-[8px] ">{open ? "▲" : "▼"}</span>
             </div>
-          </button>
+          </Button>
 
           {open && (
-            <div className="absolute left-0 right-0 top-[calc(100%+4px)] z-30 overflow-hidden rounded-lg border border-slate-800 bg-slate-900 shadow-xl">
-              <p className="border-b border-slate-800 px-3 py-1.5 font-mono text-[9px] uppercase tracking-[2px] text-slate-700">
+            <div className="absolute left-0 right-0 top-[calc(100%+4px)] z-30 overflow-hidden rounded-lg border border-border bg-slate-900 shadow-xl">
+              <p className="border-b border-border px-3 py-1.5 font-mono text-[9px] uppercase tracking-[2px] text-slate-700">
                 Select Plugin
               </p>
               {plugins.map((p) => (
-                <button
+                <Button
+                  variant="ghost"
                   key={p.id}
                   onClick={() => {
                     onSelect(p.id);
                     setOpen(false);
                   }}
                   className={`flex w-full items-center justify-between border-l-2 px-3 py-2 text-left transition hover:bg-slate-800
-                    ${
-                      p.id === selectedId
-                        ? "border-l-sky-500 bg-sky-500/10"
-                        : "border-transparent"
-                    }`}
+                    ${p.id === selectedId ? "" : "border-transparent"}`}
                 >
                   <div>
                     <p className="font-mono text-[11px] text-slate-300">
                       {p.name}
                     </p>
-                    <p className="font-mono text-[9px] text-slate-500">
-                      v{p.version}
-                    </p>
+                    <p className="font-mono text-[9px] ">v{p.version}</p>
                   </div>
                   <StatusBadge status={p.status} />
-                </button>
+                </Button>
               ))}
             </div>
           )}
         </div>
 
-        <button
+        <Button
+          variant="ghost"
           onClick={onAdd}
           title={`New ${label} plugin`}
-          className="flex w-7 shrink-0 items-center justify-center rounded-md border border-slate-800 bg-[#080d14] text-base text-slate-600 transition hover:border-sky-500 hover:text-sky-400"
+          className="flex w-7 shrink-0 items-center justify-center rounded-md border border-border text-base transition"
         >
           +
-        </button>
+        </Button>
       </div>
     </div>
   );

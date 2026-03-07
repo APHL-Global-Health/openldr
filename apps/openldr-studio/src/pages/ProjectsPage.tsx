@@ -3,6 +3,7 @@ import { ContextDropdown } from "@/components/projects/ContextDropdown";
 import { CreateModal } from "@/components/projects/CreateModal";
 import { PluginSlot } from "@/components/projects/PluginSlot";
 import { StageOutput } from "@/components/projects/StageOutput";
+import { Button } from "@/components/ui/button";
 import { usePluginTest } from "@/hooks/misc/usePluginTest";
 import { useAppTranslation } from "@/i18n/hooks";
 import { cn } from "@/lib/utils";
@@ -142,30 +143,12 @@ function ProjectsPage() {
         )}
       >
         {/* ── Left sidebar ────────────────────────────────────────────────────── */}
-        <aside className="flex w-72 shrink-0 flex-col overflow-hidden border-r border-slate-900">
-          {/* Header */}
-          <div className="shrink-0 border-b border-slate-900 px-3 py-3">
-            <p className="mb-2 font-mono text-[9px] uppercase tracking-[3px] text-slate-600">
-              Plugin Test Harness
-            </p>
-            <div className="flex items-center gap-2">
-              <span className="h-2 w-2 shrink-0 animate-pulse rounded-full bg-amber-500 shadow-[0_0_6px_#f59e0b]" />
-              <span className="font-mono text-[9px] tracking-[1px] text-slate-600">
-                KAFKA BYPASSED · TEST MODE
-              </span>
-            </div>
-          </div>
-
+        <aside className="flex w-72 shrink-0 flex-col overflow-hidden border-r border-border">
           {/* Scrollable content */}
           <div className="flex-1 overflow-y-auto py-3">
-            {/* ── Context Section ── */}
-            <p className="mb-2 px-3 font-mono text-[9px] uppercase tracking-[2px] text-slate-700">
-              Context
-            </p>
-
             <ContextDropdown
               label="Project"
-              accentClass="border-cyan-500"
+              accentClass="border-border"
               items={state.projects}
               selectedId={state.selectedProjectId}
               onSelect={actions.selectProject}
@@ -200,7 +183,7 @@ function ProjectsPage() {
             <div className="mx-3 my-4 border-t border-slate-900" />
 
             {/* ── Pipeline Slots ── */}
-            <p className="mb-2 px-3 font-mono text-[9px] uppercase tracking-[2px] text-slate-700">
+            <p className="mb-2 px-3  text-[9px] uppercase tracking-[2px] ">
               Pipeline Slots
             </p>
             {SLOTS.map((s, idx) => (
@@ -219,58 +202,52 @@ function ProjectsPage() {
           </div>
 
           {/* Footer: Run + Save */}
-          <div className="shrink-0 space-y-2 border-t border-slate-900 p-3">
+          <div className="shrink-0 space-y-2 border-t border-border p-3">
             {/* Run */}
-            <button
+            <Button
+              variant="ghost"
               onClick={actions.runTest}
               disabled={!canRun}
-              className={`flex w-full items-center justify-center gap-2 rounded-lg py-2.5 font-mono text-[11px] uppercase tracking-[2px] transition-all
-              ${
-                canRun
-                  ? "bg-gradient-to-r from-sky-600 to-violet-600 text-white hover:from-sky-500 hover:to-violet-500 shadow-lg shadow-sky-900/30"
-                  : "cursor-not-allowed border border-slate-800 bg-transparent text-slate-700"
-              }`}
+              className={`flex w-full border border-border items-center justify-center gap-2 rounded-sm py-2.5  text-[11px] uppercase tracking-[2px] transition-all
+              ${canRun ? "" : "cursor-not-allowed  bg-transparent "}`}
             >
               {isRunning ? (
                 <>
-                  <span className="h-2 w-2 animate-spin rounded-full border border-white/30 border-t-white" />
+                  <span className="h-2 w-2 animate-spin rounded-full border border-border border-t-white" />
                   Running…
                 </>
               ) : (
                 "▶  Run Test"
               )}
-            </button>
+            </Button>
 
             {/* Save */}
-            <button
+            <Button
+              variant="ghost"
               onClick={actions.saveAssignment}
               disabled={!canSave || saving}
-              className={`flex w-full items-center justify-center gap-2 rounded-lg border py-2 font-mono text-[11px] uppercase tracking-[2px] transition-all
+              className={`flex w-full items-center justify-center gap-2 rounded-sm border py-2  text-[11px] uppercase tracking-[2px] transition-all
               ${
                 canSave
-                  ? "border-green-600/50 bg-green-500/10 text-green-400 hover:bg-green-500/20"
-                  : "cursor-not-allowed border-slate-800 text-slate-700"
+                  ? "border-primary/50 bg-primary/10 text-primary"
+                  : "cursor-not-allowed border-border "
               }
-              ${
-                savedOk
-                  ? "border-green-500/50 bg-green-500/15 text-green-400"
-                  : ""
-              }`}
+              ${savedOk ? "border-primary/50 bg-primary/15 text-primary" : ""}`}
             >
               {saving ? "Saving…" : savedOk ? "✓ Saved" : "↓  Save Assignment"}
-            </button>
+            </Button>
 
-            {!canRun && !isRunning && (
-              <p className="text-center font-mono text-[9px] text-slate-700">
+            {/* {!canRun && !isRunning && (
+              <p className="text-center  text-[9px] ">
                 {!parsedPayloadOk && payload.trim()
                   ? "Fix JSON payload first"
                   : !payload.trim()
                   ? "Paste a payload to test"
                   : "Select at least one plugin"}
               </p>
-            )}
+            )} */}
             {testResult && !testResult.allPassed && (
-              <p className="text-center font-mono text-[9px] text-red-500">
+              <p className="text-center  text-[9px] text-red-500">
                 Fix failures before saving
               </p>
             )}
@@ -280,10 +257,10 @@ function ProjectsPage() {
         {/* ── Main panel ──────────────────────────────────────────────────────── */}
         <main className="flex flex-1 flex-col overflow-hidden">
           {/* Top bar */}
-          <div className="flex shrink-0 items-center gap-2 border-b border-slate-900 bg-[#04080f] px-5 py-3">
+          <div className="flex shrink-0 items-center gap-2 border-b border-border  px-5 py-3">
             {state.selectedProjectId ? (
               <>
-                <span className="font-mono text-[11px] text-slate-500">
+                <span className=" text-[11px]">
                   {
                     state.projects.find((p) => p.id === state.selectedProjectId)
                       ?.name
@@ -292,7 +269,7 @@ function ProjectsPage() {
                 {state.selectedUseCaseId && (
                   <>
                     <span className="text-slate-800">›</span>
-                    <span className="font-mono text-[11px] text-slate-500">
+                    <span className=" text-[11px]">
                       {
                         state.useCases.find(
                           (u) => u.id === state.selectedUseCaseId,
@@ -304,7 +281,7 @@ function ProjectsPage() {
                 {state.selectedFeedId && (
                   <>
                     <span className="text-slate-800">›</span>
-                    <span className="font-mono text-[11px] text-sky-400">
+                    <span className=" text-[11px] text-sky-400">
                       {
                         state.dataFeeds.find(
                           (f) => f.id === state.selectedFeedId,
@@ -315,24 +292,23 @@ function ProjectsPage() {
                 )}
               </>
             ) : (
-              <span className="font-mono text-[11px] italic text-slate-700">
-                No context selected
-              </span>
+              <span className=" text-[11px] italic ">No context selected</span>
             )}
             <div className="ml-auto flex items-center gap-2">
               {error && (
-                <span className="rounded-md border border-red-500/30 bg-red-500/10 px-2 py-0.5 font-mono text-[10px] text-red-400">
+                <span className="rounded-md border border-red-500/30 bg-red-500/10 px-2 py-0.5  text-[10px] text-red-400">
                   {error}
-                  <button
+                  <Button
+                    variant="ghost"
                     onClick={actions.clearError}
                     className="ml-2 text-red-500 hover:text-red-300"
                   >
                     ✕
-                  </button>
+                  </Button>
                 </span>
               )}
               {testResult?.allPassed && (
-                <span className="rounded-md border border-green-500/30 bg-green-500/10 px-2 py-0.5 font-mono text-[10px] text-green-400">
+                <span className="rounded-md border  bg-green-500/10 px-2 py-0.5  text-[10px]">
                   ✓ All stages passed
                 </span>
               )}
@@ -342,39 +318,39 @@ function ProjectsPage() {
           {/* Scrollable content */}
           <div className="flex-1 overflow-y-auto space-y-4 p-4">
             {/* ── Payload ── */}
-            <div className="overflow-hidden rounded-xl border border-green-500/30 bg-[#080d14] shadow-[0_0_20px_rgba(34,197,94,0.05)]">
-              <div className="flex items-center justify-between border-b border-green-500/20 bg-green-500/[0.04] px-4 py-2.5">
+            <div className="overflow-hidden rounded-sm border border-border bg-card/50">
+              <div className="flex items-center justify-between border-b  bg-card px-4 py-2.5">
                 <div className="flex items-center gap-2">
-                  <span className="h-2 w-2 rounded-sm bg-green-500" />
-                  <span className="font-mono text-[10px] uppercase tracking-[2px] text-green-400">
+                  <span className="h-2 w-2 rounded-sm bg-border" />
+                  <span className=" text-[10px] uppercase tracking-[2px]">
                     Input Payload
                   </span>
-                  <span className="font-mono text-[9px] text-slate-600">
-                    JSON
-                  </span>
+                  <span className=" text-[9px] ">JSON</span>
                 </div>
                 <div className="flex gap-2">
                   {payload.trim() && (
                     <span
-                      className={`font-mono text-[9px] ${
+                      className={` text-[9px] ${
                         parsedPayloadOk ? "text-green-500" : "text-red-400"
                       }`}
                     >
                       {parsedPayloadOk ? "✓ Valid JSON" : "✗ Invalid JSON"}
                     </span>
                   )}
-                  <button
+                  <Button
+                    variant="ghost"
                     onClick={() => actions.setPayload(SAMPLE_PAYLOAD)}
-                    className="rounded border border-slate-800 px-2 py-0.5 font-mono text-[9px] text-slate-600 transition hover:border-slate-600 hover:text-slate-400"
+                    className="rounded border border-border px-2 py-0.5  text-[9px]"
                   >
                     SAMPLE
-                  </button>
-                  <button
+                  </Button>
+                  <Button
+                    variant="ghost"
                     onClick={() => actions.setPayload("")}
-                    className="rounded border border-slate-800 px-2 py-0.5 font-mono text-[9px] text-slate-600 transition hover:border-slate-600 hover:text-slate-400"
+                    className="rounded border border-border px-2 py-0.5  text-[9px]"
                   >
                     CLEAR
-                  </button>
+                  </Button>
                 </div>
               </div>
               <textarea
@@ -382,10 +358,10 @@ function ProjectsPage() {
                 onChange={(e) => actions.setPayload(e.target.value)}
                 spellCheck={false}
                 placeholder={'{\n  "paste": "your JSON payload here"\n}'}
-                className="h-44 w-full resize-none bg-transparent px-4 py-3 font-mono text-[11px] leading-relaxed text-green-400 placeholder-slate-700 outline-none"
+                className="h-44 w-full resize-none bg-transparent px-4 py-3  text-[11px] leading-relaxed  outline-none"
               />
-              <div className="flex justify-end border-t border-slate-800/50 px-4 py-1">
-                <span className="font-mono text-[9px] text-slate-700">
+              <div className="flex justify-end border-t border-border px-4 py-1">
+                <span className=" text-[9px] ">
                   {payload.split("\n").length} lines
                 </span>
               </div>
@@ -429,13 +405,12 @@ function ProjectsPage() {
             })}
 
             {/* ── Outpost note ── */}
-            <div className="flex items-center gap-3 rounded-xl border border-dashed border-orange-500/20 bg-orange-500/[0.04] px-4 py-3">
-              <span className="h-2 w-2 shrink-0 rounded-sm bg-orange-500/30" />
-              <span className="font-mono text-[10px] text-slate-500">
-                <span className="text-orange-400/60">OUTPOST</span> · Not
-                executed in test mode.
+            <div className="flex items-center gap-3 rounded-sm border border-dashed border-border bg-card px-4 py-3">
+              <span className="h-2 w-2 shrink-0 rounded-sm bg-border" />
+              <span className=" text-[10px]">
+                <span className="t">OUTPOST</span> · Not executed in test mode.
                 {selectedPlugins.outpost && (
-                  <span className="text-slate-600">
+                  <span className="">
                     {" "}
                     Would forward to:{" "}
                     {
