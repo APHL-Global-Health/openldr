@@ -1,11 +1,11 @@
 import React from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import type { FormField, FieldTyp } from "@/types/forms";
+import type { FormField, FieldType, Select } from "@/types/forms";
 import { FIELD_TYPE_META } from "@/lib/constants";
 import { IconButton, Badge, Toggle } from "./ui";
 import { Input } from "@/components/ui/input";
-import { Select } from "@/components/ui/select";
+// import { Select } from "@/components/ui/select";
 // import { Toggle } from "@/components/ui/toggle";
 // import {IconButton} from "@/components/ui/icon-button";
 // import { Badge } from "@/components/ui/badge";
