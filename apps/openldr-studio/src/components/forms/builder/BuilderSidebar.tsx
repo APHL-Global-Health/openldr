@@ -17,7 +17,7 @@ import { useFormBuilderStore, useActiveForm } from "@/store/formBuilderStore";
 import { FieldCard } from "./FieldCard";
 import { AddFieldPanel } from "./AddFieldPanel";
 import { FormSelector } from "./FormSelector";
-import { Button } from "./ui";
+import { Button } from "@/components/ui/button";
 
 export const BuilderSidebar: React.FC = () => {
   const {
@@ -54,7 +54,7 @@ export const BuilderSidebar: React.FC = () => {
   return (
     <div className="flex flex-col h-full overflow-hidden">
       {/* ── Top section (sticky) ── */}
-      <div className="flex-shrink-0 p-4 border-b border-[#1E2E42] space-y-4">
+      <div className="flex-shrink-0 p-4 border-b border-border space-y-4">
         <FormSelector
           forms={forms}
           activeId={activeFormId}
@@ -65,14 +65,15 @@ export const BuilderSidebar: React.FC = () => {
       </div>
 
       {/* ── Fields header ── */}
-      <div className="flex-shrink-0 flex items-center justify-between px-4 py-2.5 border-b border-[#1E2E42]">
-        <span className="text-[10px] font-bold uppercase tracking-widest text-[#607A94]">
+      <div className="flex-shrink-0 flex items-center justify-between px-4 py-2.5 border-b border-border">
+        <span className="text-[10px] font-bold uppercase tracking-widest ">
           Fields {activeForm ? `(${activeForm.fields.length})` : ""}
         </span>
         {activeForm && (
           <Button
             size="sm"
-            variant="primary"
+            variant="ghost"
+            className="border border-border"
             onClick={() => setShowAddPanel((v) => !v)}
           >
             <span className="text-base leading-none">+</span>
@@ -83,7 +84,7 @@ export const BuilderSidebar: React.FC = () => {
 
       {/* ── Add panel (inline) ── */}
       {showAddPanel && (
-        <div className="flex-shrink-0 px-3 py-2 border-b border-[#1E2E42]">
+        <div className="flex-shrink-0 px-3 py-2 border-b border-border">
           <AddFieldPanel
             inline
             onAdd={(type) => {
@@ -97,7 +98,7 @@ export const BuilderSidebar: React.FC = () => {
       {/* ── Field list (scrollable) ── */}
       <div className="flex-1 overflow-y-auto px-3 py-3 space-y-2">
         {!activeForm && (
-          <div className="flex flex-col items-center justify-center h-40 gap-3 text-[#3A5068]">
+          <div className="flex flex-col items-center justify-center h-40 gap-3 ">
             <svg
               width="36"
               height="36"
@@ -114,7 +115,7 @@ export const BuilderSidebar: React.FC = () => {
         )}
 
         {activeForm && activeForm.fields.length === 0 && !showAddPanel && (
-          <div className="flex flex-col items-center justify-center h-48 gap-3 text-[#3A5068]">
+          <div className="flex flex-col items-center justify-center h-48 gap-3 ">
             <svg
               width="40"
               height="40"

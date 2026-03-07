@@ -30,7 +30,7 @@ function LogsPage() {
 
         <div className="flex flex-1"></div>
 
-        <div className="hidden md:flex items-center gap-1 bg-[#111E30] rounded-lg p-1 border border-[#1E2E42]">
+        <div className="hidden md:flex items-center gap-1 bg-[#111E30] rounded-lg p-1 border border-border">
           {TABS.map((tab) => (
             <button
               key={tab.id}
@@ -45,7 +45,7 @@ function LogsPage() {
             </button>
           ))}
         </div>
-        <div className="flex md:hidden items-center gap-1 bg-[#111E30] rounded-lg p-1 border border-[#1E2E42]">
+        <div className="flex md:hidden items-center gap-1 bg-[#111E30] rounded-lg p-1 border border-border">
           <button
             onClick={() => setMobileTab("builder")}
             className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${
@@ -80,7 +80,7 @@ function LogsPage() {
         )}
       >
         <aside
-          className={`flex-shrink-0 w-full md:w-[320px] lg:w-[360px] border-r border-[#1E2E42] bg-[#0C1A28] overflow-hidden flex-col ${
+          className={`flex-shrink-0 w-full md:w-[320px] lg:w-[360px] border-r border-border  overflow-hidden flex-col ${
             mobileTab === "builder" ? "flex" : "hidden"
           } md:flex`}
         >
@@ -88,11 +88,11 @@ function LogsPage() {
         </aside>
 
         <main
-          className={`flex-1 flex flex-col overflow-hidden bg-[#0A1628] ${
+          className={`flex-1 flex flex-col overflow-hidden  ${
             mobileTab === "right" ? "flex" : "hidden"
           } md:flex`}
         >
-          <div className="flex md:hidden flex-shrink-0 border-b border-[#1E2E42] px-4">
+          <div className="flex md:hidden flex-shrink-0 border-b border-border px-4">
             {TABS.map((tab) => (
               <button
                 key={tab.id}

@@ -56,11 +56,10 @@ export const FieldCard: React.FC<FieldCardProps> = ({
   return (
     <div ref={setNodeRef} style={style} className="group">
       <div
-        className="rounded-xl border transition-all duration-200"
-        style={{
-          background: "#1A2C40",
-          borderColor: field.expanded ? meta.color + "44" : "#1E2E42",
-        }}
+        className="rounded-sm border transition-all duration-200 border border-border bg-card"
+        // style={{
+        //   borderColor: field.expanded ? meta.color + "44" : "#1E2E42",
+        // }}
       >
         {/* ── Header ── */}
         <div className="flex items-center gap-2 px-3 py-2.5">
@@ -89,12 +88,10 @@ export const FieldCard: React.FC<FieldCardProps> = ({
 
           {/* Label */}
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold text-[#E2EAF4] truncate leading-tight">
-              {field.label || (
-                <span className="text-[#3A5068] italic">Unnamed field</span>
-              )}
+            <p className="text-sm font-semibold truncate leading-tight">
+              {field.label || <span className="italic">Unnamed field</span>}
             </p>
-            <p className="text-[10px] text-[#4A6480] leading-tight mt-0.5">
+            <p className="text-[10px] leading-tight mt-0.5">
               {meta.label}
               {field.key && (
                 <span className="ml-1 font-mono opacity-60">· {field.key}</span>
