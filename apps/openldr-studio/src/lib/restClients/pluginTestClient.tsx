@@ -18,12 +18,11 @@ import type {
   PluginSlotType,
 } from "@/types/plugin-test.types";
 
-const BASE =
-  (import.meta.env.VITE_API_URL ?? "http://localhost:3001") +
-  "/api/plugin-tests";
+const ENV = import.meta.env;
+// const IsDev = ENV.MODE === "development";
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(BASE + path, {
+  const res = await fetch(`${ENV.VITE_PROCESSOR_BASE_URL}/api/v1${path}`, {
     headers: { "Content-Type": "application/json", ...(init?.headers ?? {}) },
     ...init,
   });
