@@ -1,12 +1,12 @@
 import React from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import type { FormField, FieldType } from "@/types/forms";
+import type { FormField, FieldTyp } from "@/types/forms";
 import { FIELD_TYPE_META } from "@/lib/constants";
-import { IconButton, Badge } from "./ui";
+import { IconButton, Badge, Toggle } from "./ui";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
-import { Toggle } from "@/components/ui/toggle";
+// import { Toggle } from "@/components/ui/toggle";
 // import {IconButton} from "@/components/ui/icon-button";
 // import { Badge } from "@/components/ui/badge";
 import { generateKey } from "@/lib/schema";
@@ -148,13 +148,13 @@ export const FieldCard: React.FC<FieldCardProps> = ({
             {/* Label + Key */}
             <div className="grid grid-cols-2 gap-2">
               <Input
-                label="Label"
+                // label="Label"
                 value={field.label}
                 placeholder="Field label"
                 onChange={(e) => handleLabelChange(e.target.value)}
               />
               <Input
-                label="Key (auto)"
+                // label="Key (auto)"
                 value={field.key}
                 placeholder="field_key"
                 onChange={(e) => onUpdate({ key: e.target.value })}
@@ -164,7 +164,7 @@ export const FieldCard: React.FC<FieldCardProps> = ({
 
             {/* Type */}
             <Select
-              label="Type"
+              // label="Type"
               value={field.type}
               options={FIELD_TYPE_OPTIONS}
               onChange={(e) => onUpdate({ type: e.target.value as FieldType })}
@@ -176,7 +176,7 @@ export const FieldCard: React.FC<FieldCardProps> = ({
               field.type === "email" ||
               field.type === "number") && (
               <Input
-                label="Placeholder"
+                // label="Placeholder"
                 value={field.placeholder ?? ""}
                 placeholder="Hint text shown in input..."
                 onChange={(e) => onUpdate({ placeholder: e.target.value })}
@@ -184,7 +184,7 @@ export const FieldCard: React.FC<FieldCardProps> = ({
             )}
 
             <Input
-              label="Description / Help text"
+              // label="Description / Help text"
               value={field.description ?? ""}
               placeholder="Shown below the field..."
               onChange={(e) => onUpdate({ description: e.target.value })}
@@ -193,7 +193,7 @@ export const FieldCard: React.FC<FieldCardProps> = ({
             {/* Options */}
             {hasOptions && (
               <Input
-                label="Options (comma-separated)"
+                // label="Options (comma-separated)"
                 value={field.options ?? ""}
                 placeholder="Option A, Option B, Option C"
                 onChange={(e) => onUpdate({ options: e.target.value })}
@@ -202,7 +202,7 @@ export const FieldCard: React.FC<FieldCardProps> = ({
 
             {/* Default value */}
             <Input
-              label="Default value"
+              // label="Default value"
               value={field.defaultValue ?? ""}
               placeholder="Leave blank for none"
               onChange={(e) => onUpdate({ defaultValue: e.target.value })}
@@ -218,7 +218,7 @@ export const FieldCard: React.FC<FieldCardProps> = ({
                   {field.type === "number" ? (
                     <>
                       <Input
-                        label="Min"
+                        // label="Min"
                         type="number"
                         value={field.validation?.min ?? ""}
                         placeholder="—"
@@ -232,7 +232,7 @@ export const FieldCard: React.FC<FieldCardProps> = ({
                         }
                       />
                       <Input
-                        label="Max"
+                        // label="Max"
                         type="number"
                         value={field.validation?.max ?? ""}
                         placeholder="—"
@@ -249,7 +249,7 @@ export const FieldCard: React.FC<FieldCardProps> = ({
                   ) : (
                     <>
                       <Input
-                        label="Min length"
+                        // label="Min length"
                         type="number"
                         value={field.validation?.minLength ?? ""}
                         placeholder="—"
@@ -263,7 +263,7 @@ export const FieldCard: React.FC<FieldCardProps> = ({
                         }
                       />
                       <Input
-                        label="Max length"
+                        // label="Max length"
                         type="number"
                         value={field.validation?.maxLength ?? ""}
                         placeholder="—"
