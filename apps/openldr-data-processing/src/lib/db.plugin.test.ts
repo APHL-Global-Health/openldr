@@ -1,11 +1,3 @@
-// ─────────────────────────────────────────────────────────────────────────────
-//
-// Lightweight in-memory store used during development so the test harness works
-// without a running PostgreSQL instance.
-// Replace each exported function with your actual Sequelize model calls.
-// ─────────────────────────────────────────────────────────────────────────────
-
-// import { v4 as uuid } from "uuid";
 import type {
   Project,
   UseCase,
@@ -18,8 +10,6 @@ import type {
 import { pool } from "../lib/db";
 import { logger } from "../lib/logger";
 import { BUNDLED_DEFAULT_PLUGINS } from "./constants";
-
-// ── Query helpers (swap these out for Sequelize model calls) ──────────────────
 
 export const db = {
   // Projects
@@ -60,15 +50,6 @@ export const db = {
       throw error;
     }
   },
-  // createProject(name: string): Project {
-  //   const p: Project = {
-  //     id: uuid(),
-  //     name,
-  //     createdAt: new Date().toISOString(),
-  //   };
-  //   projects.push(p);
-  //   return p;
-  // },
 
   // Use cases
   getUseCases: async (projectId: string): Promise<UseCase[]> => {
@@ -89,16 +70,6 @@ export const db = {
       throw error;
     }
   },
-  // createUseCase(name: string, projectId: string): UseCase {
-  //   const u: UseCase = {
-  //     id: uuid(),
-  //     projectId,
-  //     name,
-  //     createdAt: new Date().toISOString(),
-  //   };
-  //   useCases.push(u);
-  //   return u;
-  // },
 
   // Data feeds
   getDataFeeds: async (useCaseId: string): Promise<DataFeed[]> => {
@@ -119,16 +90,6 @@ export const db = {
       throw error;
     }
   },
-  // createDataFeed(name: string, useCaseId: string): DataFeed {
-  //   const f: DataFeed = {
-  //     id: uuid(),
-  //     useCaseId,
-  //     name,
-  //     createdAt: new Date().toISOString(),
-  //   };
-  //   dataFeeds.push(f);
-  //   return f;
-  // },
 
   // Plugins
   getPlugins: async (slot: PluginSlotType): Promise<Plugin[]> => {
@@ -228,22 +189,6 @@ export const db = {
     }
     // plugins.find((p) => p.id === id)
   },
-  // createPlugin(
-  //   name: string,
-  //   slot: PluginSlotType,
-  //   code = "// TODO: implement run()\nasync function run(payload) {\n  return { output: payload };\n}",
-  // ): Plugin {
-  //   const p: Plugin = {
-  //     id: uuid(),
-  //     name,
-  //     version: "0.1.0",
-  //     status: "draft",
-  //     slot,
-  //     code,
-  //   };
-  //   plugins.push(p);
-  //   return p;
-  // },
 
   // Assignments
   getAssignment: async (
