@@ -41,16 +41,14 @@ export function ContextDropdown({
 
   return (
     <div className="mb-1 px-2">
-      <p className="mb-1 px-1 font-mono text-[9px] uppercase tracking-[2px]">
-        {label}
-      </p>
+      <p className="mb-1 px-1  text-[9px] uppercase tracking-[2px]">{label}</p>
       <div className="flex gap-1" ref={ref}>
         <div className="relative flex-1">
           <Button
-            disabled={disabled}
+            disabled={disabled || items.length === 0}
             variant="ghost"
             onClick={() => !disabled && setOpen((o) => !o)}
-            className={`flex w-full items-center justify-between rounded-md border px-2.5 py-1.5 text-left transition
+            className={`flex w-full items-center justify-between rounded-sm border px-2.5 py-1.5 text-left transition
               ${
                 disabled
                   ? "cursor-not-allowed opacity-30"
@@ -59,7 +57,7 @@ export function ContextDropdown({
               ${selected ? `border-slate-700` : "border-border "}`}
           >
             <span
-              className={`font-mono text-[11px] ${
+              className={` text-[11px] ${
                 selected ? "text-slate-200" : "italic"
               }`}
             >
@@ -72,11 +70,9 @@ export function ContextDropdown({
           </Button>
 
           {open && (
-            <div className="absolute left-0 right-0 top-[calc(100%+4px)] z-30 overflow-hidden rounded-lg border border-border bg-slate-900 shadow-xl">
+            <div className="absolute left-0 right-0 top-[calc(100%+4px)] z-30 overflow-hidden rounded-sm border border-border bg-card shadow-xl">
               {items.length === 0 ? (
-                <p className="px-3 py-2.5 font-mono text-[11px] italic">
-                  No items — create one →
-                </p>
+                <p className="px-3 py-2.5  text-[11px] italic">No items</p>
               ) : (
                 items.map((item) => (
                   <Button
@@ -93,7 +89,7 @@ export function ContextDropdown({
                           : "border-transparent"
                       }`}
                   >
-                    <span className="font-mono text-[12px] text-slate-300">
+                    <span className=" text-[12px] text-slate-300">
                       {item.name}
                     </span>
                   </Button>

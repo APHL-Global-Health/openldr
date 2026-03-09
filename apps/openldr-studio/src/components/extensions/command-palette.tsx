@@ -61,14 +61,14 @@ export function CommandPalette() {
             placeholder="Type a command…"
             className="flex-1 bg-transparent text-sm text-[#e2e8f0] placeholder:text-[#2d3652] focus:outline-none font-sans"
           />
-          <kbd className="inline-flex items-center px-1.5 py-0.5 rounded border border-[#1e2232] text-[10px] font-mono text-[#475569] bg-[#161923]">
+          <kbd className="inline-flex items-center px-1.5 py-0.5 rounded border border-[#1e2232] text-[10px]  text-[#475569] bg-[#161923]">
             ESC
           </kbd>
         </div>
 
         <ScrollArea className="max-h-72">
           {all.length === 0 ? (
-            <p className="py-8 text-center text-xs text-[#2d3652] font-mono">
+            <p className="py-8 text-center text-xs text-[#2d3652] ">
               No matching commands
             </p>
           ) : (
@@ -96,11 +96,11 @@ export function CommandPalette() {
         </ScrollArea>
 
         <div className="flex items-center gap-3 px-4 py-2 border-t border-[#1e2232] bg-[#080a0f]">
-          <span className="text-[10px] font-mono text-[#2d3652]">
+          <span className="text-[10px]  text-[#2d3652]">
             {all.length} commands
           </span>
           <Separator orientation="vertical" className="h-3" />
-          <span className="text-[10px] font-mono text-[#2d3652]">
+          <span className="text-[10px]  text-[#2d3652]">
             {state.extensions.filter((e) => e.state === "active").length}{" "}
             extensions active
           </span>

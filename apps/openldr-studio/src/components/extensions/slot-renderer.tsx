@@ -16,7 +16,7 @@ export function SlotRenderer({ slot }: { slot: types.ExtensionSlot }) {
           <Layers className="h-5 w-5 text-muted-foreground" />
         </div>
         <div>
-          <p className="text-[11px] font-mono text-muted-foreground">
+          <p className="text-[11px]  text-muted-foreground">
             slot: <span className="text-[#f59e0b]/40">{slot}</span>
           </p>
           <p className="text-[10px] text-muted-foreground mt-0.5">

@@ -48,7 +48,7 @@ export const AddFieldPanel: React.FC<AddFieldPanelProps> = ({
               }
             >
               <span
-                className="text-xl font-bold font-mono"
+                className="text-xl font-bold "
                 style={{ color: meta.color }}
               >
                 {meta.icon}
@@ -98,7 +98,7 @@ export const AddFieldPanel: React.FC<AddFieldPanelProps> = ({
               }}
             >
               <span
-                className="text-2xl font-bold font-mono"
+                className="text-2xl font-bold "
                 style={{ color: meta.color }}
               >
                 {meta.icon}

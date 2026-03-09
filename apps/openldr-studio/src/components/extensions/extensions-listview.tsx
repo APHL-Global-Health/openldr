@@ -86,7 +86,7 @@ export function ExtensionListPanel() {
       <>
         <div className="px-3 pt-3 pb-1 flex items-center justify-between border-b border-border">
           <span className="label-caps">{label}</span>
-          <span className="text-[10px] font-mono">{count}</span>
+          <span className="text-[10px] ">{count}</span>
         </div>
         {items.map((ext) => (
           <ExtRow key={ext.id} ext={ext} />
@@ -104,7 +104,7 @@ export function ExtensionListPanel() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search…"
-            className="w-full border border-border rounded-xs px-2.5 py-1.5 text-[11px] font-mono text-[#94a3b8]  focus:outline-none focus:border-primary/40 transition-colors pr-7"
+            className="w-full border border-border rounded-xs px-2.5 py-1.5 text-[11px]  text-[#94a3b8]  focus:outline-none focus:border-primary/40 transition-colors pr-7"
           />
           {search && (
             <button
@@ -120,7 +120,7 @@ export function ExtensionListPanel() {
         {state.extensions.length === 0 ? (
           <div className="flex justify-center flex-col items-center gap-2 py-12 px-4 text-center">
             <Package className="h-7 w-7 " />
-            <p className="text-[10px] font-mono  leading-relaxed">
+            <p className="text-[10px]   leading-relaxed">
               No extensions
               <br />
               Check registry connection

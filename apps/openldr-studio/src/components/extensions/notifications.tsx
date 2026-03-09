@@ -45,7 +45,7 @@ export function NotificationStack() {
               <p className="text-[12px] leading-snug wrap-break-word font-sans">
                 {n.message}
               </p>
-              <p className="text-[10px] opacity-40 mt-0.5 font-mono">
+              <p className="text-[10px] opacity-40 mt-0.5 ">
                 {n.extId} · {n.ts}
               </p>
             </div>

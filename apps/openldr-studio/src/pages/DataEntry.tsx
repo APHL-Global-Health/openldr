@@ -217,7 +217,9 @@ function DataEntryPage() {
 
           toast.success(t("app:data_entry.data_imported"), {
             className: "bg-card text-card-foreground border-border",
-            description: t("app:data_entry.records_imported", { count: importDialog.data.length }),
+            description: t("app:data_entry.records_imported", {
+              count: importDialog.data.length,
+            }),
           });
         }
       } catch (error: any) {
@@ -469,7 +471,9 @@ function DataEntryPage() {
                 </Button>
               </TooltipTrigger>
               <TooltipContent>
-                <span className="ml-auto text-muted text-sm">{t("common:actions.clear")}</span>
+                <span className="ml-auto text-muted text-sm">
+                  {t("common:actions.clear")}
+                </span>
               </TooltipContent>
             </Tooltip>
             <Tooltip>
@@ -495,7 +499,9 @@ function DataEntryPage() {
                 </Button>
               </TooltipTrigger>
               <TooltipContent>
-                <span className="ml-auto text-muted text-sm">{t("common:actions.save")}</span>
+                <span className="ml-auto text-muted text-sm">
+                  {t("common:actions.save")}
+                </span>
               </TooltipContent>
             </Tooltip>
           </div>
@@ -670,7 +676,7 @@ function DataEntryPage() {
                       </InputGroupButton>
                     </InputGroupAddon> */}
                       <InputGroupAddon align="block-start" className="border-b">
-                        <InputGroupText className="font-mono font-medium">
+                        <InputGroupText className=" font-medium">
                           {t("app:data_entry.json_schema")}
                         </InputGroupText>
                         <InputGroupButton className="ml-auto" size="icon-xs">
@@ -706,7 +712,9 @@ function DataEntryPage() {
               <Button variant="outline" onClick={handleCancel}>
                 {t("common:actions.cancel")}
               </Button>
-              <Button onClick={handleImport}>{t("app:data_entry.confirm_import")}</Button>
+              <Button onClick={handleImport}>
+                {t("app:data_entry.confirm_import")}
+              </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>

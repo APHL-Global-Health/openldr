@@ -166,7 +166,7 @@
 //                     <TableCell className="text-xs py-2 max-w-30 truncate">
 //                       {r.facilityName}
 //                     </TableCell>
-//                     <TableCell className="text-xs py-2 font-mono text-muted-foreground">
+//                     <TableCell className="text-xs py-2  text-muted-foreground">
 //                       {r.patientId}
 //                     </TableCell>
 //                     <TableCell className="text-xs py-2 max-w-25 truncate">
@@ -175,7 +175,7 @@
 //                     <TableCell className="text-xs py-2 max-w-30 truncate">
 //                       {r.observationDesc}
 //                     </TableCell>
-//                     <TableCell className="text-xs py-2 font-mono font-medium">
+//                     <TableCell className="text-xs py-2  font-medium">
 //                       {r.rptResult}
 //                     </TableCell>
 //                     <TableCell className="text-xs py-2 text-muted-foreground">

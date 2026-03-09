@@ -81,10 +81,18 @@ function FacilityBubbleChart({ data }: { data: FacilityActivity[] }) {
         d3.select(tooltipRef.current!)
           .style("display", "block")
           .html(
-            `<div class="font-medium text-xs text-nowrap">${fac.facilityName || fac.facilityCode}</div>` +
-              `<div class="text-xs text-nowrap text-foreground">${t("dashboard.requests")}: ${fac.requestCount.toLocaleString()}</div>` +
-              `<div class="text-xs text-nowrap text-foreground">${t("dashboard.results")}: ${fac.resultCount.toLocaleString()}</div>` +
-              `<div class="text-xs text-nowrap text-foreground">${t("dashboard.patients")}: ${fac.patientCount.toLocaleString()}</div>`,
+            `<div class="font-medium text-xs text-nowrap">${
+              fac.facilityName || fac.facilityCode
+            }</div>` +
+              `<div class="text-xs text-nowrap text-foreground">${t(
+                "dashboard.requests",
+              )}: ${fac.requestCount.toLocaleString()}</div>` +
+              `<div class="text-xs text-nowrap text-foreground">${t(
+                "dashboard.results",
+              )}: ${fac.resultCount.toLocaleString()}</div>` +
+              `<div class="text-xs text-nowrap text-foreground">${t(
+                "dashboard.patients",
+              )}: ${fac.patientCount.toLocaleString()}</div>`,
           );
       })
       .on("mousemove", (event: MouseEvent) => {
@@ -175,7 +183,9 @@ export function FacilityActivityCard({ data }: FacilityActivityCardProps) {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="text-[10px]">{t("dashboard.facility")}</TableHead>
+                    <TableHead className="text-[10px]">
+                      {t("dashboard.facility")}
+                    </TableHead>
                     <TableHead className="text-[10px] text-right">
                       {t("dashboard.requests")}
                     </TableHead>
@@ -200,13 +210,13 @@ export function FacilityActivityCard({ data }: FacilityActivityCardProps) {
                           </span>
                         </div>
                       </TableCell>
-                      <TableCell className="text-xs py-1.5 text-right font-mono">
+                      <TableCell className="text-xs py-1.5 text-right ">
                         {fac.requestCount.toLocaleString()}
                       </TableCell>
-                      <TableCell className="text-xs py-1.5 text-right font-mono">
+                      <TableCell className="text-xs py-1.5 text-right ">
                         {fac.resultCount.toLocaleString()}
                       </TableCell>
-                      <TableCell className="text-xs py-1.5 text-right font-mono">
+                      <TableCell className="text-xs py-1.5 text-right ">
                         {fac.patientCount.toLocaleString()}
                       </TableCell>
                     </TableRow>

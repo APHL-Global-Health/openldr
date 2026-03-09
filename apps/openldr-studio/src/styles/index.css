@@ -3,8 +3,7 @@
 
 @font-face {
   font-family: circular;
-  src:
-    url(/fonts/CustomFont-Medium.woff2) format("woff2"),
+  src: url(/fonts/CustomFont-Medium.woff2) format("woff2"),
     url(/fonts/CustomFont-Medium.woff) format("woff");
   font-weight: 500;
   font-style: normal;
@@ -487,7 +486,7 @@
   }
 
   .markdown-body code {
-    @apply bg-muted px-1.5 py-0.5 rounded text-xs font-mono text-foreground;
+    @apply bg-muted px-1.5 py-0.5 rounded text-xs  text-foreground;
   }
 
   .markdown-body pre {

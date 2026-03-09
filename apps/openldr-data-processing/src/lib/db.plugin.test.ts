@@ -15,6 +15,9 @@ import type {
   PluginSlotType,
 } from "@/types/plugin.test.types";
 
+import { pool } from "../lib/db";
+import { logger } from "../lib/logger";
+
 // ── Seed data ─────────────────────────────────────────────────────────────────
 
 const SEED_VALIDATION_CODE = `
@@ -210,8 +213,51 @@ const assignments: DataFeedPluginAssignment[] = [];
 
 export const db = {
   // Projects
-  getProjects: (): Project[] => [...projects],
-  getProject: (id: string) => projects.find((p) => p.id === id),
+  getProjects: async (): Promise<Project[]> => {
+    try {
+      const sql = `
+        SELECT "projectId", "projectName", "createdAt"
+        FROM "projects"
+    `;
+      const res = await pool.query(sql);
+      return res.rows.map((r) => ({
+        id: r.projectId,
+        name: r.projectName,
+        createdAt: r.createdAt,
+      }));
+    } catch (error: any) {
+      logger.error(
+        { error: error.message, stack: error.stack },
+        "Database query error",
+      );
+      throw error;
+    }
+  },
+  getProject: async (id: string): Promise<Project | null> => {
+    try {
+      const sql = `
+        SELECT "projectId", "projectName", "createdAt"
+        FROM "projects"
+        WHERE "projectId" = $1;
+    `;
+      const res = await pool.query(sql, [id]);
+      if (res.rowCount == 1) {
+        return {
+          id: res.rows[0].projectId,
+          name: res.rows[0].projectName,
+          createdAt: res.rows[0].createdAt,
+        };
+      }
+
+      return null;
+    } catch (error: any) {
+      logger.error(
+        { error: error.message, stack: error.stack },
+        "Database query error",
+      );
+      throw error;
+    }
+  },
   createProject(name: string): Project {
     const p: Project = {
       id: uuid(),

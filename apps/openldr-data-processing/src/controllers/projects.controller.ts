@@ -30,45 +30,53 @@ const err = (res: Response, msg: string, status = 400) =>
 // ─────────────────────────────────────────────────────────────────────────────
 
 /** GET /api/plugin-tests/projects */
-router.get("", (_req, res) => {
-  ok(res, { projects: db.getProjects() });
+router.get("", async (_req, res) => {
+  ok(res, { projects: await db.getProjects() });
 });
 
 /** POST /api/plugin-tests/projects */
-router.post("", (req: Request<{}, {}, CreateProjectRequest>, res) => {
+router.post("", async (req: Request<{}, {}, CreateProjectRequest>, res) => {
   const { name } = req.body;
   if (!name?.trim()) return err(res, "name is required");
-  ok(res, { project: db.createProject(name.trim()) });
+  ok(res, { project: await db.createProject(name.trim()) });
 });
 
 /** GET /api/plugin-tests/projects/:projectId/use-cases */
-router.get("/:projectId/use-cases", (req, res) => {
+router.get("/:projectId/use-cases", async (req, res) => {
   const { projectId } = req.params;
-  if (!db.getProject(projectId)) return err(res, "Project not found", 404);
-  ok(res, { useCases: db.getUseCases(projectId) });
+  if (!(await db.getProject(projectId)))
+    return err(res, "Project not found", 404);
+  ok(res, { useCases: await db.getUseCases(projectId) });
 });
 
 /** POST /api/plugin-tests/use-cases */
-router.post("/use-cases", (req: Request<{}, {}, CreateUseCaseRequest>, res) => {
-  const { name, projectId } = req.body;
-  if (!name?.trim()) return err(res, "name is required");
-  if (!projectId) return err(res, "projectId is required");
-  if (!db.getProject(projectId)) return err(res, "Project not found", 404);
-  ok(res, { useCase: db.createUseCase(name.trim(), projectId) });
-});
+router.post(
+  "/use-cases",
+  async (req: Request<{}, {}, CreateUseCaseRequest>, res) => {
+    const { name, projectId } = req.body;
+    if (!name?.trim()) return err(res, "name is required");
+    if (!projectId) return err(res, "projectId is required");
+    if (!(await db.getProject(projectId)))
+      return err(res, "Project not found", 404);
+    ok(res, { useCase: await db.createUseCase(name.trim(), projectId) });
+  },
+);
 
 /** GET /api/plugin-tests/use-cases/:useCaseId/feeds */
-router.get("/use-cases/:useCaseId/feeds", (req, res) => {
-  ok(res, { feeds: db.getDataFeeds(req.params.useCaseId) });
+router.get("/use-cases/:useCaseId/feeds", async (req, res) => {
+  ok(res, { feeds: await db.getDataFeeds(req.params.useCaseId) });
 });
 
 /** POST /api/plugin-tests/feeds */
-router.post("/feeds", (req: Request<{}, {}, CreateDataFeedRequest>, res) => {
-  const { name, useCaseId } = req.body;
-  if (!name?.trim()) return err(res, "name is required");
-  if (!useCaseId) return err(res, "useCaseId is required");
-  ok(res, { feed: db.createDataFeed(name.trim(), useCaseId) });
-});
+router.post(
+  "/feeds",
+  async (req: Request<{}, {}, CreateDataFeedRequest>, res) => {
+    const { name, useCaseId } = req.body;
+    if (!name?.trim()) return err(res, "name is required");
+    if (!useCaseId) return err(res, "useCaseId is required");
+    ok(res, { feed: await db.createDataFeed(name.trim(), useCaseId) });
+  },
+);
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Plugins
@@ -77,24 +85,27 @@ router.post("/feeds", (req: Request<{}, {}, CreateDataFeedRequest>, res) => {
 const VALID_SLOTS: PluginSlotType[] = ["validation", "mapping", "outpost"];
 
 /** GET /api/plugin-tests/plugins?slot=validation */
-router.get("/plugins", (req, res) => {
+router.get("/plugins", async (req, res) => {
   const slot = req.query.slot as PluginSlotType | undefined;
   if (slot && !VALID_SLOTS.includes(slot)) return err(res, "Invalid slot");
   ok(res, {
     plugins: slot
-      ? db.getPlugins(slot)
-      : VALID_SLOTS.flatMap((s) => db.getPlugins(s)),
+      ? await db.getPlugins(slot)
+      : await Promise.all(VALID_SLOTS.map((s) => db.getPlugins(s))),
   });
 });
 
 /** POST /api/plugin-tests/plugins */
-router.post("/plugins", (req: Request<{}, {}, CreatePluginRequest>, res) => {
-  const { name, slot, code } = req.body;
-  if (!name?.trim()) return err(res, "name is required");
-  if (!VALID_SLOTS.includes(slot))
-    return err(res, "slot must be validation | mapping | outpost");
-  ok(res, { plugin: db.createPlugin(name.trim(), slot, code) });
-});
+router.post(
+  "/plugins",
+  async (req: Request<{}, {}, CreatePluginRequest>, res) => {
+    const { name, slot, code } = req.body;
+    if (!name?.trim()) return err(res, "name is required");
+    if (!VALID_SLOTS.includes(slot))
+      return err(res, "slot must be validation | mapping | outpost");
+    ok(res, { plugin: await db.createPlugin(name.trim(), slot, code) });
+  },
+);
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Test runner  (the core endpoint)

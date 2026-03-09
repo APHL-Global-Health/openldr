@@ -1,4 +1,6 @@
 import { ContentLayout } from "@/components/admin-panel/content-layout";
+import SchemaRecordSheet from "@/components/forms/schema-record-sheet";
+import SchemaSheet from "@/components/forms/schema-sheet";
 import { ContextDropdown } from "@/components/projects/ContextDropdown";
 import { CreateModal } from "@/components/projects/CreateModal";
 import { PluginSlot } from "@/components/projects/PluginSlot";
@@ -10,6 +12,25 @@ import { useAppTranslation } from "@/i18n/hooks";
 import { cn } from "@/lib/utils";
 import type { PluginSlotType } from "@/types/plugin-test.types";
 import { useState } from "react";
+
+import * as SchemaRestClient from "@/lib/restClients/schemaRestClient";
+import { useQuery } from "@tanstack/react-query";
+import type { TableData } from "./ArchivePage";
+
+import {
+  ButtonGroup,
+  ButtonGroupSeparator,
+} from "@/components/ui/button-group";
+import { Plus } from "lucide-react";
+
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 type ModalType = "project" | "usecase" | "feed" | "plugin";
 interface ModalState {
@@ -39,6 +60,8 @@ function ProjectsPage() {
   const { state, actions } = usePluginTest(client.kc.token);
   const [modal, setModal] = useState<ModalState | null>(null);
 
+  const [isRecordSheetOpen, setRecordSheetOpen] = useState(false);
+
   const {
     runStatus,
     testResult,
@@ -65,6 +88,48 @@ function ProjectsPage() {
     parsedPayloadOk &&
     !isRunning;
   const canSave = testResult?.allPassed && selectedFeedId && !savedOk;
+
+  const { data, refetch, isLoading, isRefetching } = useQuery<TableData>({
+    queryKey: ["Data", "ProjectsPage", "projects"],
+    queryFn: async () => {
+      const cols = await SchemaRestClient.getTableColumns(
+        "projects",
+        client.kc.token,
+      );
+
+      const msg = await SchemaRestClient.getTableData(
+        "projects",
+        {},
+        client.kc.token,
+      );
+
+      const { count, rows } = msg.data;
+
+      return {
+        totalPages: 1,
+        items: rows,
+        columns: (cols?.data || []).map((row) => {
+          return {
+            id: row.Name,
+            name: row.Name.replace(/([A-Z]+)/g, " $1") // Handle consecutive capitals
+              .replace(/([A-Z][a-z])/g, " $1") // Handle normal capitals
+              .trim()
+              .replace(/^./, (str) => str.toUpperCase())
+              .replace(/\s+/g, " "), // Clean up multiple spaces
+            type: row.Type,
+            nullable: row.Nullable,
+            primaryKey: row.PrimaryKey || false,
+            constraint: row.Constraint,
+          };
+        }),
+      };
+    },
+    refetchInterval: false,
+    refetchOnMount: true,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    refetchIntervalInBackground: false,
+  });
 
   const handleCreate = async (value: string) => {
     if (!modal) return;
@@ -148,18 +213,85 @@ function ProjectsPage() {
         <aside className="flex w-72 shrink-0 flex-col overflow-hidden border-r border-border">
           {/* Scrollable content */}
           <div className="flex-1 overflow-y-auto py-3">
-            <ContextDropdown
+            {/* <ContextDropdown
               label="Project"
               accentClass="border-border"
               items={state.projects}
               selectedId={state.selectedProjectId}
               onSelect={actions.selectProject}
-              onAdd={() => setModal({ type: "project" })}
-            />
+              onAdd={() => {
+                setRecordSheetOpen(true);
+                // setModal({ type: "project" });
+              }}
+            /> */}
 
-            <div className="my-1.5 ml-5 border-l border-slate-900 pl-0 py-1" />
+            <ButtonGroup className="w-full px-2">
+              <Select onValueChange={actions.selectProject}>
+                <SelectTrigger className="flex flex-1 rounded-sm">
+                  <SelectValue placeholder="Project" />
+                </SelectTrigger>
+                <SelectContent className="rounded-xs">
+                  <SelectGroup>
+                    {state.projects?.map((project: any) => {
+                      return (
+                        <SelectItem value={project.id}>
+                          {project.name}
+                        </SelectItem>
+                      );
+                    })}
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
+              <ButtonGroupSeparator />
+              <Button
+                variant="outline"
+                className="rounded-sm"
+                onClick={() => {
+                  setRecordSheetOpen(true);
+                }}
+              >
+                <Plus />
+              </Button>
+            </ButtonGroup>
 
-            <ContextDropdown
+            <ButtonGroup className="w-full px-2">
+              <Select
+                onValueChange={(val) => {
+                  state.selectedUseCaseId = val;
+                }}
+              >
+                <SelectTrigger
+                  disabled={!state.selectedProjectId}
+                  className="flex flex-1 rounded-sm"
+                >
+                  <SelectValue placeholder="Use Case" />
+                </SelectTrigger>
+                <SelectContent className="rounded-xs">
+                  <SelectGroup>
+                    {state.useCases?.map((useCase: any) => {
+                      return (
+                        <SelectItem value={useCase.id}>
+                          {useCase.name}
+                        </SelectItem>
+                      );
+                    })}
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
+              <ButtonGroupSeparator />
+              <Button
+                disabled={!state.selectedProjectId}
+                variant="outline"
+                className="rounded-sm"
+                onClick={() => {
+                  setRecordSheetOpen(true);
+                }}
+              >
+                <Plus />
+              </Button>
+            </ButtonGroup>
+
+            {/* <ContextDropdown
               label="Use Case"
               accentClass="border-indigo-500"
               items={state.useCases}
@@ -169,9 +301,42 @@ function ProjectsPage() {
               onAdd={() => setModal({ type: "usecase" })}
             />
 
-            <div className="my-1.5 ml-5 border-l border-slate-900 py-1" />
+            <div className="my-1.5 ml-5 border-l border-slate-900 py-1" /> */}
 
-            <ContextDropdown
+            <ButtonGroup className="w-full px-2">
+              <Select onValueChange={actions.selectFeed}>
+                <SelectTrigger
+                  disabled={!state.selectedUseCaseId}
+                  className="flex flex-1 rounded-sm"
+                >
+                  <SelectValue placeholder="Data Feed" />
+                </SelectTrigger>
+                <SelectContent className="rounded-xs">
+                  <SelectGroup>
+                    {state.dataFeeds?.map((dataFeed: any) => {
+                      return (
+                        <SelectItem value={dataFeed.id}>
+                          {dataFeed.name}
+                        </SelectItem>
+                      );
+                    })}
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
+              <ButtonGroupSeparator />
+              <Button
+                disabled={!state.selectedUseCaseId}
+                variant="outline"
+                className="rounded-sm"
+                onClick={() => {
+                  setRecordSheetOpen(true);
+                }}
+              >
+                <Plus />
+              </Button>
+            </ButtonGroup>
+
+            {/* <ContextDropdown
               label="Data Feed"
               accentClass="border-sky-500"
               items={state.dataFeeds}
@@ -179,10 +344,10 @@ function ProjectsPage() {
               disabled={!state.selectedUseCaseId}
               onSelect={actions.selectFeed}
               onAdd={() => setModal({ type: "feed" })}
-            />
+            /> */}
 
             {/* Divider */}
-            <div className="mx-3 my-4 border-t border-slate-900" />
+            <div className="mx-3 my-4 border-t border-border" />
 
             {/* ── Pipeline Slots ── */}
             <p className="mb-2 px-3  text-[9px] uppercase tracking-[2px] ">
@@ -429,14 +594,38 @@ function ProjectsPage() {
         </main>
 
         {/* ── Modal ─────────────────────────────────────────────────────────── */}
-        {modal && (
+        {/* {modal && (
           <CreateModal
             title={modalMeta[modal.type].title}
             placeholder={modalMeta[modal.type].placeholder}
             onConfirm={handleCreate}
             onClose={() => setModal(null)}
           />
-        )}
+        )} */}
+
+        <SchemaRecordSheet
+          isOpen={isRecordSheetOpen}
+          data={{
+            columns: data ? data.columns : [],
+            table: "projects",
+            schema: "Internal",
+          }}
+          onSubmit={() => {
+            // handle function
+          }}
+          onDelete={() => {
+            // handle function
+          }}
+          onCleared={() => {
+            // handle function
+          }}
+          value={undefined}
+          setOpen={setRecordSheetOpen}
+          onOpenChange={(value: boolean) => {
+            // if (!value) setSelectedRecordItem(undefined);
+            setRecordSheetOpen(value);
+          }}
+        />
       </div>
     </ContentLayout>
   );

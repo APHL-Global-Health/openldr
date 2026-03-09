@@ -112,7 +112,7 @@ export function PermissionPromptDialog() {
                 >
                   <span className="mt-0.5 shrink-0">{meta.icon}</span>
                   <div>
-                    <p className="text-[11px] font-mono  mb-0.5">{perm}</p>
+                    <p className="text-[11px]   mb-0.5">{perm}</p>
                     <p className="text-[11px] text-muted-foreground">
                       {meta.label}
                     </p>

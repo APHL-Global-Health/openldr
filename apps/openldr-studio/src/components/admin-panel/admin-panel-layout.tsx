@@ -39,7 +39,7 @@ export default function AdminPanelLayout({
 
       <footer
         className={cn(
-          "min-h-6.5 max-h-6.5 bg-background border-border border-t text-[10px] font-mono shadow-md dark:shadow-zinc-800 shrink-0 flex items-center gap-3 px-3 ease-in-out duration-300 z-21",
+          "min-h-6.5 max-h-6.5 bg-background border-border border-t text-[10px]  shadow-md dark:shadow-zinc-800 shrink-0 flex items-center gap-3 px-3 ease-in-out duration-300 z-21",
         )}
       >
         <span className="flex items-center gap-1.5 ">
@@ -49,16 +49,16 @@ export default function AdminPanelLayout({
               apiStatus === "connected"
                 ? "bg-[#34d399]"
                 : apiStatus === "error"
-                  ? "bg-[#f87171]"
-                  : "bg-[#f59e0b] animate-pulse-dot",
+                ? "bg-[#f87171]"
+                : "bg-[#f59e0b] animate-pulse-dot",
             )}
           />
-          <span className="text-[10px] font-mono hidden md:block">
+          <span className="text-[10px]  hidden md:block">
             {apiStatus === "connected"
               ? "registry ok"
               : apiStatus === "error"
-                ? "unreachable"
-                : "connecting…"}
+              ? "unreachable"
+              : "connecting…"}
           </span>
         </span>
         {sorted.slice(0, 2).map((item) => (

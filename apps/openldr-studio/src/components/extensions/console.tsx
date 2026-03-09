@@ -30,7 +30,7 @@ export function DevConsole() {
               key={id}
               onClick={() => setFilter(id)}
               className={cn(
-                "px-2 py-0.5 text-[10px] font-mono rounded border transition-colors",
+                "px-2 py-0.5 text-[10px]  rounded border transition-colors",
                 filter === id
                   ? "border-primary bg-primary/5 text-primary"
                   : "border-border ",
@@ -41,7 +41,7 @@ export function DevConsole() {
           ))}
         </div>
         <div className="flex-1" />
-        <span className="text-[10px] font-mono ">{state.logs.length}</span>
+        <span className="text-[10px]  ">{state.logs.length}</span>
         <Button
           variant="ghost"
           size="icon-xs"
@@ -52,7 +52,7 @@ export function DevConsole() {
       </div>
 
       <div className="flex-1 overflow-hidden">
-        <div className="font-mono text-[10px]">
+        <div className=" text-[10px]">
           {logs.length === 0 && (
             <p className="py-6 text-center ">
               No IPC messages yet — enable an extension to start

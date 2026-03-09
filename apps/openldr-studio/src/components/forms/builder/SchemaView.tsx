@@ -106,9 +106,7 @@ export const SchemaView: React.FC<SchemaViewProps> = ({ form }) => {
             JSON Schema
           </span>
           {form && (
-            <span className="text-[10px] text-[#4A6480] font-mono">
-              draft-07
-            </span>
+            <span className="text-[10px] text-[#4A6480] ">draft-07</span>
           )}
         </div>
         <div className="flex items-center gap-2">
@@ -179,7 +177,7 @@ export const SchemaView: React.FC<SchemaViewProps> = ({ form }) => {
             Import JSON Schema
           </p>
           <textarea
-            className="w-full bg-[#0A1628] border border-[#2A3F57] text-[#A8C7E8] rounded-lg p-3 text-[11px] font-mono focus:border-[#6EE7B7] outline-none resize-y min-h-[120px] placeholder:text-[#2A3F57]"
+            className="w-full bg-[#0A1628] border border-[#2A3F57] text-[#A8C7E8] rounded-lg p-3 text-[11px]  focus:border-[#6EE7B7] outline-none resize-y min-h-[120px] placeholder:text-[#2A3F57]"
             placeholder={
               '{\n  "$schema": "http://json-schema.org/draft-07/schema#",\n  "title": "My Form",\n  "properties": { ... }\n}'
             }
@@ -236,7 +234,7 @@ export const SchemaView: React.FC<SchemaViewProps> = ({ form }) => {
           </div>
         ) : (
           <div
-            className="rounded-xl border border-[#1E2E42] bg-[#0A1628] p-4 font-mono text-[12px] leading-relaxed overflow-x-auto"
+            className="rounded-xl border border-[#1E2E42] bg-[#0A1628] p-4  text-[12px] leading-relaxed overflow-x-auto"
             style={{ tabSize: 2 }}
           >
             {highlight(schemaJson)}

@@ -28,9 +28,7 @@ function ExtensionPage() {
   if (!ext)
     return (
       <div className="flex-1 flex items-center justify-center">
-        <p className="text-[12px] font-mono text-[#2d3652]">
-          Extension not found
-        </p>
+        <p className="text-[12px]  text-[#2d3652]">Extension not found</p>
       </div>
     );
 

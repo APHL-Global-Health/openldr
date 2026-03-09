@@ -7,7 +7,7 @@ export function StatusBadge({ status }: { status: string }) {
   };
   return (
     <span
-      className={`rounded border px-1.5 py-px font-mono text-[9px] uppercase tracking-widest ${
+      className={`rounded border px-1.5 py-px  text-[9px] uppercase tracking-widest ${
         cls[status] ?? cls.inactive
       }`}
     >

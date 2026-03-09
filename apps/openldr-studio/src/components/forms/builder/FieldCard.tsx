@@ -99,7 +99,7 @@ export const FieldCard: React.FC<FieldCardProps> = ({
             <p className="text-[10px] leading-tight mt-0.5">
               {meta.label}
               {field.key && (
-                <span className="ml-1 font-mono opacity-60">· {field.key}</span>
+                <span className="ml-1  opacity-60">· {field.key}</span>
               )}
               {field.required && (
                 <span style={{ color: meta.color }} className="ml-1">
@@ -158,7 +158,7 @@ export const FieldCard: React.FC<FieldCardProps> = ({
                 value={field.key}
                 placeholder="field_key"
                 onChange={(e) => onUpdate({ key: e.target.value })}
-                className="font-mono text-xs"
+                className=" text-xs"
               />
             </div>
 

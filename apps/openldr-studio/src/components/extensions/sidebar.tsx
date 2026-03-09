@@ -138,7 +138,7 @@ export function ExtensionSidebar() {
       {state.extensions.length === 0 ? (
         <div className="flex flex-col items-center justify-center gap-3 py-12 px-4 text-center min-h-[calc(100vh-26px-56px)] max-h-[calc(100vh-26px-56px)]">
           <Unplug className="h-7 w-7 " />
-          <p className="text-[10px] font-mono text-muted-foreground leading-relaxed">
+          <p className="text-[10px]  text-muted-foreground leading-relaxed">
             No extensions loaded
             <br />
             Check registry connection
@@ -206,7 +206,7 @@ export function ExtensionSidebar() {
               {ext.error && (
                 <div className="flex items-start gap-2 mx-3 mb-2 px-2 py-1.5 rounded bg-red-950/30 border border-red-900/40">
                   <AlertTriangle className="h-3 w-3 text-[#f87171] shrink-0 mt-0.5" />
-                  <p className="text-[10px] font-mono text-[#f87171] break-all leading-snug">
+                  <p className="text-[10px]  text-[#f87171] break-all leading-snug">
                     {ext.error}
                   </p>
                 </div>
@@ -240,7 +240,7 @@ export function ExtensionSidebar() {
                     </p>
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <p className="text-[9px] font-mono truncate cursor-default">
+                        <p className="text-[9px]  truncate cursor-default">
                           {ext.integrity.slice(0, 28)}…
                         </p>
                       </TooltipTrigger>

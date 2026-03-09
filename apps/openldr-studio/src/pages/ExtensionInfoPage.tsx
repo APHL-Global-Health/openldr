@@ -66,7 +66,7 @@ function ExtensionInfoPage() {
                   {ext.slot && (
                     <>
                       {" "}
-                      · <span className="font-mono ">slot:{ext.slot}</span>
+                      · <span className=" ">slot:{ext.slot}</span>
                     </>
                   )}
                 </p>
@@ -161,7 +161,7 @@ function ExtensionInfoPage() {
               <p className="text-[12px] font-semibold text-[#f87171] mb-1">
                 Installation error
               </p>
-              <p className="text-[11px] font-mono text-red-300/60 break-all leading-relaxed">
+              <p className="text-[11px]  text-red-300/60 break-all leading-relaxed">
                 {ext.error}
               </p>
               <Button
@@ -180,7 +180,7 @@ function ExtensionInfoPage() {
         <div>
           <p className="label-caps mb-2">About</p>
           <p className="text-[13px] leading-relaxed">{ext.description}</p>
-          <p className="text-[10px]  mt-2 font-mono">Published {publishedAt}</p>
+          <p className="text-[10px]  mt-2 ">Published {publishedAt}</p>
         </div>
 
         {/* permissions */}
@@ -202,7 +202,7 @@ function ExtensionInfoPage() {
                   >
                     <span className="mt-0.5 shrink-0">{meta.icon}</span>
                     <div>
-                      <p className="text-[11px] font-mono ">{perm}</p>
+                      <p className="text-[11px]  ">{perm}</p>
                       <p className="text-[10px] mt-0.5">{meta.label}</p>
                     </div>
                   </div>
@@ -224,7 +224,7 @@ function ExtensionInfoPage() {
                 >
                   <Command className="h-3 w-3 shrink-0" />
                   <div>
-                    <p className="text-[11px] font-mono">{cmd.id}</p>
+                    <p className="text-[11px] ">{cmd.id}</p>
                     <p className="text-[10px] ">{cmd.title}</p>
                   </div>
                 </div>
@@ -236,7 +236,7 @@ function ExtensionInfoPage() {
         {/* technical details */}
         <div>
           <p className="label-caps mb-3">Technical</p>
-          <div className="rounded-xs bg-card border border-border overflow-hidden divide-y divide-border font-mono text-[10px]">
+          <div className="rounded-xs bg-card border border-border overflow-hidden divide-y divide-border  text-[10px]">
             {(
               [
                 ["ID", ext.id],

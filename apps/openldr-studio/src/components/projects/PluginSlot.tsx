@@ -42,11 +42,9 @@ export function PluginSlot({
     <div className="mb-1.5 px-2" ref={ref}>
       {/* Slot header */}
       <div className="mb-1 flex items-center gap-1.5 px-1">
-        <span className="font-mono text-[9px]">
-          {String(index).padStart(2, "0")}
-        </span>
+        <span className=" text-[9px]">{String(index).padStart(2, "0")}</span>
         {/* <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${dotClass}`} /> */}
-        <span className="flex-1 font-mono text-[9px] uppercase tracking-[2px] ">
+        <span className="flex-1  text-[9px] uppercase tracking-[2px] ">
           {label}
         </span>
       </div>
@@ -66,13 +64,11 @@ export function PluginSlot({
           >
             {selected ? (
               <div>
-                <p className="font-mono text-[11px] ">{selected.name}</p>
-                <p className="font-mono text-[9px] ">v{selected.version}</p>
+                <p className=" text-[11px] ">{selected.name}</p>
+                <p className=" text-[9px] ">v{selected.version}</p>
               </div>
             ) : (
-              <span className="font-mono text-[11px] italic ">
-                No plugin selected
-              </span>
+              <span className=" text-[11px] italic ">No plugin selected</span>
             )}
             <div className="flex items-center gap-2">
               {selected && <StatusBadge status={selected.status} />}
@@ -82,7 +78,7 @@ export function PluginSlot({
 
           {open && (
             <div className="absolute left-0 right-0 top-[calc(100%+4px)] z-30 overflow-hidden rounded-lg border border-border bg-slate-900 shadow-xl">
-              <p className="border-b border-border px-3 py-1.5 font-mono text-[9px] uppercase tracking-[2px] text-slate-700">
+              <p className="border-b border-border px-3 py-1.5  text-[9px] uppercase tracking-[2px] text-slate-700">
                 Select Plugin
               </p>
               {plugins.map((p) => (
@@ -97,10 +93,8 @@ export function PluginSlot({
                     ${p.id === selectedId ? "" : "border-transparent"}`}
                 >
                   <div>
-                    <p className="font-mono text-[11px] text-slate-300">
-                      {p.name}
-                    </p>
-                    <p className="font-mono text-[9px] ">v{p.version}</p>
+                    <p className=" text-[11px] text-slate-300">{p.name}</p>
+                    <p className=" text-[9px] ">v{p.version}</p>
                   </div>
                   <StatusBadge status={p.status} />
                 </Button>
