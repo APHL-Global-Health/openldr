@@ -414,17 +414,6 @@ function ProjectsPage() {
                   <Plus width={16} height={16} />
                 </Button>
               </ButtonGroup>
-              // <PluginSlot
-              //   key={s.key}
-              //   index={idx + 1}
-              //   label={s.label}
-              //   dotClass={s.dot}
-              //   borderSelectedClass={s.border}
-              //   plugins={state.plugins[s.key]}
-              //   selectedId={selectedPlugins[s.key]}
-              //   onSelect={(id) => actions.selectPlugin(s.key, id)}
-              //   onAdd={() => setModal({ type: "plugin", slot: s.key })}
-              // />
             ))}
           </div>
 
@@ -483,87 +472,28 @@ function ProjectsPage() {
 
         {/* ── Main panel ──────────────────────────────────────────────────────── */}
         <main className="flex flex-1 flex-col overflow-hidden">
-          {/* Top bar */}
-          <div className="flex shrink-0 items-center gap-2 border-b border-border  px-5 py-3">
-            {state.selectedProjectId ? (
-              <>
-                <span className=" text-[11px]">
-                  {
-                    state.projects.find((p) => p.id === state.selectedProjectId)
-                      ?.name
-                  }
-                </span>
-                {state.selectedUseCaseId && (
-                  <>
-                    <span className="text-slate-800">›</span>
-                    <span className=" text-[11px]">
-                      {
-                        state.useCases.find(
-                          (u) => u.id === state.selectedUseCaseId,
-                        )?.name
-                      }
-                    </span>
-                  </>
-                )}
-                {state.selectedFeedId && (
-                  <>
-                    <span className="text-slate-800">›</span>
-                    <span className=" text-[11px] text-sky-400">
-                      {
-                        state.dataFeeds.find(
-                          (f) => f.id === state.selectedFeedId,
-                        )?.name
-                      }
-                    </span>
-                  </>
-                )}
-              </>
-            ) : (
-              <span className=" text-[11px] italic ">No context selected</span>
-            )}
-            <div className="ml-auto flex items-center gap-2">
-              {error && (
-                <span className="rounded-md border border-red-500/30 bg-red-500/10 px-2 py-0.5  text-[10px] text-red-400">
-                  {error}
-                  <Button
-                    variant="ghost"
-                    onClick={actions.clearError}
-                    className="ml-2 text-red-500 hover:text-red-300"
-                  >
-                    ✕
-                  </Button>
-                </span>
-              )}
-              {testResult?.allPassed && (
-                <span className="rounded-md border  bg-green-500/10 px-2 py-0.5  text-[10px]">
-                  ✓ All stages passed
-                </span>
-              )}
-            </div>
-          </div>
-
           {/* Scrollable content */}
           <div className="flex-1 overflow-y-auto space-y-4 p-4">
             {/* ── Payload ── */}
             <div className="overflow-hidden rounded-sm border border-border bg-card/50">
               <div className="flex items-center justify-between border-b  bg-card px-4 py-2.5">
                 <div className="flex items-center gap-2">
-                  <span className="h-2 w-2 rounded-sm bg-border" />
+                  <span
+                    className={cn(
+                      "h-2 w-2 rounded-sm bg-border",
+                      payload.trim()
+                        ? parsedPayloadOk
+                          ? "bg-green-500"
+                          : "bg-red-400"
+                        : "bg-border",
+                    )}
+                  />
                   <span className=" text-[10px] uppercase tracking-[2px]">
                     Input Payload
                   </span>
                   <span className=" text-[9px] ">JSON</span>
                 </div>
                 <div className="flex gap-2">
-                  {payload.trim() && (
-                    <span
-                      className={` text-[9px] ${
-                        parsedPayloadOk ? "text-green-500" : "text-red-400"
-                      }`}
-                    >
-                      {parsedPayloadOk ? "✓ Valid JSON" : "✗ Invalid JSON"}
-                    </span>
-                  )}
                   <Button
                     variant="ghost"
                     onClick={() => actions.setPayload(SAMPLE_PAYLOAD)}
