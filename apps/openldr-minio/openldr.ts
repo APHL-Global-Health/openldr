@@ -277,6 +277,69 @@ ON CONFLICT ("pluginId") DO UPDATE SET
   console.log("Default plugin seeding complete");
 };
 
+/**
+ * Seeds a built-in project → use case → data feed with the default active
+ * plugins pre-assigned. Uses fixed UUIDs so the operation is idempotent.
+ *
+ * Plugin IDs match the DEFAULT_PLUGINS entries above:
+ *   validation : 7f7207f2-ed04-4e49-a566-6ed244dea111  (default-schema v1.2.0)
+ *   mapping    : fbabe1c3-f563-4634-bb41-da53f88e6cf8  (default-mapper v1.2.0)
+ *   outpost    : 83d52575-ecf6-4d86-aa8f-30480f883a5b  (default-outpost v1.0.0)
+ */
+const BUILTIN_PROJECT_ID  = "00000000-0000-0000-0001-000000000001";
+const BUILTIN_USE_CASE_ID = "00000000-0000-0000-0001-000000000002";
+const BUILTIN_FEED_ID     = "00000000-0000-0000-0001-000000000003";
+
+const seedBuiltinProject = (): void => {
+  console.log("Seeding built-in project / use case / data feed");
+
+  const sql = `
+INSERT INTO projects ("projectId", "projectName", description, "isEnabled", "createdAt", "updatedAt")
+VALUES (
+  '${BUILTIN_PROJECT_ID}',
+  'Built-in',
+  'Default built-in project with pre-configured plugins',
+  true,
+  NOW(), NOW()
+)
+ON CONFLICT ("projectId") DO NOTHING;
+
+INSERT INTO "useCases" ("useCaseId", "useCaseName", "projectId", description, "isEnabled", "createdAt", "updatedAt")
+VALUES (
+  '${BUILTIN_USE_CASE_ID}',
+  'Built-in',
+  '${BUILTIN_PROJECT_ID}',
+  'Default built-in use case',
+  true,
+  NOW(), NOW()
+)
+ON CONFLICT ("useCaseId") DO NOTHING;
+
+INSERT INTO "dataFeeds" (
+  "dataFeedId", "dataFeedName", "useCaseId",
+  "schemaPluginId", "mapperPluginId", "recipientPluginId",
+  "isEnabled", "isProtected", "createdAt", "updatedAt"
+)
+VALUES (
+  '${BUILTIN_FEED_ID}',
+  'Built-in',
+  '${BUILTIN_USE_CASE_ID}',
+  '7f7207f2-ed04-4e49-a566-6ed244dea111',
+  'fbabe1c3-f563-4634-bb41-da53f88e6cf8',
+  '83d52575-ecf6-4d86-aa8f-30480f883a5b',
+  true, false,
+  NOW(), NOW()
+)
+ON CONFLICT ("dataFeedId") DO UPDATE SET
+  "schemaPluginId"    = EXCLUDED."schemaPluginId",
+  "mapperPluginId"    = EXCLUDED."mapperPluginId",
+  "recipientPluginId" = EXCLUDED."recipientPluginId";
+`;
+
+  runSqlInPostgres(sql);
+  console.log("Built-in project / use case / data feed seeded");
+};
+
 // ── Lifecycle commands ────────────────────────────────────────────────────────
 
 const setup = async (dir: string) => {
@@ -315,6 +378,7 @@ const start = async (dir: string) => {
     await minio.createPluginsBucket();
 
     await seedDefaultPlugins(dir);
+    seedBuiltinProject();
 
     if (
       process.env.INCLUDE_TEST_DATA &&
