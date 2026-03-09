@@ -7,6 +7,10 @@ export class MetadataHandler implements RefinementHandler {
     if (schema.description) {
       zodSchema = zodSchema.describe(schema.description);
     }
+    if ((schema as any).readOnly === true) {
+      const existing = z.globalRegistry.get(zodSchema as any) ?? {};
+      z.globalRegistry.add(zodSchema as any, { ...existing, readOnly: true });
+    }
     return zodSchema;
   }
 }

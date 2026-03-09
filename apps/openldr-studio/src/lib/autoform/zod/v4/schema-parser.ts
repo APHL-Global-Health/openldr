@@ -81,6 +81,18 @@ function parseField(key: string, schema: z.$ZodType): ParsedField {
     }
   }
 
+  const isReadOnly = getReadOnly(schema);
+  if (isReadOnly) {
+    fieldConfig = {
+      ...fieldConfig,
+      inputProps: {
+        ...fieldConfig?.inputProps,
+        readOnly: true,
+        disabled: true,
+      },
+    };
+  }
+
   return {
     key,
     type,
@@ -144,4 +156,18 @@ function getDescription<SchemaType extends z.$ZodType>(
   }
 
   return undefined;
+}
+
+function getReadOnly<SchemaType extends z.$ZodType>(
+  schema: SchemaType,
+): boolean {
+  if (z.globalRegistry.get(schema)?.readOnly === true) {
+    return true;
+  }
+
+  if ("innerType" in schema._zod.def) {
+    return getReadOnly(schema._zod.def.innerType as SchemaType);
+  }
+
+  return false;
 }

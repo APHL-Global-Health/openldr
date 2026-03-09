@@ -155,40 +155,6 @@ function ProjectsPage() {
     refetchIntervalInBackground: false,
   });
 
-  const handleCreate = async (value: string) => {
-    if (!modal) return;
-    try {
-      if (modal.type === "project") await actions.createProject(value);
-      if (modal.type === "usecase") await actions.createUseCase(value);
-      if (modal.type === "feed") await actions.createDataFeed(value);
-      if (modal.type === "plugin" && modal.slot)
-        await actions.createPlugin(value, modal.slot);
-    } catch (e) {
-      /* toast here */
-    }
-    setModal(null);
-  };
-
-  const modalMeta: Record<ModalType, { title: string; placeholder: string }> = {
-    project: {
-      title: "New Project",
-      placeholder: "e.g. KCMC AMR Surveillance",
-    },
-    usecase: {
-      title: "New Use Case",
-      placeholder: "e.g. WHONET Lab Ingestion",
-    },
-    feed: { title: "New Data Feed", placeholder: "e.g. WHONET SQLite Feed" },
-    plugin: {
-      title: `New ${
-        modal?.slot
-          ? modal.slot.charAt(0).toUpperCase() + modal.slot.slice(1)
-          : ""
-      } Plugin`,
-      placeholder: "e.g. My Custom Validator",
-    },
-  };
-
   const SLOTS: Array<{
     key: PluginSlotType;
     label: string;
@@ -287,10 +253,10 @@ function ProjectsPage() {
     }
   };
 
-  const addData = (schema: string, table: string) => {
+  const EditData = (schema: string, table: string, item: any = undefined) => {
     setSchema(schema);
     setTable(table);
-    setSelectedRecordItem(undefined);
+    setSelectedRecordItem(item);
     setRecordSheetOpen(true);
   };
 
@@ -357,12 +323,20 @@ function ProjectsPage() {
                 <DropdownMenuContent align="end" className="w-40">
                   <DropdownMenuGroup>
                     <DropdownMenuItem
-                      onClick={() => addData("Internal", "projects")}
+                      onClick={() => EditData("Internal", "projects")}
                     >
                       <Plus width={16} height={16} />
                       New
                     </DropdownMenuItem>
-                    <DropdownMenuItem disabled={!state.selectedProjectId}>
+                    <DropdownMenuItem
+                      disabled={!state.selectedProjectId}
+                      onClick={() => {
+                        const item = state.projects.find(
+                          (uc: any) => uc.id === state.selectedProjectId,
+                        );
+                        EditData("Internal", "projects", item);
+                      }}
+                    >
                       <Pencil width={16} height={16} />
                       Edit
                     </DropdownMenuItem>
@@ -436,12 +410,25 @@ function ProjectsPage() {
                 <DropdownMenuContent align="end" className="w-40">
                   <DropdownMenuGroup>
                     <DropdownMenuItem
-                      onClick={() => addData("Internal", "useCases")}
+                      onClick={() => {
+                        const item = state.useCases.find(
+                          (uc: any) => uc.id === state.selectedUseCaseId,
+                        );
+                        EditData("Internal", "useCases", item);
+                      }}
                     >
                       <Plus width={16} height={16} />
                       New
                     </DropdownMenuItem>
-                    <DropdownMenuItem disabled={!state.selectedUseCaseId}>
+                    <DropdownMenuItem
+                      disabled={!state.selectedUseCaseId}
+                      onClick={() => {
+                        const item = state.useCases.find(
+                          (uc: any) => uc.id === state.selectedUseCaseId,
+                        );
+                        EditData("Internal", "useCases", item);
+                      }}
+                    >
                       <Pencil width={16} height={16} />
                       Edit
                     </DropdownMenuItem>
@@ -451,6 +438,9 @@ function ProjectsPage() {
                     <DropdownMenuItem
                       variant="destructive"
                       disabled={!state.selectedUseCaseId}
+                      onClick={() => {
+                        //delete?
+                      }}
                     >
                       <Trash2Icon />
                       Delete
@@ -514,12 +504,25 @@ function ProjectsPage() {
                 <DropdownMenuContent align="end" className="w-40">
                   <DropdownMenuGroup>
                     <DropdownMenuItem
-                      onClick={() => addData("Internal", "dataFeeds")}
+                      onClick={() => {
+                        const item = state.dataFeeds.find(
+                          (df: any) => df.id === state.selectedFeedId,
+                        );
+                        EditData("Internal", "dataFeeds", item);
+                      }}
                     >
                       <Plus width={16} height={16} />
                       New
                     </DropdownMenuItem>
-                    <DropdownMenuItem disabled={!state.selectedFeedId}>
+                    <DropdownMenuItem
+                      disabled={!state.selectedFeedId}
+                      onClick={() => {
+                        const item = state.dataFeeds.find(
+                          (df: any) => df.id === state.selectedFeedId,
+                        );
+                        EditData("Internal", "dataFeeds", item);
+                      }}
+                    >
                       <Pencil width={16} height={16} />
                       Edit
                     </DropdownMenuItem>
@@ -609,13 +612,24 @@ function ProjectsPage() {
                   <DropdownMenuContent align="end" className="w-40">
                     <DropdownMenuGroup>
                       <DropdownMenuItem
-                        onClick={() => addData("Internal", "plugins")}
+                        onClick={() => EditData("Internal", "plugins")}
                       >
                         <Plus width={16} height={16} />
                         New
                       </DropdownMenuItem>
                       <DropdownMenuItem
                         disabled={selectedPlugins[s.key] ? false : true}
+                        onClick={() => {
+                          const item = state.plugins[s.key].find(
+                            (df: any) => df.id === s.key,
+                          );
+                          console.log(
+                            "Editing plugin:",
+                            state.plugins[s.key],
+                            s,
+                          );
+                          EditData("Internal", "plugins", item);
+                        }}
                       >
                         <Pencil width={16} height={16} />
                         Edit
@@ -799,10 +813,10 @@ function ProjectsPage() {
           onCleared={() => {
             // handle function
           }}
-          value={undefined}
+          value={selectedRecordItem}
           setOpen={setRecordSheetOpen}
           onOpenChange={(value: boolean) => {
-            // if (!value) setSelectedRecordItem(undefined);
+            if (!value) setSelectedRecordItem(undefined);
             setRecordSheetOpen(value);
           }}
         />
