@@ -36,9 +36,10 @@ CREATE TYPE "enum_formSchemas_schemaType" AS ENUM (
 );
 
 CREATE TYPE "enum_plugins_pluginType" AS ENUM (
-    'schema',
-    'mapper',
-    'recipient'
+    'validation',
+    'mapping',
+    'storage',
+    'outpost'
 );
 
 CREATE TYPE "enum_plugins_securityLevel" AS ENUM (

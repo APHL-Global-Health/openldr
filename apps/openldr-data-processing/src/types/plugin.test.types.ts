@@ -1,5 +1,5 @@
-export type PluginStatus = "active" | "draft" | "inactive";
-export type PluginSlotType = "validation" | "mapping" | "outpost";
+export type PluginStatus = "active" | "draft" | "inactive" | "deprecated";
+export type PluginSlotType = "validation" | "mapping" | "outpost" | "storage";
 
 // ── Domain entities ───────────────────────────────────────────────────────────
 
@@ -115,3 +115,19 @@ export interface CreatePluginRequest {
   slot: PluginSlotType;
   code?: string;
 }
+
+// export type PluginType = "schema" | "mapper" | "storage" | "outpost";
+
+export type BundledPlugin = {
+  pluginId: string;
+  pluginType: PluginSlotType;
+  pluginName: string;
+  pluginVersion: string;
+  pluginMinioObjectPath: null;
+  securityLevel: "medium" | "low" | "high";
+  config: Record<string, any>;
+  notes: string;
+  status: PluginStatus;
+  bundledSourcePath: string;
+  isBundled: true;
+};
