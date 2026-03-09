@@ -380,17 +380,16 @@ export function usePluginTest(token: any, signal?: AbortSignal) {
     if (!selectedFeedId) return;
     dispatch({ type: "SAVE_START" });
     try {
-      // TODO fix later
-      // await pluginTestApi.saveAssignment(
-      //   token,
-      //   {
-      //     feedId: selectedFeedId,
-      //     validationPluginId: selectedPlugins.validation,
-      //     mappingPluginId: selectedPlugins.mapping,
-      //     outpostPluginId: selectedPlugins.outpost,
-      //   },
-      //   signal,
-      // );
+      await pluginTestApi.saveAssignment(
+        token,
+        {
+          feedId: selectedFeedId,
+          validationPluginId: selectedPlugins.validation!,
+          mappingPluginId: selectedPlugins.mapping!,
+          outpostPluginId: selectedPlugins.outpost!,
+        },
+        signal,
+      );
       dispatch({ type: "SAVE_DONE" });
     } catch (e) {
       dispatch({ type: "SAVE_ERROR", error: (e as Error).message });

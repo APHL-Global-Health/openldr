@@ -184,12 +184,12 @@ router.post("/run", async (req: Request<{}, {}, RunPluginTestRequest>, res) => {
  */
 router.post(
   "/assignments",
-  (req: Request<{}, {}, SavePluginAssignmentRequest>, res) => {
+  async (req: Request<{}, {}, SavePluginAssignmentRequest>, res) => {
     const { feedId, validationPluginId, mappingPluginId, outpostPluginId } =
       req.body;
     if (!feedId) return err(res, "feedId is required");
 
-    const assignment = db.upsertAssignment({
+    const assignment = await db.upsertAssignment({
       feedId,
       validationPluginId: validationPluginId ?? null,
       mappingPluginId: mappingPluginId ?? null,
@@ -201,8 +201,8 @@ router.post(
 );
 
 /** GET /api/plugin-tests/assignments/:feedId */
-router.get("/assignments/:feedId", (req, res) => {
-  const assignment = db.getAssignment(req.params.feedId);
+router.get("/assignments/:feedId", async (req, res) => {
+  const assignment = await db.getAssignment(req.params.feedId);
   if (!assignment) return err(res, "No assignment found for this feed", 404);
   ok(res, { assignment });
 });

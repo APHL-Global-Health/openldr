@@ -248,12 +248,66 @@ export const db = {
   // },
 
   // Assignments
-  getAssignment: (feedId: string) =>
-    assignments.find((a) => a.feedId === feedId) ?? null,
-  upsertAssignment(a: DataFeedPluginAssignment): DataFeedPluginAssignment {
-    const idx = assignments.findIndex((x) => x.feedId === a.feedId);
-    if (idx >= 0) assignments[idx] = a;
-    else assignments.push(a);
-    return a;
+  getAssignment: async (
+    feedId: string,
+  ): Promise<DataFeedPluginAssignment | null> => {
+    try {
+      const sql = `
+        SELECT "dataFeedId", "schemaPluginId", "mapperPluginId", "recipientPluginId"
+        FROM "dataFeeds"
+        WHERE "dataFeedId" = $1;
+      `;
+      const res = await pool.query(sql, [feedId]);
+      if (res.rowCount === 1) {
+        const row = res.rows[0];
+        return {
+          feedId: row.dataFeedId,
+          validationPluginId: row.schemaPluginId ?? null,
+          mappingPluginId: row.mapperPluginId ?? null,
+          outpostPluginId: row.recipientPluginId ?? null,
+        };
+      }
+      return null;
+    } catch (error: any) {
+      logger.error(
+        { error: error.message, stack: error.stack },
+        "Database query error",
+      );
+      throw error;
+    }
+  },
+
+  upsertAssignment: async (
+    a: DataFeedPluginAssignment,
+  ): Promise<DataFeedPluginAssignment> => {
+    try {
+      // Bundled plugins only exist in memory — their IDs are not in the plugins
+      // table, so they would violate the FK constraint. Store null for those
+      // columns; the runtime resolves bundled plugins by ID from memory.
+      const bundledIds = new Set(BUNDLED_DEFAULT_PLUGINS.map((p) => p.pluginId));
+      const toDb = (id: string | null) =>
+        id && !bundledIds.has(id) ? id : null;
+
+      const sql = `
+        UPDATE "dataFeeds"
+        SET "schemaPluginId"    = $2,
+            "mapperPluginId"    = $3,
+            "recipientPluginId" = $4
+        WHERE "dataFeedId" = $1;
+      `;
+      await pool.query(sql, [
+        a.feedId,
+        toDb(a.validationPluginId),
+        toDb(a.mappingPluginId),
+        toDb(a.outpostPluginId),
+      ]);
+      return a;
+    } catch (error: any) {
+      logger.error(
+        { error: error.message, stack: error.stack },
+        "Database query error",
+      );
+      throw error;
+    }
   },
 };

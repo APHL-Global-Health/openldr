@@ -619,9 +619,6 @@ function ProjectsPage() {
                       <DropdownMenuItem
                         disabled={selectedPlugins[s.key] ? false : true}
                         onClick={() => {
-                          // const item = state.plugins[s.key].find(
-                          //   (df: any) => df.id === selectedPlugins[s.key],
-                          // );
                           // EditData("Internal", "plugins", item);
                         }}
                       >
