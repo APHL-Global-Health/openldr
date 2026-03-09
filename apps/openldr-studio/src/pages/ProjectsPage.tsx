@@ -310,6 +310,7 @@ function ProjectsPage() {
           <div className="flex-1 overflow-y-auto py-3">
             <ButtonGroup className="w-full px-2 pb-2 focus-visible:outline-none">
               <Select
+                disabled={state.projects.length === 0}
                 value={state.selectedProjectId || undefined}
                 onValueChange={(val) => {
                   actions.selectProject(val);
@@ -340,9 +341,12 @@ function ProjectsPage() {
                 <div className="flex bg-border min-h-7 max-h-7  w-[0.5px]"></div>
               </div>
               <DropdownMenu>
-                <DropdownMenuTrigger asChild>
+                <DropdownMenuTrigger
+                  asChild
+                  className="disabled:cursor-not-allowed"
+                >
                   <Button
-                    className="rounded-sm"
+                    className="rounded-sm disabled:cursor-not-allowed"
                     variant="outline"
                     size="icon"
                     aria-label="More Options"
@@ -379,6 +383,7 @@ function ProjectsPage() {
 
             <ButtonGroup className="w-full px-2 pb-2 focus-visible:outline-none">
               <Select
+                key={state.selectedProjectId}
                 value={state.selectedUseCaseId || undefined}
                 onValueChange={(val) => {
                   actions.selectUseCase(val);
@@ -386,7 +391,9 @@ function ProjectsPage() {
                 }}
               >
                 <SelectTrigger
-                  disabled={!state.selectedProjectId}
+                  disabled={
+                    !state.selectedProjectId || state.useCases.length === 0
+                  }
                   className="flex flex-1 rounded-sm text-sm focus-visible:outline-none"
                 >
                   <SelectValue placeholder="Use Case" />
@@ -414,6 +421,7 @@ function ProjectsPage() {
               <DropdownMenu>
                 <DropdownMenuTrigger
                   asChild
+                  className="disabled:cursor-not-allowed"
                   disabled={!state.selectedProjectId}
                 >
                   <Button
@@ -454,6 +462,7 @@ function ProjectsPage() {
 
             <ButtonGroup className="w-full px-2 pb-2 focus-visible:outline-none">
               <Select
+                key={state.selectedUseCaseId}
                 value={state.selectedFeedId || undefined}
                 onValueChange={(val) => {
                   actions.selectFeed(val);
@@ -461,8 +470,10 @@ function ProjectsPage() {
                 }}
               >
                 <SelectTrigger
-                  disabled={!state.selectedUseCaseId}
-                  className="flex flex-1 rounded-sm text-sm focus-visible:outline-none"
+                  disabled={
+                    !state.selectedUseCaseId || state.dataFeeds.length === 0
+                  }
+                  className="flex flex-1 rounded-sm text-sm focus-visible:outline-none disabled:cursor-not-allowed"
                 >
                   <SelectValue placeholder="Data Feed" />
                 </SelectTrigger>
@@ -537,7 +548,7 @@ function ProjectsPage() {
             {SLOTS.map((s, idx) => (
               <ButtonGroup className="w-full px-2 pb-2 focus-visible:outline-none">
                 <Select
-                  key={s.key}
+                  key={`${state.selectedFeedId}-${s.key}`}
                   value={selectedPlugins[s.key] || undefined}
                   onValueChange={(val) => {
                     actions.selectPlugin(s.key, val);
@@ -545,7 +556,9 @@ function ProjectsPage() {
                   }}
                 >
                   <SelectTrigger
-                    disabled={!state.selectedFeedId}
+                    disabled={
+                      !state.selectedFeedId || state.plugins[s.key].length === 0
+                    }
                     className="flex flex-1 rounded-sm text-sm focus-visible:outline-none"
                   >
                     <SelectValue placeholder={s.label} />
@@ -578,16 +591,12 @@ function ProjectsPage() {
                 <div className="flex justify-center items-center min-h-9 max-h-9 w-[0.5px]">
                   <div className="flex bg-border min-h-7 max-h-7  w-[0.5px]"></div>
                 </div>
-                {/* <Button
-                  disabled={!state.selectedFeedId}
-                  variant="outline"
-                  className="rounded-sm"
-                  onClick={() => addData("Internal", "plugins")}
-                >
-                  <Plus width={16} height={16} />
-                </Button> */}
                 <DropdownMenu>
-                  <DropdownMenuTrigger asChild disabled={!state.selectedFeedId}>
+                  <DropdownMenuTrigger
+                    asChild
+                    disabled={!state.selectedFeedId}
+                    className="disabled:cursor-not-allowed"
+                  >
                     <Button
                       className="rounded-sm"
                       variant="outline"

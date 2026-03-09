@@ -93,12 +93,18 @@ CREATE TRIGGER set_projects_updated_at
 CREATE TABLE "useCases" (
     "useCaseId"   uuid DEFAULT gen_random_uuid() NOT NULL,
     "useCaseName" varchar(255) NOT NULL CHECK ("useCaseName" <> ''),
+    "projectId"   uuid NOT NULL,
     description   varchar(255),
     "isEnabled"   boolean DEFAULT true NOT NULL,
     "createdAt"   timestamptz(6) NOT NULL DEFAULT now(),
     "updatedAt"   timestamptz(6) NOT NULL DEFAULT now(),
-    CONSTRAINT "useCases_pkey" PRIMARY KEY ("useCaseId")
+    CONSTRAINT "useCases_pkey" PRIMARY KEY ("useCaseId"),
+    CONSTRAINT "useCases_projectId_fkey"
+        FOREIGN KEY ("projectId") REFERENCES projects("projectId")
+        ON UPDATE CASCADE ON DELETE RESTRICT
 );
+
+CREATE INDEX idx_usecases_project ON "useCases" ("projectId");
 
 CREATE TRIGGER "set_useCases_updated_at"
     BEFORE UPDATE ON "useCases"
@@ -163,24 +169,17 @@ CREATE TRIGGER set_plugins_updated_at
 -- dataFeeds
 -- ----------------------------------------------------------
 CREATE TABLE "dataFeeds" (
-    "dataFeedId"      uuid DEFAULT gen_random_uuid() NOT NULL,
-    "dataFeedName"    varchar(255) NOT NULL CHECK ("dataFeedName" <> ''),
-    "facilityId"      uuid NOT NULL,
-    "schemaPluginId"  uuid,
-    "mapperPluginId"  uuid,
+    "dataFeedId"        uuid DEFAULT gen_random_uuid() NOT NULL,
+    "dataFeedName"      varchar(255) NOT NULL CHECK ("dataFeedName" <> ''),
+    "schemaPluginId"    uuid,
+    "mapperPluginId"    uuid,
     "recipientPluginId" uuid,
-    "projectId"       uuid NOT NULL,
-    "useCaseId"       uuid NOT NULL,
-    "isEnabled"       boolean DEFAULT true NOT NULL,
-    "isProtected"     boolean DEFAULT false NOT NULL,
-    "createdAt"       timestamptz(6) NOT NULL DEFAULT now(),
-    "updatedAt"       timestamptz(6) NOT NULL DEFAULT now(),
+    "useCaseId"         uuid NOT NULL,
+    "isEnabled"         boolean DEFAULT true NOT NULL,
+    "isProtected"       boolean DEFAULT false NOT NULL,
+    "createdAt"         timestamptz(6) NOT NULL DEFAULT now(),
+    "updatedAt"         timestamptz(6) NOT NULL DEFAULT now(),
     CONSTRAINT "dataFeeds_pkey" PRIMARY KEY ("dataFeedId"),
-
-    -- Foreign keys (were completely missing)
-    CONSTRAINT "dataFeeds_facilityId_fkey"
-        FOREIGN KEY ("facilityId") REFERENCES facilities("facilityId")
-        ON UPDATE CASCADE ON DELETE RESTRICT,
     CONSTRAINT "dataFeeds_schemaPluginId_fkey"
         FOREIGN KEY ("schemaPluginId") REFERENCES plugins("pluginId")
         ON UPDATE CASCADE ON DELETE SET NULL,
@@ -190,24 +189,19 @@ CREATE TABLE "dataFeeds" (
     CONSTRAINT "dataFeeds_recipientPluginId_fkey"
         FOREIGN KEY ("recipientPluginId") REFERENCES plugins("pluginId")
         ON UPDATE CASCADE ON DELETE SET NULL,
-    CONSTRAINT "dataFeeds_projectId_fkey"
-        FOREIGN KEY ("projectId") REFERENCES projects("projectId")
-        ON UPDATE CASCADE ON DELETE RESTRICT,
     CONSTRAINT "dataFeeds_useCaseId_fkey"
         FOREIGN KEY ("useCaseId") REFERENCES "useCases"("useCaseId")
         ON UPDATE CASCADE ON DELETE RESTRICT
 );
 
--- Indexes on all FK columns for JOIN performance
-CREATE INDEX idx_datafeeds_facility   ON "dataFeeds" ("facilityId");
-CREATE INDEX idx_datafeeds_project    ON "dataFeeds" ("projectId");
-CREATE INDEX idx_datafeeds_usecase    ON "dataFeeds" ("useCaseId");
-CREATE INDEX idx_datafeeds_schema_plugin    ON "dataFeeds" ("schemaPluginId")    WHERE "schemaPluginId" IS NOT NULL;
-CREATE INDEX idx_datafeeds_mapper_plugin    ON "dataFeeds" ("mapperPluginId")    WHERE "mapperPluginId" IS NOT NULL;
+-- Indexes on FK columns for JOIN performance
+CREATE INDEX idx_datafeeds_usecase         ON "dataFeeds" ("useCaseId");
+CREATE INDEX idx_datafeeds_schema_plugin   ON "dataFeeds" ("schemaPluginId")    WHERE "schemaPluginId" IS NOT NULL;
+CREATE INDEX idx_datafeeds_mapper_plugin   ON "dataFeeds" ("mapperPluginId")    WHERE "mapperPluginId" IS NOT NULL;
 CREATE INDEX idx_datafeeds_recipient_plugin ON "dataFeeds" ("recipientPluginId") WHERE "recipientPluginId" IS NOT NULL;
 
 -- Partial index: only enabled feeds (common query pattern)
-CREATE INDEX idx_datafeeds_enabled ON "dataFeeds" ("facilityId", "projectId") WHERE "isEnabled" = true;
+CREATE INDEX idx_datafeeds_enabled ON "dataFeeds" ("useCaseId") WHERE "isEnabled" = true;
 
 CREATE TRIGGER "set_dataFeeds_updated_at"
     BEFORE UPDATE ON "dataFeeds"
@@ -265,7 +259,7 @@ BEGIN
      true, NOW(), NOW()),
 
     (v_usecases, 'useCases', 'archive', 'Internal',
-     '{"$schema":"https://json-schema.org/draft/2020-12/schema","title":"useCases Schema","description":"From Internal","type":"object","properties":{"useCaseName":{"type":"string","maxLength":255},"description":{"type":"string","maxLength":255},"isEnabled":{"type":"boolean"}},"required":["useCaseName"],"additionalProperties":false}'::json,
+     '{"$schema":"https://json-schema.org/draft/2020-12/schema","title":"useCases Schema","description":"From Internal","type":"object","properties":{"useCaseName":{"type":"string","maxLength":255},"projectId":{"type":["object","string"],"x-zodType":"reference","x-zodReference":{"table":"projects","key":"projectId","attributes":["projectName","description","isEnabled"]}},"description":{"type":"string","maxLength":255},"isEnabled":{"type":"boolean"}},"required":["useCaseName","projectId"],"additionalProperties":false}'::json,
      true, NOW(), NOW()),
 
     (v_plugins, 'plugins', 'archive', 'Internal',
@@ -281,7 +275,7 @@ BEGIN
      true, NOW(), NOW()),
 
     (v_datafeeds, 'dataFeeds', 'archive', 'Internal',
-     '{"$schema":"https://json-schema.org/draft/2020-12/schema","title":"dataFeeds Schema","description":"From Internal","type":"object","properties":{"dataFeedName":{"type":"string","maxLength":255},"facilityId":{"type":["object","string"],"x-zodType":"reference","x-zodReference":{"table":"facilities","key":"facilityId","attributes":["facilityCode","facilityName"]}},"schemaPluginId":{"type":["object","string"],"x-zodType":"reference","x-zodReference":{"table":"plugins","key":"pluginId","attributes":["pluginType","pluginName","pluginVersion","securityLevel"]}},"mapperPluginId":{"type":["object","string"],"x-zodType":"reference","x-zodReference":{"table":"plugins","key":"pluginId","attributes":["pluginType","pluginName","pluginVersion","securityLevel"]}},"recipientPluginId":{"type":["object","string"],"x-zodType":"reference","x-zodReference":{"table":"plugins","key":"pluginId","attributes":["pluginType","pluginName","pluginVersion","securityLevel"]}},"projectId":{"type":["object","string"],"x-zodType":"reference","x-zodReference":{"table":"projects","key":"projectId","attributes":["projectName","description","isEnabled"]}},"useCaseId":{"type":["object","string"],"x-zodType":"reference","x-zodReference":{"table":"useCases","key":"useCaseId","attributes":["useCaseName","description","isEnabled"]}},"isEnabled":{"type":"boolean"},"isProtected":{"type":"boolean"}},"required":["dataFeedName","facilityId","projectId","useCaseId","isEnabled","isProtected"],"additionalProperties":false}'::json,
+     '{"$schema":"https://json-schema.org/draft/2020-12/schema","title":"dataFeeds Schema","description":"From Internal","type":"object","properties":{"dataFeedName":{"type":"string","maxLength":255},"schemaPluginId":{"type":["object","string"],"x-zodType":"reference","x-zodReference":{"table":"plugins","key":"pluginId","attributes":["pluginType","pluginName","pluginVersion","securityLevel"]}},"mapperPluginId":{"type":["object","string"],"x-zodType":"reference","x-zodReference":{"table":"plugins","key":"pluginId","attributes":["pluginType","pluginName","pluginVersion","securityLevel"]}},"recipientPluginId":{"type":["object","string"],"x-zodType":"reference","x-zodReference":{"table":"plugins","key":"pluginId","attributes":["pluginType","pluginName","pluginVersion","securityLevel"]}},"useCaseId":{"type":["object","string"],"x-zodType":"reference","x-zodReference":{"table":"useCases","key":"useCaseId","attributes":["useCaseName","description","isEnabled"]}},"isEnabled":{"type":"boolean"},"isProtected":{"type":"boolean"}},"required":["dataFeedName","useCaseId","isEnabled","isProtected"],"additionalProperties":false}'::json,
      true, NOW(), NOW()),
 
     (v_formschemas, 'formSchemas', 'archive', 'Internal',

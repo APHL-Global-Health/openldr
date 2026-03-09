@@ -143,6 +143,10 @@ function reducer(s: State, a: Action): State {
         selectedFeedId: undefined,
         useCases: [],
         dataFeeds: [],
+        selectedPlugins: { validation: undefined, mapping: undefined, outpost: undefined },
+        testResult: undefined,
+        runStatus: "idle",
+        savedOk: false,
       };
     case "SELECT_USE_CASE":
       return {
@@ -150,9 +154,20 @@ function reducer(s: State, a: Action): State {
         selectedUseCaseId: a.id,
         selectedFeedId: undefined,
         dataFeeds: [],
+        selectedPlugins: { validation: undefined, mapping: undefined, outpost: undefined },
+        testResult: undefined,
+        runStatus: "idle",
+        savedOk: false,
       };
     case "SELECT_FEED":
-      return { ...s, selectedFeedId: a.id };
+      return {
+        ...s,
+        selectedFeedId: a.id,
+        selectedPlugins: { validation: undefined, mapping: undefined, outpost: undefined },
+        testResult: undefined,
+        runStatus: "idle",
+        savedOk: false,
+      };
     case "SELECT_PLUGIN":
       return {
         ...s,
