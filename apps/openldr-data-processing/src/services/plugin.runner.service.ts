@@ -45,6 +45,23 @@ async function execPluginCode(
       error: (...args: unknown[]) =>
         logs.push("[error] " + args.map(String).join(" ")),
     },
+    JSON,
+    Object,
+    Array,
+    String,
+    Number,
+    Boolean,
+    Date,
+    Math,
+    RegExp,
+    parseInt,
+    parseFloat,
+    isNaN,
+    isFinite,
+    Promise,
+    URL,
+    setTimeout,
+    clearTimeout,
   };
 
   vm.createContext(sandbox);
@@ -53,11 +70,25 @@ async function execPluginCode(
   // call it and store the awaited value in `result`.
   const script = new vm.Script(`
     (async () => {
+      var module = { exports: {} };
+      var exports = module.exports;
+
       ${code}
       if (typeof run !== 'function') throw new Error('Plugin must export an async function named \\'run\\'');
       result = await run(payload);
+
+      return module.exports;
     })();
   `);
+
+  // `
+  //   (function() {
+  //     var module = { exports: {} };
+  //     var exports = module.exports;
+  //     ${pluginSource}
+  //     return module.exports;
+  //   })();
+  // `
 
   // runInContext returns a Promise (the IIFE), we await it with a race timeout
   const p = script.runInContext(sandbox) as Promise<void>;

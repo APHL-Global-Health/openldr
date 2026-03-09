@@ -119,7 +119,7 @@ export async function handleMessage(kafkaMessage: any) {
 
     const { plugin, selection } = await pluginService.resolvePluginSelection({
       pluginID: dataFeed.schemaPluginId,
-      pluginType: "schema",
+      pluginType: "validation",
       pluginVersion: dataFeed.schemaPlugin?.pluginVersion || null,
     });
 

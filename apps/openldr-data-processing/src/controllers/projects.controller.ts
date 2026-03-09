@@ -4,6 +4,7 @@
 //   app.use('/api/plugin-tests', pluginTestRouter);
 // ─────────────────────────────────────────────────────────────────────────────
 
+import fs from "fs";
 import { Router, type Request, type Response } from "express";
 import { db } from "@/lib/db.plugin.test";
 import { runPluginTest } from "@/services/plugin.runner.service";
@@ -140,14 +141,17 @@ router.post("/run", async (req: Request<{}, {}, RunPluginTestRequest>, res) => {
         `Validation plugin "${validationPluginId}" not found`,
         404,
       );
-    validation = { id: p.id, code: p.code };
+    const code = fs.readFileSync(p.code, "utf8");
+    validation = { id: p.id, code };
   }
 
   if (mappingPluginId) {
     const p = await db.getPluginById(mappingPluginId);
     if (!p)
       return err(res, `Mapping plugin "${mappingPluginId}" not found`, 404);
-    mapping = { id: p.id, code: p.code };
+
+    const code = fs.readFileSync(p.code, "utf8");
+    mapping = { id: p.id, code };
   }
 
   try {
