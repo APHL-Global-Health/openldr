@@ -278,23 +278,17 @@ function ProjectsPage() {
       if (successful.length > 0) {
         if (effectiveTable === "projects") {
           actions.selectProject(undefined);
+          actions.refreshProjects();
         } else if (effectiveTable === "useCases") {
           actions.selectUseCase(undefined);
+          actions.refreshUseCases();
         } else if (effectiveTable === "dataFeeds") {
           actions.selectFeed(undefined);
+          actions.refreshDataFeeds();
         }
       }
 
-      actions.refreshProjects();
-      if (state.selectedProjectId) {
-        actions.refreshUseCases();
-        if (state.selectedUseCaseId) {
-          actions.refreshDataFeeds();
-          if (state.selectedFeedId) {
-            actions.refreshPlugins();
-          }
-        }
-      }
+      actions.refreshPlugins();
 
       setEditMode(false);
       setRecordSheetOpen(false);
