@@ -30,7 +30,7 @@ export const LanguageSwitcher: React.FC = () => {
         <SelectTrigger className="flex flex-1 b-0 max-h-8 rounded border bg-transparent dark:bg-transparent">
           <SelectValue placeholder="" />
         </SelectTrigger>
-        <SelectContent>
+        <SelectContent side="bottom" avoidCollisions={false} position="popper">
           {SUPPORTED_LANGUAGES.map((lang) => (
             <SelectItem key={lang.code} value={lang.code}>
               {lang.flag} {lang.nativeName}

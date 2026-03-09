@@ -223,7 +223,12 @@ function ProjectsPage() {
                 <SelectTrigger className="flex flex-1 rounded-sm text-sm focus-visible:outline-none">
                   <SelectValue placeholder="Project" />
                 </SelectTrigger>
-                <SelectContent className="rounded-xs">
+                <SelectContent
+                  className="rounded-xs"
+                  side="bottom"
+                  avoidCollisions={false}
+                  position="popper"
+                >
                   <SelectGroup>
                     {state.projects?.map((project: any) => {
                       return (
@@ -263,7 +268,12 @@ function ProjectsPage() {
                 >
                   <SelectValue placeholder="Use Case" />
                 </SelectTrigger>
-                <SelectContent className="rounded-xs">
+                <SelectContent
+                  className="rounded-xs"
+                  side="bottom"
+                  avoidCollisions={false}
+                  position="popper"
+                >
                   <SelectGroup>
                     {state.useCases?.map((useCase: any) => {
                       return (
@@ -275,7 +285,9 @@ function ProjectsPage() {
                   </SelectGroup>
                 </SelectContent>
               </Select>
-              <ButtonGroupSeparator className="border-border bg-border" />
+              <div className="flex justify-center items-center min-h-9 max-h-9 w-[0.5px]">
+                <div className="flex bg-border min-h-7 max-h-7  w-[0.5px]"></div>
+              </div>
               <Button
                 disabled={!state.selectedProjectId}
                 variant="outline"
@@ -304,7 +316,12 @@ function ProjectsPage() {
                 >
                   <SelectValue placeholder="Data Feed" />
                 </SelectTrigger>
-                <SelectContent className="rounded-xs">
+                <SelectContent
+                  className="rounded-xs"
+                  side="bottom"
+                  avoidCollisions={false}
+                  position="popper"
+                >
                   <SelectGroup>
                     {state.dataFeeds?.map((dataFeed: any) => {
                       return (
@@ -316,7 +333,9 @@ function ProjectsPage() {
                   </SelectGroup>
                 </SelectContent>
               </Select>
-              <ButtonGroupSeparator className="border-border bg-border" />
+              <div className="flex justify-center items-center min-h-9 max-h-9 w-[0.5px]">
+                <div className="flex bg-border min-h-7 max-h-7  w-[0.5px]"></div>
+              </div>
               <Button
                 disabled={!state.selectedUseCaseId}
                 variant="outline"
@@ -354,7 +373,12 @@ function ProjectsPage() {
                   >
                     <SelectValue placeholder={s.label} />
                   </SelectTrigger>
-                  <SelectContent className="rounded-xs">
+                  <SelectContent
+                    className="rounded-xs"
+                    side="bottom"
+                    avoidCollisions={false}
+                    position="popper"
+                  >
                     <SelectGroup>
                       {state.plugins[s.key]?.map((plugin: any) => {
                         return (
@@ -374,7 +398,9 @@ function ProjectsPage() {
                     </SelectGroup>
                   </SelectContent>
                 </Select>
-                <ButtonGroupSeparator className="border-border bg-border" />
+                <div className="flex justify-center items-center min-h-9 max-h-9 w-[0.5px]">
+                  <div className="flex bg-border min-h-7 max-h-7  w-[0.5px]"></div>
+                </div>
                 <Button
                   disabled={!state.selectedFeedId}
                   variant="outline"

@@ -336,7 +336,11 @@ function ReportsPage() {
             <SelectTrigger className="w-full">
               <SelectValue placeholder={t("app:reports.title")} />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent
+              side="bottom"
+              avoidCollisions={false}
+              position="popper"
+            >
               <SelectGroup>
                 {REPORTS.map((report) => (
                   <SelectItem key={report.id} value={report.id}>

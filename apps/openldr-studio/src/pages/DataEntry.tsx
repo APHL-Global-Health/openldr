@@ -390,7 +390,12 @@ function DataEntryPage() {
             <SelectTrigger className="focus:ring-0 w-50 h-8 justify-between ">
               <SelectValue placeholder={t("app:data_entry.forms")} />
             </SelectTrigger>
-            <SelectContent className="flex bg-background">
+            <SelectContent
+              className="flex bg-background"
+              side="bottom"
+              avoidCollisions={false}
+              position="popper"
+            >
               {(entryForms || []).map((value) => {
                 return (
                   <SelectItem
