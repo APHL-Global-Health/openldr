@@ -85,6 +85,7 @@ function ProjectsPage() {
   );
 
   const [isRecordSheetOpen, setRecordSheetOpen] = useState(false);
+  const [isEditMode, setEditMode] = useState(false);
 
   const {
     runStatus,
@@ -208,7 +209,7 @@ function ProjectsPage() {
             "archive",
             _data,
             client.kc.token,
-            !selectedRecordItem ? "POST" : "PUT",
+            !isEditMode ? "POST" : "PUT",
           );
         }),
       );
@@ -249,12 +250,19 @@ function ProjectsPage() {
         }
       }
 
+      setEditMode(false);
       setRecordSheetOpen(false);
     }
   };
 
-  const EditData = (schema: string, table: string, item: any = undefined) => {
+  const EditData = (
+    schema: string,
+    table: string,
+    item: any = undefined,
+    editMode: boolean = false,
+  ) => {
     console.log(schema, table, item);
+    setEditMode(editMode);
     setSchema(schema);
     setTable(table);
     setSelectedRecordItem(item);
@@ -335,7 +343,7 @@ function ProjectsPage() {
                         const item = state.projects.find(
                           (uc: any) => uc.projectId === state.selectedProjectId,
                         );
-                        EditData("Internal", "projects", item);
+                        EditData("Internal", "projects", item, true);
                       }}
                     >
                       <Pencil width={16} height={16} />
@@ -426,7 +434,7 @@ function ProjectsPage() {
                         const item = state.useCases.find(
                           (uc: any) => uc.useCaseId === state.selectedUseCaseId,
                         );
-                        EditData("Internal", "useCases", item);
+                        EditData("Internal", "useCases", item, true);
                       }}
                     >
                       <Pencil width={16} height={16} />
@@ -519,7 +527,7 @@ function ProjectsPage() {
                         const item = state.dataFeeds.find(
                           (df: any) => df.dataFeedId === state.selectedFeedId,
                         );
-                        EditData("Internal", "dataFeeds", item);
+                        EditData("Internal", "dataFeeds", item, true);
                       }}
                     >
                       <Pencil width={16} height={16} />
@@ -619,7 +627,7 @@ function ProjectsPage() {
                       <DropdownMenuItem
                         disabled={selectedPlugins[s.key] ? false : true}
                         onClick={() => {
-                          // EditData("Internal", "plugins", item);
+                          // EditData("Internal", "plugins", item, true);
                         }}
                       >
                         <Pencil width={16} height={16} />
