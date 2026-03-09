@@ -239,6 +239,68 @@ function ProjectsPage() {
     }
   };
 
+  const onDelete = async (data: any, _table?: string, _schema?: string) => {
+    const effectiveTable = _table ?? table;
+    const effectiveSchema = _schema ?? schema;
+    if (effectiveTable && effectiveSchema) {
+      const keys = [data];
+      console.log("onDelete", effectiveTable, effectiveSchema, data);
+      const results = await Promise.allSettled(
+        keys.map((item) => {
+          return manipulateData(
+            effectiveTable,
+            effectiveSchema,
+            "archive",
+            data,
+            client.kc.token,
+            "DELETE",
+          );
+        }),
+      );
+
+      // console.log("onDelete", results);
+
+      const successful = results.filter((r: any) => r.status === "fulfilled");
+      const failed = results.filter((r: any) => r.status === "rejected");
+      if (successful.length > 0) {
+        toast.success(`(${successful.length}) dleted successfully`, {
+          className: "bg-card text-card-foreground border-border",
+        });
+      }
+      if (failed.length > 0) {
+        toast.error(`Failed to delete. Please try again.`, {
+          className: "bg-card text-card-foreground border-border",
+        });
+      }
+      refetch();
+      setSelectedRecordItem(undefined);
+
+      if (successful.length > 0) {
+        if (effectiveTable === "projects") {
+          actions.selectProject(undefined);
+        } else if (effectiveTable === "useCases") {
+          actions.selectUseCase(undefined);
+        } else if (effectiveTable === "dataFeeds") {
+          actions.selectFeed(undefined);
+        }
+      }
+
+      actions.refreshProjects();
+      if (state.selectedProjectId) {
+        actions.refreshUseCases();
+        if (state.selectedUseCaseId) {
+          actions.refreshDataFeeds();
+          if (state.selectedFeedId) {
+            actions.refreshPlugins();
+          }
+        }
+      }
+
+      setEditMode(false);
+      setRecordSheetOpen(false);
+    }
+  };
+
   const EditData = (
     schema: string,
     table: string,
@@ -251,6 +313,12 @@ function ProjectsPage() {
     setTable(table);
     setSelectedRecordItem(item);
     setRecordSheetOpen(true);
+  };
+
+  const DeleteData = (schema: string, table: string, item: any = undefined) => {
+    setSchema(schema);
+    setTable(table);
+    onDelete(item, table, schema);
   };
 
   const navComponents = () => {
@@ -339,6 +407,11 @@ function ProjectsPage() {
                     <DropdownMenuItem
                       variant="destructive"
                       disabled={!state.selectedProjectId}
+                      onClick={() => {
+                        DeleteData("Internal", "projects", [
+                          state.selectedProjectId,
+                        ]);
+                      }}
                     >
                       <Trash2Icon />
                       Delete
@@ -431,7 +504,9 @@ function ProjectsPage() {
                       variant="destructive"
                       disabled={!state.selectedUseCaseId}
                       onClick={() => {
-                        //delete?
+                        DeleteData("Internal", "useCases", [
+                          state.selectedUseCaseId,
+                        ]);
                       }}
                     >
                       <Trash2Icon />
@@ -523,6 +598,11 @@ function ProjectsPage() {
                     <DropdownMenuItem
                       variant="destructive"
                       disabled={!state.selectedFeedId}
+                      onClick={() => {
+                        DeleteData("Internal", "dataFeeds", [
+                          state.selectedFeedId,
+                        ]);
+                      }}
                     >
                       <Trash2Icon />
                       Delete
@@ -623,6 +703,9 @@ function ProjectsPage() {
                       <DropdownMenuItem
                         variant="destructive"
                         disabled={selectedPlugins[s.key] ? false : true}
+                        onClick={() => {
+                          // DeleteData("Internal", "plugins",[selectedPlugins[s.key]]);
+                        }}
                       >
                         <Trash2Icon />
                         Delete
@@ -782,10 +865,7 @@ function ProjectsPage() {
             schema: schema || "",
           }}
           onSubmit={onSubmit}
-          onDelete={async (data: any) => {
-            console.log("Deleting data:", data);
-            // handle function
-          }}
+          onDelete={onDelete}
           onCleared={() => {
             // handle function
           }}
