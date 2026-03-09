@@ -130,8 +130,8 @@ router.post("/run", async (req: Request<{}, {}, RunPluginTestRequest>, res) => {
     );
 
   // Resolve plugin code from store
-  let validation: { id: string; code: string } | null = null;
-  let mapping: { id: string; code: string } | null = null;
+  let validation: { id: string; code: string; type: string } | null = null;
+  let mapping: { id: string; code: string; type: string } | null = null;
 
   if (validationPluginId) {
     const p = await db.getPluginById(validationPluginId);
@@ -142,7 +142,7 @@ router.post("/run", async (req: Request<{}, {}, RunPluginTestRequest>, res) => {
         404,
       );
     const code = fs.readFileSync(p.code, "utf8");
-    validation = { id: p.id, code };
+    validation = { id: p.id, code, type: p.slot };
   }
 
   if (mappingPluginId) {
@@ -151,7 +151,7 @@ router.post("/run", async (req: Request<{}, {}, RunPluginTestRequest>, res) => {
       return err(res, `Mapping plugin "${mappingPluginId}" not found`, 404);
 
     const code = fs.readFileSync(p.code, "utf8");
-    mapping = { id: p.id, code };
+    mapping = { id: p.id, code, type: p.slot };
   }
 
   try {

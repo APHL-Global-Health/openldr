@@ -29,6 +29,7 @@ const PLUGIN_TIMEOUT_MS = 8_000;
 // ── Low-level VM executor ────────────────────────────────────────────────────
 
 async function execPluginCode(
+  type: string,
   code: string,
   input: Record<string, unknown>,
 ): Promise<{ result: unknown; logs: string[] }> {
@@ -66,6 +67,43 @@ async function execPluginCode(
 
   vm.createContext(sandbox);
 
+  let vmExec: string = "";
+  if (type === "validation") {
+    vmExec = `
+      if (typeof validate !== 'function') throw new Error('Validation plugin must export an async function named \\'validate\\'');
+      if (typeof convert !== 'function') throw new Error('Validation plugin must export an async function named \\'convert\\'');
+
+      let res = validate(payload);
+      let checks = [];
+      let passed = true;
+
+      if (res.valid) {
+        checks.push({ rule: 'schema', status: 'pass', message: 'Validation passed' });
+      } else {
+        passed = false;
+        const details = res.details?.errors || [res.reason || 'Validation failed'];
+        for (const d of details) {
+          checks.push({ rule: 'schema', status: 'fail', message: String(d) });
+        }
+      }
+
+      let output = passed ? await convert(payload) : payload;
+      result = { passed, checks, output };
+    `;
+  } else if (type === "mapping") {
+    vmExec = `
+      if (typeof map !== 'function') throw new Error('Mapping plugin must export an async function named \\'map\\'');
+
+      result = map(payload);
+    `;
+  } else if (type === "outpost") {
+    vmExec = `
+      if (typeof run !== 'function') throw new Error('Outpost plugin must export an async function named \\'run\\'');
+
+      result = run(payload);
+    `;
+  }
+
   // Wrap the plugin body so it can declare `async function run(...)` then we
   // call it and store the awaited value in `result`.
   const script = new vm.Script(`
@@ -74,21 +112,12 @@ async function execPluginCode(
       var exports = module.exports;
 
       ${code}
-      if (typeof run !== 'function') throw new Error('Plugin must export an async function named \\'run\\'');
-      result = await run(payload);
+
+      ${vmExec}
 
       return module.exports;
     })();
   `);
-
-  // `
-  //   (function() {
-  //     var module = { exports: {} };
-  //     var exports = module.exports;
-  //     ${pluginSource}
-  //     return module.exports;
-  //   })();
-  // `
 
   // runInContext returns a Promise (the IIFE), we await it with a race timeout
   const p = script.runInContext(sandbox) as Promise<void>;
@@ -110,11 +139,12 @@ async function execPluginCode(
 // ── Stage runners ─────────────────────────────────────────────────────────────
 
 async function runValidation(
+  type: string,
   code: string,
   payload: Record<string, unknown>,
 ): Promise<ValidationStageResult> {
   const start = Date.now();
-  const { result, logs } = await execPluginCode(code, payload);
+  const { result, logs } = await execPluginCode(type, code, payload);
 
   const r = result as {
     passed: boolean;
@@ -142,11 +172,12 @@ async function runValidation(
 }
 
 async function runMapping(
+  type: string,
   code: string,
   payload: Record<string, unknown>,
 ): Promise<MappingStageResult> {
   const start = Date.now();
-  const { result, logs } = await execPluginCode(code, payload);
+  const { result, logs } = await execPluginCode(type, code, payload);
 
   const r = result as { output: Record<string, unknown> };
 
@@ -168,6 +199,7 @@ async function runMapping(
 export interface PluginRef {
   id: string;
   code: string;
+  type: string;
 }
 
 export interface RunTestOptions {
@@ -200,7 +232,11 @@ export async function runPluginTest(
   // ── Validation ──
   if (opts.validation) {
     try {
-      const vResult = await runValidation(opts.validation.code, currentPayload);
+      const vResult = await runValidation(
+        opts.validation.type,
+        opts.validation.code,
+        currentPayload,
+      );
       stages.validation = vResult;
       if (!vResult.passed || vResult.checks.some((c) => c.status === "fail")) {
         allPassed = false;
@@ -230,7 +266,11 @@ export async function runPluginTest(
   // ── Mapping ──
   if (opts.mapping) {
     try {
-      const mResult = await runMapping(opts.mapping.code, currentPayload);
+      const mResult = await runMapping(
+        opts.mapping.type,
+        opts.mapping.code,
+        currentPayload,
+      );
       stages.mapping = mResult;
     } catch (err) {
       stages.mapping = {

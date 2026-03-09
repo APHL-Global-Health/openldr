@@ -1,4 +1,4 @@
-function process(message) {
+function run(message) {
   return {
     success: true,
     action: 'noop',
@@ -7,4 +7,4 @@ function process(message) {
     message_id: message?._metadata?.message?.message_id || null,
   };
 }
-module.exports = { name: 'default-outpost', version: '1.0.0', status: 'active', process };
+module.exports = { name: 'default-outpost', version: '1.0.0', status: 'active', run };
