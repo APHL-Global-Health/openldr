@@ -18,10 +18,26 @@ import { useQuery } from "@tanstack/react-query";
 import type { TableData } from "./ArchivePage";
 
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+
+import { toast } from "sonner";
+
+import {
   ButtonGroup,
   ButtonGroupSeparator,
 } from "@/components/ui/button-group";
-import { Plus } from "lucide-react";
+import { MoreHorizontalIcon, Pencil, Plus, Trash2Icon } from "lucide-react";
 
 import {
   Select,
@@ -31,6 +47,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { manipulateData } from "@/lib/restClients/schemaRestClient";
 
 type ModalType = "project" | "usecase" | "feed" | "plugin";
 interface ModalState {
@@ -63,6 +80,10 @@ function ProjectsPage() {
   const [schema, setSchema] = useState<string | undefined>("Internal");
   const [table, setTable] = useState<string | undefined>("projects");
 
+  const [selectedRecordItem, setSelectedRecordItem] = useState<any | undefined>(
+    undefined,
+  );
+
   const [isRecordSheetOpen, setRecordSheetOpen] = useState(false);
 
   const {
@@ -76,7 +97,9 @@ function ProjectsPage() {
     error,
   } = state;
   const isRunning =
-    runStatus === "running-validation" || runStatus === "running-mapping";
+    runStatus === "running-validation" ||
+    runStatus === "running-mapping" ||
+    runStatus === "running-outpost";
 
   let parsedPayloadOk = false;
   try {
@@ -87,7 +110,9 @@ function ProjectsPage() {
   } catch {}
 
   const canRun =
-    (selectedPlugins.validation || selectedPlugins.mapping) &&
+    (selectedPlugins.validation ||
+      selectedPlugins.mapping ||
+      selectedPlugins.outpost) &&
     parsedPayloadOk &&
     !isRunning;
   const canSave = testResult?.allPassed && selectedFeedId && !savedOk;
@@ -198,6 +223,77 @@ function ProjectsPage() {
     },
   ];
 
+  const onSubmit = async (data: any) => {
+    let _data = data;
+    if (selectedRecordItem) {
+      _data = {
+        ...selectedRecordItem,
+        ...data,
+      };
+    }
+
+    if (table && schema) {
+      const keys = [_data];
+      const results = await Promise.allSettled(
+        keys.map((item) => {
+          return manipulateData(
+            table,
+            schema,
+            "archive",
+            _data,
+            client.kc.token,
+            !selectedRecordItem ? "POST" : "PUT",
+          );
+        }),
+      );
+
+      const successful = results.filter((r: any) => r.status === "fulfilled");
+      const failed = results.filter((r: any) => r.status === "rejected");
+      if (successful.length > 0) {
+        toast.success(
+          `(${successful.length}) ${
+            !selectedRecordItem ? "created" : "updated"
+          } successfully`,
+          {
+            className: "bg-card text-card-foreground border-border",
+          },
+        );
+      }
+      if (failed.length > 0) {
+        toast.error(
+          `Failed to ${
+            !selectedRecordItem ? "create" : "update"
+          }. Please try again.`,
+          {
+            className: "bg-card text-card-foreground border-border",
+          },
+        );
+      }
+      refetch();
+      setSelectedRecordItem(undefined);
+
+      actions.refreshProjects();
+      if (state.selectedProjectId) {
+        actions.refreshUseCases();
+        if (state.selectedUseCaseId) {
+          actions.refreshDataFeeds();
+          if (state.selectedFeedId) {
+            actions.refreshPlugins();
+          }
+        }
+      }
+
+      setRecordSheetOpen(false);
+    }
+  };
+
+  const addData = (schema: string, table: string) => {
+    setSchema(schema);
+    setTable(table);
+    setSelectedRecordItem(undefined);
+    setRecordSheetOpen(true);
+  };
+
   const navComponents = () => {
     return <h1 className="font-bold">{t("projects.title")}</h1>;
   };
@@ -240,18 +336,45 @@ function ProjectsPage() {
                   </SelectGroup>
                 </SelectContent>
               </Select>
-              <ButtonGroupSeparator />
-              <Button
-                variant="outline"
-                className="rounded-sm"
-                onClick={() => {
-                  setSchema("Internal");
-                  setTable("projects");
-                  setRecordSheetOpen(true);
-                }}
-              >
-                <Plus width={16} height={16} />
-              </Button>
+              <div className="flex justify-center items-center min-h-9 max-h-9 w-[0.5px]">
+                <div className="flex bg-border min-h-7 max-h-7  w-[0.5px]"></div>
+              </div>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    className="rounded-sm"
+                    variant="outline"
+                    size="icon"
+                    aria-label="More Options"
+                  >
+                    <MoreHorizontalIcon />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-40">
+                  <DropdownMenuGroup>
+                    <DropdownMenuItem
+                      onClick={() => addData("Internal", "projects")}
+                    >
+                      <Plus width={16} height={16} />
+                      New
+                    </DropdownMenuItem>
+                    <DropdownMenuItem disabled={!state.selectedProjectId}>
+                      <Pencil width={16} height={16} />
+                      Edit
+                    </DropdownMenuItem>
+                  </DropdownMenuGroup>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuGroup>
+                    <DropdownMenuItem
+                      variant="destructive"
+                      disabled={!state.selectedProjectId}
+                    >
+                      <Trash2Icon />
+                      Delete
+                    </DropdownMenuItem>
+                  </DropdownMenuGroup>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </ButtonGroup>
 
             <ButtonGroup className="w-full px-2 pb-2 focus-visible:outline-none">
@@ -288,18 +411,45 @@ function ProjectsPage() {
               <div className="flex justify-center items-center min-h-9 max-h-9 w-[0.5px]">
                 <div className="flex bg-border min-h-7 max-h-7  w-[0.5px]"></div>
               </div>
-              <Button
-                disabled={!state.selectedProjectId}
-                variant="outline"
-                className="rounded-sm"
-                onClick={() => {
-                  setSchema("Internal");
-                  setTable("useCases");
-                  setRecordSheetOpen(true);
-                }}
-              >
-                <Plus width={16} height={16} />
-              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger
+                  asChild
+                  disabled={!state.selectedProjectId}
+                >
+                  <Button
+                    className="rounded-sm"
+                    variant="outline"
+                    size="icon"
+                    aria-label="More Options"
+                  >
+                    <MoreHorizontalIcon />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-40">
+                  <DropdownMenuGroup>
+                    <DropdownMenuItem
+                      onClick={() => addData("Internal", "useCases")}
+                    >
+                      <Plus width={16} height={16} />
+                      New
+                    </DropdownMenuItem>
+                    <DropdownMenuItem disabled={!state.selectedUseCaseId}>
+                      <Pencil width={16} height={16} />
+                      Edit
+                    </DropdownMenuItem>
+                  </DropdownMenuGroup>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuGroup>
+                    <DropdownMenuItem
+                      variant="destructive"
+                      disabled={!state.selectedUseCaseId}
+                    >
+                      <Trash2Icon />
+                      Delete
+                    </DropdownMenuItem>
+                  </DropdownMenuGroup>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </ButtonGroup>
 
             <ButtonGroup className="w-full px-2 pb-2 focus-visible:outline-none">
@@ -336,18 +486,45 @@ function ProjectsPage() {
               <div className="flex justify-center items-center min-h-9 max-h-9 w-[0.5px]">
                 <div className="flex bg-border min-h-7 max-h-7  w-[0.5px]"></div>
               </div>
-              <Button
-                disabled={!state.selectedUseCaseId}
-                variant="outline"
-                className="rounded-sm"
-                onClick={() => {
-                  setSchema("Internal");
-                  setTable("dataFeeds");
-                  setRecordSheetOpen(true);
-                }}
-              >
-                <Plus width={16} height={16} />
-              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger
+                  asChild
+                  disabled={!state.selectedUseCaseId}
+                >
+                  <Button
+                    className="rounded-sm"
+                    variant="outline"
+                    size="icon"
+                    aria-label="More Options"
+                  >
+                    <MoreHorizontalIcon />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-40">
+                  <DropdownMenuGroup>
+                    <DropdownMenuItem
+                      onClick={() => addData("Internal", "dataFeeds")}
+                    >
+                      <Plus width={16} height={16} />
+                      New
+                    </DropdownMenuItem>
+                    <DropdownMenuItem disabled={!state.selectedFeedId}>
+                      <Pencil width={16} height={16} />
+                      Edit
+                    </DropdownMenuItem>
+                  </DropdownMenuGroup>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuGroup>
+                    <DropdownMenuItem
+                      variant="destructive"
+                      disabled={!state.selectedFeedId}
+                    >
+                      <Trash2Icon />
+                      Delete
+                    </DropdownMenuItem>
+                  </DropdownMenuGroup>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </ButtonGroup>
 
             {/* Divider */}
@@ -401,18 +578,52 @@ function ProjectsPage() {
                 <div className="flex justify-center items-center min-h-9 max-h-9 w-[0.5px]">
                   <div className="flex bg-border min-h-7 max-h-7  w-[0.5px]"></div>
                 </div>
-                <Button
+                {/* <Button
                   disabled={!state.selectedFeedId}
                   variant="outline"
                   className="rounded-sm"
-                  onClick={() => {
-                    setSchema("Internal");
-                    setTable("plugins");
-                    setRecordSheetOpen(true);
-                  }}
+                  onClick={() => addData("Internal", "plugins")}
                 >
                   <Plus width={16} height={16} />
-                </Button>
+                </Button> */}
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild disabled={!state.selectedFeedId}>
+                    <Button
+                      className="rounded-sm"
+                      variant="outline"
+                      size="icon"
+                      aria-label="More Options"
+                    >
+                      <MoreHorizontalIcon />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-40">
+                    <DropdownMenuGroup>
+                      <DropdownMenuItem
+                        onClick={() => addData("Internal", "plugins")}
+                      >
+                        <Plus width={16} height={16} />
+                        New
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        disabled={selectedPlugins[s.key] ? false : true}
+                      >
+                        <Pencil width={16} height={16} />
+                        Edit
+                      </DropdownMenuItem>
+                    </DropdownMenuGroup>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuGroup>
+                      <DropdownMenuItem
+                        variant="destructive"
+                        disabled={selectedPlugins[s.key] ? false : true}
+                      >
+                        <Trash2Icon />
+                        Delete
+                      </DropdownMenuItem>
+                    </DropdownMenuGroup>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </ButtonGroup>
             ))}
           </div>
@@ -450,7 +661,7 @@ function ProjectsPage() {
               }
               ${savedOk ? "border-primary/50 bg-primary/15 text-primary" : ""}`}
             >
-              {saving ? "Saving…" : savedOk ? "✓ Saved" : "↓  Save Assignment"}
+              {saving ? "Saving…" : savedOk ? " Saved" : "  Save Assignment"}
             </Button>
 
             {/* {!canRun && !isRunning && (
@@ -462,11 +673,11 @@ function ProjectsPage() {
                   : "Select at least one plugin"}
               </p>
             )} */}
-            {testResult && !testResult.allPassed && (
+            {/* {testResult && !testResult.allPassed && (
               <p className="text-center  text-[9px] text-red-500">
                 Fix failures before saving
               </p>
-            )}
+            )} */}
           </div>
         </aside>
 
@@ -524,20 +735,20 @@ function ProjectsPage() {
               </div>
             </div>
 
-            {/* ── Validation + Mapping outputs ── */}
-            {SLOTS.filter((s) => s.key !== "outpost").map((s) => {
+            {/* ── Validation + Mapping + Outpost outputs ── */}
+            {SLOTS.map((s) => {
               const stageResult =
-                testResult?.stages[s.key as "validation" | "mapping"];
+                testResult?.stages[
+                  s.key as "validation" | "mapping" | "outpost"
+                ];
               const isStageRunning =
                 (s.key === "validation" &&
                   runStatus === "running-validation") ||
-                (s.key === "mapping" && runStatus === "running-mapping");
+                (s.key === "mapping" && runStatus === "running-mapping") ||
+                (s.key === "outpost" && runStatus === "running-outpost");
               const isDone = !!stageResult;
 
-              const outputData =
-                s.key === "validation"
-                  ? (testResult?.stages.validation as any)?.output ?? null
-                  : (testResult?.stages.mapping as any)?.output ?? null;
+              const outputData = (stageResult as any)?.output ?? null;
 
               const checks =
                 s.key === "validation"
@@ -560,39 +771,10 @@ function ProjectsPage() {
                 />
               );
             })}
-
-            {/* ── Outpost note ── */}
-            <div className="flex items-center gap-3 rounded-sm border border-dashed border-border bg-card px-4 py-3">
-              <span className="h-2 w-2 shrink-0 rounded-sm bg-border" />
-              <span className=" text-[10px]">
-                <span className="t">OUTPOST</span> · Not executed in test mode.
-                {selectedPlugins.outpost && (
-                  <span className="">
-                    {" "}
-                    Would forward to:{" "}
-                    {
-                      state.plugins.outpost.find(
-                        (o) => o.id === selectedPlugins.outpost,
-                      )?.name
-                    }
-                    .
-                  </span>
-                )}
-              </span>
-            </div>
           </div>
         </main>
 
         {/* ── Modal ─────────────────────────────────────────────────────────── */}
-        {/* {modal && (
-          <CreateModal
-            title={modalMeta[modal.type].title}
-            placeholder={modalMeta[modal.type].placeholder}
-            onConfirm={handleCreate}
-            onClose={() => setModal(null)}
-          />
-        )} */}
-
         <SchemaRecordSheet
           isOpen={isRecordSheetOpen}
           data={{
@@ -600,10 +782,9 @@ function ProjectsPage() {
             table: table || "",
             schema: schema || "",
           }}
-          onSubmit={() => {
-            // handle function
-          }}
-          onDelete={() => {
+          onSubmit={onSubmit}
+          onDelete={async (data: any) => {
+            console.log("Deleting data:", data);
             // handle function
           }}
           onCleared={() => {

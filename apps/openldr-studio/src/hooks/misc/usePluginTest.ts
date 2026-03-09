@@ -38,6 +38,7 @@ interface State {
     | "idle"
     | "running-validation"
     | "running-mapping"
+    | "running-outpost"
     | "done"
     | "error";
   testResult: RunPluginTestResponse | undefined;
@@ -244,6 +245,38 @@ export function usePluginTest(token: any, signal?: AbortSignal) {
 
   // ── Actions ──────────────────────────────────────────────────────────────────
 
+  const refreshProjects = useCallback(() => {
+    pluginTestApi
+      .getProjects(token, signal)
+      .then((p) => dispatch({ type: "SET_PROJECTS", projects: p }))
+      .catch(() => {});
+  }, [token, signal]);
+
+  const refreshUseCases = useCallback(() => {
+    if (!state.selectedProjectId) return;
+    pluginTestApi
+      .getUseCases(token, state.selectedProjectId, signal)
+      .then((u) => dispatch({ type: "SET_USE_CASES", useCases: u }))
+      .catch(() => {});
+  }, [token, signal, state.selectedProjectId]);
+
+  const refreshDataFeeds = useCallback(() => {
+    if (!state.selectedUseCaseId) return;
+    pluginTestApi
+      .getDataFeeds(token, state.selectedUseCaseId, signal)
+      .then((f) => dispatch({ type: "SET_FEEDS", feeds: f }))
+      .catch(() => {});
+  }, [token, signal, state.selectedUseCaseId]);
+
+  const refreshPlugins = useCallback(() => {
+    (["validation", "mapping", "outpost"] as PluginSlotType[]).forEach((slot) =>
+      pluginTestApi
+        .getPlugins(token, slot, signal)
+        .then((p) => dispatch({ type: "SET_PLUGINS", slot, plugins: p }))
+        .catch(() => {}),
+    );
+  }, [token, signal]);
+
   const createProject = useCallback(async (name: string) => {
     const p = await pluginTestApi.createProject(token, name, signal);
     dispatch({ type: "ADD_PROJECT", project: p });
@@ -288,7 +321,7 @@ export function usePluginTest(token: any, signal?: AbortSignal) {
   const runTest = useCallback(async () => {
     const { payload, selectedPlugins } = state;
     if (!payload.trim()) return;
-    if (!selectedPlugins.validation && !selectedPlugins.mapping) return;
+    if (!selectedPlugins.validation && !selectedPlugins.mapping && !selectedPlugins.outpost) return;
 
     abortRef.current?.abort();
     dispatch({ type: "RUN_START" });
@@ -351,6 +384,10 @@ export function usePluginTest(token: any, signal?: AbortSignal) {
       createPlugin,
       runTest,
       saveAssignment,
+      refreshProjects,
+      refreshUseCases,
+      refreshDataFeeds,
+      refreshPlugins,
       clearError: () => dispatch({ type: "CLEAR_ERROR" }),
     },
   };

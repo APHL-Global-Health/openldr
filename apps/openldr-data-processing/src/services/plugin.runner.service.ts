@@ -100,7 +100,7 @@ async function execPluginCode(
     vmExec = `
       if (typeof run !== 'function') throw new Error('Outpost plugin must export an async function named \\'run\\'');
 
-      result = await run(payload);
+      result = { output: await run(payload) };
     `;
   }
 
@@ -229,7 +229,7 @@ export interface RunTestOptions {
   payload: string;
   validation?: PluginRef | null;
   mapping?: PluginRef | null;
-  // outpost is skipped in test mode — just noted
+  outpost?: PluginRef | null;
 }
 
 export async function runPluginTest(
@@ -296,8 +296,30 @@ export async function runPluginTest(
       );
 
       stages.mapping = mResult;
+      currentPayload = mResult.output;
     } catch (err) {
       stages.mapping = {
+        output: {},
+        logs: [(err as Error).message],
+        durationMs: 0,
+      };
+      allPassed = false;
+      return { ok: true, stages, allPassed };
+    }
+  }
+
+  // ── Outpost ──
+  if (opts.outpost) {
+    try {
+      const oResult = await runOutpost(
+        opts.outpost.type,
+        opts.outpost.code,
+        currentPayload,
+      );
+
+      stages.outpost = oResult;
+    } catch (err) {
+      stages.outpost = {
         output: {},
         logs: [(err as Error).message],
         durationMs: 0,

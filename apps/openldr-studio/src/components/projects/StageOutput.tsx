@@ -105,7 +105,7 @@ export function StageOutput({
                     : "text-red-400"
                 }`}
               >
-                {c.status === "pass" ? "✓" : c.status === "warn" ? "⚠" : "✗"}
+                {/* {c.status === "pass" ? "✓" : c.status === "warn" ? "⚠" : "✗"} */}
               </span>
               <span className=" text-[10px] ">{c.rule}</span>
               <span className="ml-auto  text-[10px] ">{c.message}</span>
@@ -115,7 +115,7 @@ export function StageOutput({
       )}
 
       {/* JSON output */}
-      <div className="min-h-[60px] p-4  text-[11px] leading-relaxed ">
+      <div className="min-h-15 max-h-44 overflow-y-auto p-4  text-[11px] leading-relaxed ">
         {!done && !running && (
           <span className="text-muted-foreground">— awaiting run —</span>
         )}

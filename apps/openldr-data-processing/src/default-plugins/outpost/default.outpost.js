@@ -1,4 +1,5 @@
 function run(message) {
+  console.log("Default outpost plugin executed with message:", message);
   return {
     success: true,
     action: 'noop',

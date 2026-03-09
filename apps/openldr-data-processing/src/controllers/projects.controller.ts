@@ -120,18 +120,19 @@ router.get("/plugins", async (req, res) => {
  * Returns per-stage results + allPassed flag.
  */
 router.post("/run", async (req: Request<{}, {}, RunPluginTestRequest>, res) => {
-  const { payload, validationPluginId, mappingPluginId } = req.body;
+  const { payload, validationPluginId, mappingPluginId, outpostPluginId } = req.body;
 
   if (!payload?.trim()) return err(res, "payload is required");
-  if (!validationPluginId && !mappingPluginId)
+  if (!validationPluginId && !mappingPluginId && !outpostPluginId)
     return err(
       res,
-      "At least one of validationPluginId or mappingPluginId is required",
+      "At least one of validationPluginId, mappingPluginId, or outpostPluginId is required",
     );
 
   // Resolve plugin code from store
   let validation: { id: string; code: string; type: string } | null = null;
   let mapping: { id: string; code: string; type: string } | null = null;
+  let outpost: { id: string; code: string; type: string } | null = null;
 
   if (validationPluginId) {
     const p = await db.getPluginById(validationPluginId);
@@ -154,8 +155,17 @@ router.post("/run", async (req: Request<{}, {}, RunPluginTestRequest>, res) => {
     mapping = { id: p.id, code, type: p.slot };
   }
 
+  if (outpostPluginId) {
+    const p = await db.getPluginById(outpostPluginId);
+    if (!p)
+      return err(res, `Outpost plugin "${outpostPluginId}" not found`, 404);
+
+    const code = fs.readFileSync(p.code, "utf8");
+    outpost = { id: p.id, code, type: p.slot };
+  }
+
   try {
-    const result = await runPluginTest({ payload, validation, mapping });
+    const result = await runPluginTest({ payload, validation, mapping, outpost });
     res.json(result);
   } catch (e) {
     console.error("[plugin-test] run error:", e);

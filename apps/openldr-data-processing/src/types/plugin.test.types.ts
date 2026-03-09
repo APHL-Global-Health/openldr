@@ -81,6 +81,7 @@ export interface RunPluginTestResponse {
   stages: {
     validation?: ValidationStageResult;
     mapping?: MappingStageResult;
+    outpost?: MappingStageResult;
   };
   /** True when every executed stage passed with no failures */
   allPassed: boolean;
