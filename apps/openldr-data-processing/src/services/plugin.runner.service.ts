@@ -94,13 +94,13 @@ async function execPluginCode(
     vmExec = `
       if (typeof map !== 'function') throw new Error('Mapping plugin must export an async function named \\'map\\'');
 
-      result = map(payload);
+      result = { output: await map(payload) };
     `;
   } else if (type === "outpost") {
     vmExec = `
       if (typeof run !== 'function') throw new Error('Outpost plugin must export an async function named \\'run\\'');
 
-      result = run(payload);
+      result = await run(payload);
     `;
   }
 
@@ -194,6 +194,29 @@ async function runMapping(
   };
 }
 
+async function runOutpost(
+  type: string,
+  code: string,
+  payload: Record<string, unknown>,
+): Promise<MappingStageResult> {
+  const start = Date.now();
+  const { result, logs } = await execPluginCode(type, code, payload);
+
+  const r = result as { output: Record<string, unknown> };
+
+  if (!r?.output || typeof r.output !== "object") {
+    throw new Error(
+      "Outpost plugin returned unexpected shape. Expected { output }",
+    );
+  }
+
+  return {
+    output: r.output,
+    logs,
+    durationMs: Date.now() - start,
+  };
+}
+
 // ── Public orchestrator ───────────────────────────────────────────────────────
 
 export interface PluginRef {
@@ -271,6 +294,7 @@ export async function runPluginTest(
         opts.mapping.code,
         currentPayload,
       );
+
       stages.mapping = mResult;
     } catch (err) {
       stages.mapping = {
