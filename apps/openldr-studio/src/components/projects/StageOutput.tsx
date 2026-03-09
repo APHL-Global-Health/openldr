@@ -37,7 +37,7 @@ export function StageOutput({
       <div
         className={`flex items-center justify-between border-b px-4 py-2.5 transition-colors duration-300 ${
           done
-            ? `${headerClass.replace("border-", "border-b-")} bg-white/[0.02]`
+            ? `${headerClass.replace("border-", "border-b-")} bg-white/2`
             : "border-slate-800/50"
         }`}
       >

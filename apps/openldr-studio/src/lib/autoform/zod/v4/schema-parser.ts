@@ -88,7 +88,6 @@ function parseField(key: string, schema: z.$ZodType): ParsedField {
       inputProps: {
         ...fieldConfig?.inputProps,
         readOnly: true,
-        disabled: true,
       },
     };
   }
