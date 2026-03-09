@@ -55,21 +55,6 @@ interface ModalState {
   slot?: PluginSlotType;
 }
 
-const SAMPLE_PAYLOAD = JSON.stringify(
-  {
-    patient_id: "TZ-KCMC-00421",
-    sample_date: "2025-11-12",
-    organism: "MRSA",
-    antibiotic: "OXA",
-    sir: "R",
-    mic: 8,
-    ward: "ICU",
-    specimen_type: "Blood",
-  },
-  null,
-  2,
-);
-
 function ProjectsPage() {
   const { t } = useAppTranslation();
 
@@ -726,13 +711,6 @@ function ProjectsPage() {
                   <span className=" text-[9px] ">JSON</span>
                 </div>
                 <div className="flex gap-2">
-                  <Button
-                    variant="ghost"
-                    onClick={() => actions.setPayload(SAMPLE_PAYLOAD)}
-                    className="rounded border border-border px-2 py-0.5  text-[9px]"
-                  >
-                    SAMPLE
-                  </Button>
                   <Button
                     variant="ghost"
                     onClick={() => actions.setPayload("")}
