@@ -411,7 +411,11 @@ function ProjectsPage() {
                 <DropdownMenuContent align="end" className="w-40">
                   <DropdownMenuGroup>
                     <DropdownMenuItem
-                      onClick={() => EditData("Internal", "useCases")}
+                      onClick={() =>
+                        EditData("Internal", "useCases", {
+                          projectId: state.selectedProjectId,
+                        })
+                      }
                     >
                       <Plus width={16} height={16} />
                       New
@@ -422,7 +426,6 @@ function ProjectsPage() {
                         const item = state.useCases.find(
                           (uc: any) => uc.useCaseId === state.selectedUseCaseId,
                         );
-                        console.log(state.selectedUseCaseId, item);
                         EditData("Internal", "useCases", item);
                       }}
                     >
@@ -501,7 +504,11 @@ function ProjectsPage() {
                 <DropdownMenuContent align="end" className="w-40">
                   <DropdownMenuGroup>
                     <DropdownMenuItem
-                      onClick={() => EditData("Internal", "dataFeeds")}
+                      onClick={() =>
+                        EditData("Internal", "dataFeeds", {
+                          useCaseId: state.selectedUseCaseId,
+                        })
+                      }
                     >
                       <Plus width={16} height={16} />
                       New
