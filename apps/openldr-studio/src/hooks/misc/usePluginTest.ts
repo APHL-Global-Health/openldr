@@ -111,7 +111,7 @@ function reducer(s: State, a: Action): State {
       return {
         ...s,
         projects: [...s.projects, a.project],
-        selectedProjectId: a.project.id,
+        selectedProjectId: a.project.projectId,
         selectedUseCaseId: undefined,
         selectedFeedId: undefined,
       };
@@ -119,14 +119,14 @@ function reducer(s: State, a: Action): State {
       return {
         ...s,
         useCases: [...s.useCases, a.useCase],
-        selectedUseCaseId: a.useCase.id,
+        selectedUseCaseId: a.useCase.useCaseId,
         selectedFeedId: undefined,
       };
     case "ADD_FEED":
       return {
         ...s,
         dataFeeds: [...s.dataFeeds, a.feed],
-        selectedFeedId: a.feed.id,
+        selectedFeedId: a.feed.dataFeedId,
       };
     case "ADD_PLUGIN":
       return {
@@ -143,7 +143,11 @@ function reducer(s: State, a: Action): State {
         selectedFeedId: undefined,
         useCases: [],
         dataFeeds: [],
-        selectedPlugins: { validation: undefined, mapping: undefined, outpost: undefined },
+        selectedPlugins: {
+          validation: undefined,
+          mapping: undefined,
+          outpost: undefined,
+        },
         testResult: undefined,
         runStatus: "idle",
         savedOk: false,
@@ -154,7 +158,11 @@ function reducer(s: State, a: Action): State {
         selectedUseCaseId: a.id,
         selectedFeedId: undefined,
         dataFeeds: [],
-        selectedPlugins: { validation: undefined, mapping: undefined, outpost: undefined },
+        selectedPlugins: {
+          validation: undefined,
+          mapping: undefined,
+          outpost: undefined,
+        },
         testResult: undefined,
         runStatus: "idle",
         savedOk: false,
@@ -163,7 +171,11 @@ function reducer(s: State, a: Action): State {
       return {
         ...s,
         selectedFeedId: a.id,
-        selectedPlugins: { validation: undefined, mapping: undefined, outpost: undefined },
+        selectedPlugins: {
+          validation: undefined,
+          mapping: undefined,
+          outpost: undefined,
+        },
         testResult: undefined,
         runStatus: "idle",
         savedOk: false,
@@ -336,7 +348,12 @@ export function usePluginTest(token: any, signal?: AbortSignal) {
   const runTest = useCallback(async () => {
     const { payload, selectedPlugins } = state;
     if (!payload.trim()) return;
-    if (!selectedPlugins.validation && !selectedPlugins.mapping && !selectedPlugins.outpost) return;
+    if (
+      !selectedPlugins.validation &&
+      !selectedPlugins.mapping &&
+      !selectedPlugins.outpost
+    )
+      return;
 
     abortRef.current?.abort();
     dispatch({ type: "RUN_START" });

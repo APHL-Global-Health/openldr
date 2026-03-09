@@ -4,23 +4,33 @@ export type PluginSlotType = "validation" | "mapping" | "outpost" | "storage";
 // ── Domain entities ───────────────────────────────────────────────────────────
 
 export interface Project {
-  id: string;
-  name: string;
+  projectId: string;
+  projectName: string;
+  description: string;
+  isEnabled: boolean;
   createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface UseCase {
-  id: string;
+  useCaseId: string;
   projectId: string;
-  name: string;
+  useCaseName: string;
+  description: string;
+  isEnabled: boolean;
   createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface DataFeed {
-  id: string;
+  dataFeedId: string;
   useCaseId: string;
-  name: string;
+  dataFeedName: string;
   createdAt?: string;
+  updatedAt?: string;
+  schemaPluginId?: string;
+  mapperPluginId?: string;
+  recipientPluginId?: string;
 }
 
 export interface Plugin {

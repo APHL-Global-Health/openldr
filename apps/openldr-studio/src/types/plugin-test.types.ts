@@ -2,29 +2,39 @@
 // packages/types/src/plugin-test.types.ts
 // ─────────────────────────────────────────────────────────────────────────────
 
-export type PluginStatus = 'active' | 'draft' | 'inactive';
-export type PluginSlotType = 'validation' | 'mapping' | 'outpost';
+export type PluginStatus = "active" | "draft" | "inactive";
+export type PluginSlotType = "validation" | "mapping" | "outpost";
 
 // ── Domain entities ───────────────────────────────────────────────────────────
 
 export interface Project {
-  id: string;
-  name: string;
+  projectId: string;
+  projectName: string;
+  description: string;
+  isEnabled: boolean;
   createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface UseCase {
-  id: string;
+  useCaseId: string;
   projectId: string;
-  name: string;
+  useCaseName: string;
+  description: string;
+  isEnabled: boolean;
   createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface DataFeed {
-  id: string;
+  dataFeedId: string;
   useCaseId: string;
-  name: string;
+  dataFeedName: string;
   createdAt?: string;
+  updatedAt?: string;
+  schemaPluginId?: string;
+  mapperPluginId?: string;
+  recipientPluginId?: string;
 }
 
 export interface Plugin {
@@ -49,7 +59,7 @@ export interface DataFeedPluginAssignment {
 
 export interface CheckResult {
   rule: string;
-  status: 'pass' | 'warn' | 'fail';
+  status: "pass" | "warn" | "fail";
   message: string;
 }
 
@@ -104,7 +114,19 @@ export interface SavePluginAssignmentResponse {
   assignment: DataFeedPluginAssignment;
 }
 
-export interface CreateProjectRequest { name: string }
-export interface CreateUseCaseRequest  { name: string; projectId: string }
-export interface CreateDataFeedRequest { name: string; useCaseId: string }
-export interface CreatePluginRequest   { name: string; slot: PluginSlotType; code?: string }
+export interface CreateProjectRequest {
+  name: string;
+}
+export interface CreateUseCaseRequest {
+  name: string;
+  projectId: string;
+}
+export interface CreateDataFeedRequest {
+  name: string;
+  useCaseId: string;
+}
+export interface CreatePluginRequest {
+  name: string;
+  slot: PluginSlotType;
+  code?: string;
+}

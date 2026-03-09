@@ -254,6 +254,7 @@ function ProjectsPage() {
   };
 
   const EditData = (schema: string, table: string, item: any = undefined) => {
+    console.log(schema, table, item);
     setSchema(schema);
     setTable(table);
     setSelectedRecordItem(item);
@@ -295,8 +296,8 @@ function ProjectsPage() {
                   <SelectGroup>
                     {state.projects?.map((project: any) => {
                       return (
-                        <SelectItem value={project.id}>
-                          {project.name}
+                        <SelectItem value={project.projectId}>
+                          {project.projectName}
                         </SelectItem>
                       );
                     })}
@@ -332,7 +333,7 @@ function ProjectsPage() {
                       disabled={!state.selectedProjectId}
                       onClick={() => {
                         const item = state.projects.find(
-                          (uc: any) => uc.id === state.selectedProjectId,
+                          (uc: any) => uc.projectId === state.selectedProjectId,
                         );
                         EditData("Internal", "projects", item);
                       }}
@@ -381,8 +382,8 @@ function ProjectsPage() {
                   <SelectGroup>
                     {state.useCases?.map((useCase: any) => {
                       return (
-                        <SelectItem value={useCase.id}>
-                          {useCase.name}
+                        <SelectItem value={useCase.useCaseId}>
+                          {useCase.useCaseName}
                         </SelectItem>
                       );
                     })}
@@ -410,12 +411,7 @@ function ProjectsPage() {
                 <DropdownMenuContent align="end" className="w-40">
                   <DropdownMenuGroup>
                     <DropdownMenuItem
-                      onClick={() => {
-                        const item = state.useCases.find(
-                          (uc: any) => uc.id === state.selectedUseCaseId,
-                        );
-                        EditData("Internal", "useCases", item);
-                      }}
+                      onClick={() => EditData("Internal", "useCases")}
                     >
                       <Plus width={16} height={16} />
                       New
@@ -424,8 +420,9 @@ function ProjectsPage() {
                       disabled={!state.selectedUseCaseId}
                       onClick={() => {
                         const item = state.useCases.find(
-                          (uc: any) => uc.id === state.selectedUseCaseId,
+                          (uc: any) => uc.useCaseId === state.selectedUseCaseId,
                         );
+                        console.log(state.selectedUseCaseId, item);
                         EditData("Internal", "useCases", item);
                       }}
                     >
@@ -476,8 +473,8 @@ function ProjectsPage() {
                   <SelectGroup>
                     {state.dataFeeds?.map((dataFeed: any) => {
                       return (
-                        <SelectItem value={dataFeed.id}>
-                          {dataFeed.name}
+                        <SelectItem value={dataFeed.dataFeedId}>
+                          {dataFeed.dataFeedName}
                         </SelectItem>
                       );
                     })}
@@ -504,12 +501,7 @@ function ProjectsPage() {
                 <DropdownMenuContent align="end" className="w-40">
                   <DropdownMenuGroup>
                     <DropdownMenuItem
-                      onClick={() => {
-                        const item = state.dataFeeds.find(
-                          (df: any) => df.id === state.selectedFeedId,
-                        );
-                        EditData("Internal", "dataFeeds", item);
-                      }}
+                      onClick={() => EditData("Internal", "dataFeeds")}
                     >
                       <Plus width={16} height={16} />
                       New
@@ -518,7 +510,7 @@ function ProjectsPage() {
                       disabled={!state.selectedFeedId}
                       onClick={() => {
                         const item = state.dataFeeds.find(
-                          (df: any) => df.id === state.selectedFeedId,
+                          (df: any) => df.dataFeedId === state.selectedFeedId,
                         );
                         EditData("Internal", "dataFeeds", item);
                       }}
@@ -620,15 +612,10 @@ function ProjectsPage() {
                       <DropdownMenuItem
                         disabled={selectedPlugins[s.key] ? false : true}
                         onClick={() => {
-                          const item = state.plugins[s.key].find(
-                            (df: any) => df.id === s.key,
-                          );
-                          console.log(
-                            "Editing plugin:",
-                            state.plugins[s.key],
-                            s,
-                          );
-                          EditData("Internal", "plugins", item);
+                          // const item = state.plugins[s.key].find(
+                          //   (df: any) => df.id === selectedPlugins[s.key],
+                          // );
+                          // EditData("Internal", "plugins", item);
                         }}
                       >
                         <Pencil width={16} height={16} />

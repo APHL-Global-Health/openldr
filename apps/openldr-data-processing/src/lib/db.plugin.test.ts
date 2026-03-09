@@ -5,7 +5,7 @@
 // Replace each exported function with your actual Sequelize model calls.
 // ─────────────────────────────────────────────────────────────────────────────
 
-import { v4 as uuid } from "uuid";
+// import { v4 as uuid } from "uuid";
 import type {
   Project,
   UseCase,
@@ -28,15 +28,11 @@ export const db = {
   getProjects: async (): Promise<Project[]> => {
     try {
       const sql = `
-        SELECT "projectId", "projectName", "createdAt"
+        SELECT *
         FROM "projects"
     `;
       const res = await pool.query(sql);
-      return res.rows.map((r) => ({
-        id: r.projectId,
-        name: r.projectName,
-        createdAt: r.createdAt,
-      }));
+      return res.rows;
     } catch (error: any) {
       logger.error(
         { error: error.message, stack: error.stack },
@@ -48,17 +44,13 @@ export const db = {
   getProject: async (id: string): Promise<Project | null> => {
     try {
       const sql = `
-        SELECT "projectId", "projectName", "createdAt"
+        SELECT *
         FROM "projects"
         WHERE "projectId" = $1;
     `;
       const res = await pool.query(sql, [id]);
       if (res.rowCount == 1) {
-        return {
-          id: res.rows[0].projectId,
-          name: res.rows[0].projectName,
-          createdAt: res.rows[0].createdAt,
-        };
+        return res.rows[0];
       }
 
       return null;
@@ -84,18 +76,13 @@ export const db = {
   getUseCases: async (projectId: string): Promise<UseCase[]> => {
     try {
       const sql = `
-        SELECT "useCaseId", "useCaseName", "projectId", "createdAt"
+        SELECT *
         FROM "useCases"
         WHERE "projectId" = $1;
       `;
       const res = await pool.query(sql, [projectId]);
 
-      return res.rows.map((row) => ({
-        id: row.useCaseId,
-        projectId: row.projectId,
-        name: row.useCaseName,
-        createdAt: row.createdAt,
-      }));
+      return res.rows;
     } catch (error: any) {
       logger.error(
         { error: error.message, stack: error.stack },
@@ -119,18 +106,13 @@ export const db = {
   getDataFeeds: async (useCaseId: string): Promise<DataFeed[]> => {
     try {
       const sql = `
-        SELECT "dataFeedId", "dataFeedName", "useCaseId", "createdAt"
+        SELECT *
         FROM "dataFeeds"
         WHERE "useCaseId" = $1;
       `;
       const res = await pool.query(sql, [useCaseId]);
 
-      return res.rows.map((row) => ({
-        id: row.dataFeedId,
-        useCaseId: row.useCaseId,
-        name: row.dataFeedName,
-        createdAt: row.createdAt,
-      }));
+      return res.rows;
     } catch (error: any) {
       logger.error(
         { error: error.message, stack: error.stack },

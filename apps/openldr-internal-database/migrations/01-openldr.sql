@@ -259,7 +259,7 @@ BEGIN
      true, NOW(), NOW()),
 
     (v_usecases, 'useCases', 'archive', 'Internal',
-     '{"$schema":"https://json-schema.org/draft/2020-12/schema","title":"useCases Schema","description":"From Internal","type":"object","properties":{"useCaseName":{"type":"string","maxLength":255},"projectId":{"type":["object","string"],"x-zodType":"reference","x-zodReference":{"table":"projects","key":"projectId","attributes":["projectName","description","isEnabled"]}},"description":{"type":"string","maxLength":255},"isEnabled":{"type":"boolean"}},"required":["useCaseName","projectId"],"additionalProperties":false}'::json,
+     '{"$schema":"https://json-schema.org/draft/2020-12/schema","title":"useCases Schema","description":"From Internal","type":"object","properties":{"projectId":{"type":"string","readOnly":true},"useCaseName":{"type":"string","maxLength":255},"description":{"type":"string","maxLength":255},"isEnabled":{"type":"boolean"}},"required":["useCaseName","projectId"],"additionalProperties":false}'::json,
      true, NOW(), NOW()),
 
     (v_plugins, 'plugins', 'archive', 'Internal',
@@ -275,7 +275,7 @@ BEGIN
      true, NOW(), NOW()),
 
     (v_datafeeds, 'dataFeeds', 'archive', 'Internal',
-     '{"$schema":"https://json-schema.org/draft/2020-12/schema","title":"dataFeeds Schema","description":"From Internal","type":"object","properties":{"dataFeedName":{"type":"string","maxLength":255},"schemaPluginId":{"type":["object","string"],"x-zodType":"reference","x-zodReference":{"table":"plugins","key":"pluginId","attributes":["pluginType","pluginName","pluginVersion","securityLevel"]}},"mapperPluginId":{"type":["object","string"],"x-zodType":"reference","x-zodReference":{"table":"plugins","key":"pluginId","attributes":["pluginType","pluginName","pluginVersion","securityLevel"]}},"recipientPluginId":{"type":["object","string"],"x-zodType":"reference","x-zodReference":{"table":"plugins","key":"pluginId","attributes":["pluginType","pluginName","pluginVersion","securityLevel"]}},"useCaseId":{"type":["object","string"],"x-zodType":"reference","x-zodReference":{"table":"useCases","key":"useCaseId","attributes":["useCaseName","description","isEnabled"]}},"isEnabled":{"type":"boolean"},"isProtected":{"type":"boolean"}},"required":["dataFeedName","useCaseId","isEnabled","isProtected"],"additionalProperties":false}'::json,
+     '{"$schema":"https://json-schema.org/draft/2020-12/schema","title":"dataFeeds Schema","description":"From Internal","type":"object","properties":{"useCaseId":{"type":"string","readOnly":true},"dataFeedName":{"type":"string","maxLength":255},"isEnabled":{"type":"boolean"},"isProtected":{"type":"boolean"}},"required":["dataFeedName","useCaseId","isEnabled","isProtected"],"additionalProperties":false}'::json,
      true, NOW(), NOW()),
 
     (v_formschemas, 'formSchemas', 'archive', 'Internal',
