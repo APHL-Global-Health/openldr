@@ -60,6 +60,9 @@ function ProjectsPage() {
   const { state, actions } = usePluginTest(client.kc.token);
   const [modal, setModal] = useState<ModalState | null>(null);
 
+  const [schema, setSchema] = useState<string | undefined>("Internal");
+  const [table, setTable] = useState<string | undefined>("projects");
+
   const [isRecordSheetOpen, setRecordSheetOpen] = useState(false);
 
   const {
@@ -89,26 +92,21 @@ function ProjectsPage() {
     !isRunning;
   const canSave = testResult?.allPassed && selectedFeedId && !savedOk;
 
-  const { data, refetch, isLoading, isRefetching } = useQuery<TableData>({
-    queryKey: ["Data", "ProjectsPage", "projects"],
+  const {
+    data: columns,
+    refetch,
+    isLoading,
+    isRefetching,
+  } = useQuery<TableData>({
+    queryKey: ["Data", "ProjectsPage", table, schema],
     queryFn: async () => {
-      const cols = await SchemaRestClient.getTableColumns(
-        "projects",
-        client.kc.token,
-      );
+      if (table && schema) {
+        const cols = await SchemaRestClient.getTableColumns(
+          table,
+          client.kc.token,
+        );
 
-      const msg = await SchemaRestClient.getTableData(
-        "projects",
-        {},
-        client.kc.token,
-      );
-
-      const { count, rows } = msg.data;
-
-      return {
-        totalPages: 1,
-        items: rows,
-        columns: (cols?.data || []).map((row) => {
+        return (cols?.data || []).map((row) => {
           return {
             id: row.Name,
             name: row.Name.replace(/([A-Z]+)/g, " $1") // Handle consecutive capitals
@@ -121,8 +119,9 @@ function ProjectsPage() {
             primaryKey: row.PrimaryKey || false,
             constraint: row.Constraint,
           };
-        }),
-      };
+        });
+      }
+      return [];
     },
     refetchInterval: false,
     refetchOnMount: true,
@@ -213,21 +212,15 @@ function ProjectsPage() {
         <aside className="flex w-72 shrink-0 flex-col overflow-hidden border-r border-border">
           {/* Scrollable content */}
           <div className="flex-1 overflow-y-auto py-3">
-            {/* <ContextDropdown
-              label="Project"
-              accentClass="border-border"
-              items={state.projects}
-              selectedId={state.selectedProjectId}
-              onSelect={actions.selectProject}
-              onAdd={() => {
-                setRecordSheetOpen(true);
-                // setModal({ type: "project" });
-              }}
-            /> */}
-
-            <ButtonGroup className="w-full px-2">
-              <Select onValueChange={actions.selectProject}>
-                <SelectTrigger className="flex flex-1 rounded-sm">
+            <ButtonGroup className="w-full px-2 pb-2 focus-visible:outline-none">
+              <Select
+                value={state.selectedProjectId || undefined}
+                onValueChange={(val) => {
+                  actions.selectProject(val);
+                  refetch();
+                }}
+              >
+                <SelectTrigger className="flex flex-1 rounded-sm text-sm focus-visible:outline-none">
                   <SelectValue placeholder="Project" />
                 </SelectTrigger>
                 <SelectContent className="rounded-xs">
@@ -247,22 +240,26 @@ function ProjectsPage() {
                 variant="outline"
                 className="rounded-sm"
                 onClick={() => {
+                  setSchema("Internal");
+                  setTable("projects");
                   setRecordSheetOpen(true);
                 }}
               >
-                <Plus />
+                <Plus width={16} height={16} />
               </Button>
             </ButtonGroup>
 
-            <ButtonGroup className="w-full px-2">
+            <ButtonGroup className="w-full px-2 pb-2 focus-visible:outline-none">
               <Select
+                value={state.selectedUseCaseId || undefined}
                 onValueChange={(val) => {
-                  state.selectedUseCaseId = val;
+                  actions.selectUseCase(val);
+                  refetch();
                 }}
               >
                 <SelectTrigger
                   disabled={!state.selectedProjectId}
-                  className="flex flex-1 rounded-sm"
+                  className="flex flex-1 rounded-sm text-sm focus-visible:outline-none"
                 >
                   <SelectValue placeholder="Use Case" />
                 </SelectTrigger>
@@ -278,36 +275,32 @@ function ProjectsPage() {
                   </SelectGroup>
                 </SelectContent>
               </Select>
-              <ButtonGroupSeparator />
+              <ButtonGroupSeparator className="border-border bg-border" />
               <Button
                 disabled={!state.selectedProjectId}
                 variant="outline"
                 className="rounded-sm"
                 onClick={() => {
+                  setSchema("Internal");
+                  setTable("useCases");
                   setRecordSheetOpen(true);
                 }}
               >
-                <Plus />
+                <Plus width={16} height={16} />
               </Button>
             </ButtonGroup>
 
-            {/* <ContextDropdown
-              label="Use Case"
-              accentClass="border-indigo-500"
-              items={state.useCases}
-              selectedId={state.selectedUseCaseId}
-              disabled={!state.selectedProjectId}
-              onSelect={actions.selectUseCase}
-              onAdd={() => setModal({ type: "usecase" })}
-            />
-
-            <div className="my-1.5 ml-5 border-l border-slate-900 py-1" /> */}
-
-            <ButtonGroup className="w-full px-2">
-              <Select onValueChange={actions.selectFeed}>
+            <ButtonGroup className="w-full px-2 pb-2 focus-visible:outline-none">
+              <Select
+                value={state.selectedFeedId || undefined}
+                onValueChange={(val) => {
+                  actions.selectFeed(val);
+                  refetch();
+                }}
+              >
                 <SelectTrigger
                   disabled={!state.selectedUseCaseId}
-                  className="flex flex-1 rounded-sm"
+                  className="flex flex-1 rounded-sm text-sm focus-visible:outline-none"
                 >
                   <SelectValue placeholder="Data Feed" />
                 </SelectTrigger>
@@ -323,28 +316,20 @@ function ProjectsPage() {
                   </SelectGroup>
                 </SelectContent>
               </Select>
-              <ButtonGroupSeparator />
+              <ButtonGroupSeparator className="border-border bg-border" />
               <Button
                 disabled={!state.selectedUseCaseId}
                 variant="outline"
                 className="rounded-sm"
                 onClick={() => {
+                  setSchema("Internal");
+                  setTable("dataFeeds");
                   setRecordSheetOpen(true);
                 }}
               >
-                <Plus />
+                <Plus width={16} height={16} />
               </Button>
             </ButtonGroup>
-
-            {/* <ContextDropdown
-              label="Data Feed"
-              accentClass="border-sky-500"
-              items={state.dataFeeds}
-              selectedId={state.selectedFeedId}
-              disabled={!state.selectedUseCaseId}
-              onSelect={actions.selectFeed}
-              onAdd={() => setModal({ type: "feed" })}
-            /> */}
 
             {/* Divider */}
             <div className="mx-3 my-4 border-t border-border" />
@@ -354,17 +339,66 @@ function ProjectsPage() {
               Pipeline Slots
             </p>
             {SLOTS.map((s, idx) => (
-              <PluginSlot
-                key={s.key}
-                index={idx + 1}
-                label={s.label}
-                dotClass={s.dot}
-                borderSelectedClass={s.border}
-                plugins={state.plugins[s.key]}
-                selectedId={selectedPlugins[s.key]}
-                onSelect={(id) => actions.selectPlugin(s.key, id)}
-                onAdd={() => setModal({ type: "plugin", slot: s.key })}
-              />
+              <ButtonGroup className="w-full px-2 pb-2 focus-visible:outline-none">
+                <Select
+                  key={s.key}
+                  value={selectedPlugins[s.key] || undefined}
+                  onValueChange={(val) => {
+                    actions.selectPlugin(s.key, val);
+                    // refetch();
+                  }}
+                >
+                  <SelectTrigger
+                    disabled={!state.selectedFeedId}
+                    className="flex flex-1 rounded-sm text-sm focus-visible:outline-none"
+                  >
+                    <SelectValue placeholder={s.label} />
+                  </SelectTrigger>
+                  <SelectContent className="rounded-xs">
+                    <SelectGroup>
+                      {state.plugins[s.key]?.map((plugin: any) => {
+                        return (
+                          <SelectItem value={plugin.id}>
+                            {/* {plugin.name} */}
+                            <div>
+                              <div className=" text-[11px] text-left truncate w-full">
+                                {plugin.name}
+                              </div>
+                              <div className=" text-[9px] text-left w-full">
+                                v{plugin.version}
+                              </div>
+                            </div>
+                          </SelectItem>
+                        );
+                      })}
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
+                <ButtonGroupSeparator className="border-border bg-border" />
+                <Button
+                  disabled={!state.selectedFeedId}
+                  variant="outline"
+                  className="rounded-sm"
+                  onClick={() => {
+                    setSchema("Internal");
+                    setTable("plugins");
+                    setRecordSheetOpen(true);
+                  }}
+                >
+                  <Plus width={16} height={16} />
+                </Button>
+              </ButtonGroup>
+              // <PluginSlot
+              //   key={s.key}
+              //   index={idx + 1}
+              //   label={s.label}
+              //   dotClass={s.dot}
+              //   borderSelectedClass={s.border}
+              //   plugins={state.plugins[s.key]}
+              //   selectedId={selectedPlugins[s.key]}
+              //   onSelect={(id) => actions.selectPlugin(s.key, id)}
+              //   onAdd={() => setModal({ type: "plugin", slot: s.key })}
+              // />
             ))}
           </div>
 
@@ -606,9 +640,9 @@ function ProjectsPage() {
         <SchemaRecordSheet
           isOpen={isRecordSheetOpen}
           data={{
-            columns: data ? data.columns : [],
-            table: "projects",
-            schema: "Internal",
+            columns: columns || [],
+            table: table || "",
+            schema: schema || "",
           }}
           onSubmit={() => {
             // handle function

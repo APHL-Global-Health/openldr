@@ -269,8 +269,37 @@ export const db = {
   },
 
   // Use cases
-  getUseCases: (projectId: string): UseCase[] =>
-    useCases.filter((u) => u.projectId === projectId),
+  getUseCases: async (projectId: string): Promise<UseCase[]> => {
+    try {
+      //   const sql = `
+      //     SELECT "useCaseId", "useCaseName", "createdAt"
+      //     FROM "useCases"
+      //     WHERE "projectId" = $1;
+      // `;
+      // const res = await pool.query(sql, [projectId]);
+      const sql = `
+        SELECT "useCaseId", "useCaseName", "createdAt"
+        FROM "useCases"
+    `;
+      const res = await pool.query(sql);
+
+      return res.rows.map((row) => {
+        return {
+          id: row.useCaseId,
+          projectId: row.projectId || projectId, // fallback to param if not in DB
+          name: row.useCaseName,
+          createdAt: row.createdAt,
+        };
+      });
+    } catch (error: any) {
+      logger.error(
+        { error: error.message, stack: error.stack },
+        "Database query error",
+      );
+      throw error;
+    }
+    // return useCases.filter((u) => u.projectId === projectId);
+  },
   createUseCase(name: string, projectId: string): UseCase {
     const u: UseCase = {
       id: uuid(),
@@ -283,8 +312,37 @@ export const db = {
   },
 
   // Data feeds
-  getDataFeeds: (useCaseId: string): DataFeed[] =>
-    dataFeeds.filter((f) => f.useCaseId === useCaseId),
+  getDataFeeds: async (useCaseId: string): Promise<DataFeed[]> => {
+    try {
+      //   const sql = `
+      //     SELECT "useCaseId", "useCaseName", "createdAt"
+      //     FROM "useCases"
+      //     WHERE "useCaseId" = $1;
+      // `;
+      // const res = await pool.query(sql, [projectId]);
+      const sql = `
+        SELECT "dataFeedId", "dataFeedName", "createdAt"
+        FROM "dataFeeds"
+    `;
+      const res = await pool.query(sql);
+
+      return res.rows.map((row) => {
+        return {
+          id: row.dataFeedId,
+          useCaseId: row.useCaseId || useCaseId, // fallback to param if not in DB
+          name: row.dataFeedName,
+          createdAt: row.createdAt,
+        };
+      });
+    } catch (error: any) {
+      logger.error(
+        { error: error.message, stack: error.stack },
+        "Database query error",
+      );
+      throw error;
+    }
+    //dataFeeds.filter((f) => f.useCaseId === useCaseId)
+  },
   createDataFeed(name: string, useCaseId: string): DataFeed {
     const f: DataFeed = {
       id: uuid(),
