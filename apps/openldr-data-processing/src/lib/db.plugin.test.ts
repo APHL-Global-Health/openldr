@@ -19,8 +19,6 @@ import { pool } from "../lib/db";
 import { logger } from "../lib/logger";
 import { BUNDLED_DEFAULT_PLUGINS } from "./constants";
 
-const assignments: DataFeedPluginAssignment[] = [];
-
 // ── Query helpers (swap these out for Sequelize model calls) ──────────────────
 
 export const db = {
@@ -284,7 +282,9 @@ export const db = {
       // Bundled plugins only exist in memory — their IDs are not in the plugins
       // table, so they would violate the FK constraint. Store null for those
       // columns; the runtime resolves bundled plugins by ID from memory.
-      const bundledIds = new Set(BUNDLED_DEFAULT_PLUGINS.map((p) => p.pluginId));
+      const bundledIds = new Set(
+        BUNDLED_DEFAULT_PLUGINS.map((p) => p.pluginId),
+      );
       const toDb = (id: string | null) =>
         id && !bundledIds.has(id) ? id : null;
 
