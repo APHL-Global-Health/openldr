@@ -1,16 +1,9 @@
-import fs from 'fs/promises';
-import path from 'path';
 import vm from 'vm';
-import { fileURLToPath } from 'url';
 import https from 'https';
 import http from 'http';
 import { logger } from '../lib/logger';
 import * as minioUtil from './minio.service';
 import * as pluginService from './plugin.service';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const projectRoot = path.resolve(__dirname, '..', '..');
 
 type PluginRecord = any;
 
@@ -116,13 +109,8 @@ async function readStreamToString(stream: any): Promise<string> {
 }
 
 export async function readPluginSource(plugin: PluginRecord): Promise<string> {
-  if (plugin?.bundledSourcePath) {
-    const sourcePath = path.resolve(projectRoot, plugin.bundledSourcePath);
-    return await fs.readFile(sourcePath, 'utf8');
-  }
-
   if (!plugin?.pluginMinioObjectPath) {
-    throw new Error(`Plugin ${plugin?.pluginId || plugin?.pluginName} does not have a source path`);
+    throw new Error(`Plugin ${plugin?.pluginId || plugin?.pluginName} does not have a MinIO object path`);
   }
 
   const pluginStream = await minioUtil.getObject({
@@ -148,7 +136,7 @@ export async function readPluginSourceWithFallback(pluginType: RuntimePluginType
       'Falling back to bundled default plugin source',
     );
 
-    const fallbackPlugin = pluginService.getBundledDefaultPlugin({ pluginType });
+    const fallbackPlugin = await pluginService.getDefaultBundledPluginFromDb({ pluginType });
     const pluginSource = await readPluginSource(fallbackPlugin);
     return { plugin: fallbackPlugin, pluginSource };
   }

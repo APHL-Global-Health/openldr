@@ -1,19 +1,7 @@
 import { pool } from "../lib/db";
 import { logger } from "../lib/logger";
 
-import { BUNDLED_DEFAULT_PLUGINS } from "../lib/constants";
 import type { PluginSlotType } from "@/types/plugin.test.types";
-
-function compareVersions(a: string, b: string) {
-  const ap = a.split(".").map((v) => Number.parseInt(v, 10) || 0);
-  const bp = b.split(".").map((v) => Number.parseInt(v, 10) || 0);
-  const max = Math.max(ap.length, bp.length);
-  for (let i = 0; i < max; i += 1) {
-    const diff = (ap[i] || 0) - (bp[i] || 0);
-    if (diff !== 0) return diff;
-  }
-  return 0;
-}
 
 export async function getPluginById({ pluginID }: { pluginID: string }) {
   try {
@@ -29,34 +17,55 @@ export async function getPluginById({ pluginID }: { pluginID: string }) {
   }
 }
 
-export function getBundledDefaultPlugin({
+export async function getDefaultBundledPluginFromDb({
   pluginType,
   pluginVersion,
 }: {
   pluginType: PluginSlotType;
   pluginVersion?: string | null;
 }) {
-  const candidates = BUNDLED_DEFAULT_PLUGINS.filter(
-    (plugin) => plugin.pluginType === pluginType,
-  ).filter(
-    (plugin) => plugin.status !== "inactive" && plugin.status !== "deprecated",
-  );
+  try {
+    let sql: string;
+    let params: any[];
 
-  if (pluginVersion) {
-    const exact = candidates.find(
-      (plugin) => plugin.pluginVersion === pluginVersion,
+    if (pluginVersion) {
+      sql = `
+        SELECT * FROM plugins
+        WHERE "pluginType" = $1
+          AND "pluginVersion" = $2
+          AND "isBundled" = true
+          AND status NOT IN ('inactive', 'deprecated')
+        LIMIT 1;
+      `;
+      params = [pluginType, pluginVersion];
+    } else {
+      sql = `
+        SELECT * FROM plugins
+        WHERE "pluginType" = $1
+          AND "isBundled" = true
+          AND status NOT IN ('inactive', 'deprecated')
+        ORDER BY "pluginVersion" DESC
+        LIMIT 1;
+      `;
+      params = [pluginType];
+    }
+
+    const res = await pool.query(sql, params);
+
+    if (res.rowCount === 0) {
+      throw new Error(
+        `No bundled default plugin found in database for type ${pluginType}`,
+      );
+    }
+
+    return res.rows[0];
+  } catch (error: any) {
+    logger.error(
+      { error: error.message, stack: error.stack, pluginType, pluginVersion },
+      "Failed to fetch default bundled plugin from database",
     );
-    if (exact) return exact;
+    throw error;
   }
-
-  const preferred = [...candidates].sort((a, b) =>
-    compareVersions(b.pluginVersion, a.pluginVersion),
-  )[0];
-  if (!preferred)
-    throw new Error(
-      `No bundled default plugin available for type ${pluginType}`,
-    );
-  return preferred;
 }
 
 export async function resolvePluginSelection({
@@ -100,7 +109,7 @@ export async function resolvePluginSelection({
     );
   }
 
-  const fallback = getBundledDefaultPlugin({ pluginType, pluginVersion });
+  const fallback = await getDefaultBundledPluginFromDb({ pluginType, pluginVersion });
   return {
     plugin: fallback,
     selection: {

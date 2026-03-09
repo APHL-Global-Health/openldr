@@ -63,6 +63,12 @@ type Action =
   | { type: "SELECT_USE_CASE"; id: string | undefined }
   | { type: "SELECT_FEED"; id: string | undefined }
   | { type: "SELECT_PLUGIN"; slot: PluginSlotType; id: string | undefined }
+  | {
+      type: "SET_ASSIGNMENT";
+      validationPluginId: string | null;
+      mappingPluginId: string | null;
+      outpostPluginId: string | null;
+    }
   | { type: "SET_PAYLOAD"; payload: string }
   | { type: "RUN_START" }
   | { type: "RUN_STAGE"; stage: "validation" | "mapping" }
@@ -188,6 +194,18 @@ function reducer(s: State, a: Action): State {
         runStatus: "idle",
         savedOk: false,
       };
+    case "SET_ASSIGNMENT":
+      return {
+        ...s,
+        selectedPlugins: {
+          validation: a.validationPluginId ?? undefined,
+          mapping: a.mappingPluginId ?? undefined,
+          outpost: a.outpostPluginId ?? undefined,
+        },
+        testResult: undefined,
+        runStatus: "idle",
+        savedOk: false,
+      };
 
     case "SET_PAYLOAD":
       return {
@@ -269,6 +287,24 @@ export function usePluginTest(token: any, signal?: AbortSignal) {
       .getDataFeeds(token, state.selectedUseCaseId, signal)
       .then((f) => dispatch({ type: "SET_FEEDS", feeds: f }));
   }, [state.selectedUseCaseId]);
+
+  // ── Cascade: load plugin assignment when feed changes ──
+  useEffect(() => {
+    if (!state.selectedFeedId) return;
+    pluginTestApi
+      .getAssignment(token, state.selectedFeedId, signal)
+      .then((a) =>
+        dispatch({
+          type: "SET_ASSIGNMENT",
+          validationPluginId: a.validationPluginId,
+          mappingPluginId: a.mappingPluginId,
+          outpostPluginId: a.outpostPluginId,
+        }),
+      )
+      .catch(() => {
+        // No assignment saved yet — leave plugins cleared
+      });
+  }, [state.selectedFeedId]);
 
   // ── Actions ──────────────────────────────────────────────────────────────────
 

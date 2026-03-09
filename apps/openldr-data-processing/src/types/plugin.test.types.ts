@@ -127,18 +127,3 @@ export interface CreatePluginRequest {
   code?: string;
 }
 
-// export type PluginType = "schema" | "mapper" | "storage" | "outpost";
-
-export type BundledPlugin = {
-  pluginId: string;
-  pluginType: PluginSlotType;
-  pluginName: string;
-  pluginVersion: string;
-  pluginMinioObjectPath: null;
-  securityLevel: "medium" | "low" | "high";
-  config: Record<string, any>;
-  notes: string;
-  status: PluginStatus;
-  bundledSourcePath: string;
-  isBundled: true;
-};

@@ -75,7 +75,6 @@ function ProjectsPage() {
 
   const client = useKeycloakClient();
   const { state, actions } = usePluginTest(client.kc.token);
-  const [modal, setModal] = useState<ModalState | null>(null);
 
   const [schema, setSchema] = useState<string | undefined>("Internal");
   const [table, setTable] = useState<string | undefined>("projects");

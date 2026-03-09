@@ -1,6 +1,9 @@
 import "dotenv/config";
 import path from "path";
+import os from "os";
 import { fileURLToPath } from "url";
+import { writeFileSync, unlinkSync } from "fs";
+import { execSync } from "child_process";
 import { services, MinioDocker } from "@repo/openldr-core";
 
 import type {
@@ -13,6 +16,85 @@ import type {
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+// ── Default plugin seed definitions ──────────────────────────────────────────
+// These are the canonical bundled plugins uploaded to MinIO and registered in
+// the database during system initialisation. The source files live in the
+// default-plugins/ directory next to this file.
+
+type SeedPlugin = {
+  pluginId: string;
+  pluginType: string;
+  pluginName: string;
+  pluginVersion: string;
+  /** Filename used for the MinIO object */
+  fileName: string;
+  /** Path relative to this file's directory */
+  localRelativePath: string;
+  securityLevel: "low" | "medium" | "high";
+  notes: string;
+  status: "active" | "draft" | "inactive" | "deprecated";
+};
+
+const DEFAULT_PLUGINS: SeedPlugin[] = [
+  {
+    pluginId: "7f7207f2-ed04-4e49-a566-6ed244dea111",
+    pluginType: "validation",
+    pluginName: "default-schema",
+    pluginVersion: "1.2.0",
+    fileName: "default.schema.js",
+    localRelativePath: "default-plugins/schema/default.schema.js",
+    securityLevel: "medium",
+    notes: "Bundled default schema plugin",
+    status: "active",
+  },
+  {
+    pluginId: "bb71232f-0d94-42b6-bca7-792eb954690e",
+    pluginType: "validation",
+    pluginName: "default-schema",
+    pluginVersion: "1.1.0",
+    fileName: "default.schema.1.1.0.js",
+    localRelativePath: "default-plugins/schema/default.schema.1.1.0.js",
+    securityLevel: "medium",
+    notes: "Bundled deprecated schema plugin",
+    status: "deprecated",
+  },
+  {
+    pluginId: "fbabe1c3-f563-4634-bb41-da53f88e6cf8",
+    pluginType: "mapping",
+    pluginName: "default-mapper",
+    pluginVersion: "1.2.0",
+    fileName: "default.mapper.js",
+    localRelativePath: "default-plugins/mapper/default.mapper.js",
+    securityLevel: "medium",
+    notes: "Bundled default mapper plugin",
+    status: "active",
+  },
+  {
+    pluginId: "6f31845c-41f9-422c-a773-d5a37d7eae2e",
+    pluginType: "storage",
+    pluginName: "default-storage",
+    pluginVersion: "1.2.0",
+    fileName: "default.storage.js",
+    localRelativePath: "default-plugins/storage/default.storage.js",
+    securityLevel: "medium",
+    notes: "Bundled default storage plugin",
+    status: "active",
+  },
+  {
+    pluginId: "83d52575-ecf6-4d86-aa8f-30480f883a5b",
+    pluginType: "outpost",
+    pluginName: "default-outpost",
+    pluginVersion: "1.0.0",
+    fileName: "default.outpost.js",
+    localRelativePath: "default-plugins/outpost/default.outpost.js",
+    securityLevel: "medium",
+    notes: "Bundled default outpost plugin",
+    status: "active",
+  },
+];
+
+// ── Minio services ────────────────────────────────────────────────────────────
 
 const minio_services: MinioService[] = [
   {
@@ -115,6 +197,88 @@ const minio = new MinioDocker(
   process.env.MINIO_ROOT_PASSWORD!,
 );
 
+// ── Default plugin seeding ────────────────────────────────────────────────────
+
+/**
+ * Writes SQL statements to a temp file, docker-copies it into the Postgres
+ * container, and runs it via psql. Avoids shell-escaping pitfalls with inline -c.
+ */
+const runSqlInPostgres = (sql: string): void => {
+  const tmpFile = path.join(os.tmpdir(), "openldr-plugin-seed.sql");
+  const pgUser = process.env.POSTGRES_USER || "postgres";
+  const pgDb = process.env.POSTGRES_DB || "openldr";
+
+  try {
+    writeFileSync(tmpFile, sql, "utf8");
+    execSync(`docker cp "${tmpFile}" openldr-postgres:/tmp/openldr-plugin-seed.sql`);
+    execSync(
+      `docker exec openldr-postgres psql -U "${pgUser}" -d "${pgDb}" -f /tmp/openldr-plugin-seed.sql`,
+    );
+  } finally {
+    unlinkSync(tmpFile);
+  }
+};
+
+/**
+ * Uploads each default plugin file to the MinIO plugins bucket and upserts
+ * its record in the database. Safe to run multiple times (idempotent).
+ */
+const seedDefaultPlugins = async (dir: string): Promise<void> => {
+  console.log("Seeding default plugins to MinIO and database");
+
+  const sqlStatements: string[] = [];
+
+  for (const plugin of DEFAULT_PLUGINS) {
+    const localPath = path.resolve(dir, plugin.localRelativePath);
+    const containerTmpPath = `/tmp/openldr-plugin-${plugin.pluginId}.js`;
+    const minioObjectPath = `${plugin.pluginId}/${plugin.fileName}`;
+
+    // 1. Copy plugin file from host into the MinIO container's /tmp
+    execSync(`docker cp "${localPath}" openldr-minio:${containerTmpPath}`);
+    console.log(`  Copied ${plugin.pluginName} v${plugin.pluginVersion} to container`);
+
+    // 2. Upload from container /tmp into the plugins bucket via mc
+    await minio.executeMinIOCommand([
+      "cp",
+      containerTmpPath,
+      `myminio/plugins/${minioObjectPath}`,
+    ]);
+    console.log(`  Uploaded to MinIO: plugins/${minioObjectPath}`);
+
+    // 3. Build upsert SQL — using $$ quoting for notes to avoid single-quote issues
+    sqlStatements.push(`
+INSERT INTO plugins (
+  "pluginId", "pluginType", "pluginName", "pluginVersion",
+  "pluginMinioObjectPath", "securityLevel", config, notes, status, "isBundled"
+) VALUES (
+  '${plugin.pluginId}',
+  '${plugin.pluginType}',
+  '${plugin.pluginName}',
+  '${plugin.pluginVersion}',
+  '${minioObjectPath}',
+  '${plugin.securityLevel}',
+  '{}',
+  $$${plugin.notes}$$,
+  '${plugin.status}',
+  true
+)
+ON CONFLICT ("pluginId") DO UPDATE SET
+  "pluginMinioObjectPath" = EXCLUDED."pluginMinioObjectPath",
+  "pluginVersion"         = EXCLUDED."pluginVersion",
+  status                  = EXCLUDED.status,
+  "isBundled"             = true;
+`);
+  }
+
+  // 4. Run all upserts in a single psql call
+  runSqlInPostgres(sqlStatements.join("\n"));
+  console.log("Default plugin database records upserted");
+
+  console.log("Default plugin seeding complete");
+};
+
+// ── Lifecycle commands ────────────────────────────────────────────────────────
+
 const setup = async (dir: string) => {
   console.log(`Running setup - ${dir}`);
 };
@@ -150,6 +314,8 @@ const start = async (dir: string) => {
     await minio.waitForContainerHealth(120000);
     await minio.createPluginsBucket();
 
+    await seedDefaultPlugins(dir);
+
     if (
       process.env.INCLUDE_TEST_DATA &&
       process.env.INCLUDE_TEST_DATA.toLowerCase().trim() == "true"
@@ -161,7 +327,7 @@ const start = async (dir: string) => {
     await minio.restartMinIOContainer(dir);
     await minio.waitForContainerHealth(120000);
 
-    console.log("Minio initialization complete`");
+    console.log("Minio initialization complete");
   } catch (error) {
     await console.log(`Init failed: ${error}`);
     process.exit(1);

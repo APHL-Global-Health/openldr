@@ -4,7 +4,6 @@
 //   app.use('/api/plugin-tests', pluginTestRouter);
 // ─────────────────────────────────────────────────────────────────────────────
 
-import fs from "fs";
 import { Router, type Request, type Response } from "express";
 import { db } from "@/lib/db.plugin.test";
 import { runPluginTest } from "@/services/plugin.runner.service";
@@ -142,8 +141,7 @@ router.post("/run", async (req: Request<{}, {}, RunPluginTestRequest>, res) => {
         `Validation plugin "${validationPluginId}" not found`,
         404,
       );
-    const code = fs.readFileSync(p.code, "utf8");
-    validation = { id: p.id, code, type: p.slot };
+    validation = { id: p.id, code: p.code, type: p.slot };
   }
 
   if (mappingPluginId) {
@@ -151,8 +149,7 @@ router.post("/run", async (req: Request<{}, {}, RunPluginTestRequest>, res) => {
     if (!p)
       return err(res, `Mapping plugin "${mappingPluginId}" not found`, 404);
 
-    const code = fs.readFileSync(p.code, "utf8");
-    mapping = { id: p.id, code, type: p.slot };
+    mapping = { id: p.id, code: p.code, type: p.slot };
   }
 
   if (outpostPluginId) {
@@ -160,8 +157,7 @@ router.post("/run", async (req: Request<{}, {}, RunPluginTestRequest>, res) => {
     if (!p)
       return err(res, `Outpost plugin "${outpostPluginId}" not found`, 404);
 
-    const code = fs.readFileSync(p.code, "utf8");
-    outpost = { id: p.id, code, type: p.slot };
+    outpost = { id: p.id, code: p.code, type: p.slot };
   }
 
   try {

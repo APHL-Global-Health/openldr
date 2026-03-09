@@ -48,6 +48,13 @@ CREATE TYPE "enum_plugins_securityLevel" AS ENUM (
     'high'
 );
 
+CREATE TYPE "enum_plugins_status" AS ENUM (
+    'active',
+    'draft',
+    'inactive',
+    'deprecated'
+);
+
 -- ============================================================
 -- TABLES
 -- ============================================================
@@ -151,6 +158,8 @@ CREATE TABLE plugins (
     "securityLevel"          "enum_plugins_securityLevel" DEFAULT 'high' NOT NULL,
     config                   jsonb,
     notes                    varchar(2000),
+    status                   "enum_plugins_status" NOT NULL DEFAULT 'active',
+    "isBundled" boolean NOT NULL DEFAULT false,
     "createdAt"              timestamptz(6) NOT NULL DEFAULT now(),
     "updatedAt"              timestamptz(6) NOT NULL DEFAULT now(),
     CONSTRAINT plugins_pkey PRIMARY KEY ("pluginId")

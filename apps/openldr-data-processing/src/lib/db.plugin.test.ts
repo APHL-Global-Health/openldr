@@ -9,7 +9,18 @@ import type {
 
 import { pool } from "../lib/db";
 import { logger } from "../lib/logger";
-import { BUNDLED_DEFAULT_PLUGINS } from "./constants";
+import { getObject } from "../services/minio.service";
+
+async function readMinioObjectAsString(objectPath: string): Promise<string> {
+  const stream = await getObject({ bucketName: "plugins", objectName: objectPath });
+  let output = "";
+  await new Promise<void>((resolve, reject) => {
+    stream.on("data", (chunk: any) => (output += chunk.toString()));
+    stream.on("end", () => resolve());
+    stream.on("error", (err: any) => reject(err));
+  });
+  return output;
+}
 
 export const db = {
   // Projects
@@ -91,49 +102,28 @@ export const db = {
     }
   },
 
-  // Plugins
+  // Plugins — all plugins (including bundled) are now stored in the database
+  // and their source code is stored in MinIO.
   getPlugins: async (slot: PluginSlotType): Promise<Plugin[]> => {
     try {
       const sql = `
-          SELECT * FROM plugins WHERE "pluginType" = $1
-        `;
+        SELECT "pluginId", "pluginName", "pluginVersion", status, "pluginType", "pluginMinioObjectPath", "createdAt"
+        FROM plugins
+        WHERE "pluginType" = $1
+          AND status NOT IN ('inactive', 'deprecated')
+        ORDER BY "isBundled" DESC, "pluginVersion" DESC;
+      `;
       const res = await pool.query(sql, [slot]);
 
-      const plugins: Plugin[] = res.rows
-        .map((row) => {
-          return {
-            id: row.id,
-            name: row.name,
-            version: row.version,
-            status: row.status,
-            slot: row.slot,
-            code: row.code,
-          };
-        })
-        .filter(
-          (plugin) =>
-            plugin.status !== "inactive" && plugin.status !== "deprecated",
-        );
-
-      const candidates = BUNDLED_DEFAULT_PLUGINS.filter(
-        (plugin) => plugin.pluginType === slot,
-      )
-        .filter(
-          (plugin) =>
-            plugin.status !== "inactive" && plugin.status !== "deprecated",
-        )
-        .map((row) => {
-          return {
-            id: row.pluginId,
-            name: row.pluginName,
-            version: row.pluginVersion,
-            status: row.status,
-            slot: row.pluginType,
-            code: row.bundledSourcePath, // In a real implementation, you'd read the file content here
-          };
-        });
-
-      return [...candidates, ...plugins];
+      return res.rows.map((row) => ({
+        id: row.pluginId,
+        name: row.pluginName,
+        version: row.pluginVersion,
+        status: row.status,
+        slot: row.pluginType,
+        code: row.pluginMinioObjectPath,
+        createdAt: row.createdAt,
+      }));
     } catch (error: any) {
       logger.error(
         { error: error.message, stack: error.stack },
@@ -141,45 +131,31 @@ export const db = {
       );
       throw error;
     }
-    // plugins.filter((p) => p.slot === slot)
   },
-  getPluginById: async (id: string) => {
+
+  getPluginById: async (id: string): Promise<Plugin | undefined> => {
     try {
       const sql = `
-          SELECT * FROM plugins 
-          WHERE "pluginId" = $1
-        `;
+        SELECT "pluginId", "pluginName", "pluginVersion", status, "pluginType", "pluginMinioObjectPath", "createdAt"
+        FROM plugins
+        WHERE "pluginId" = $1;
+      `;
       const res = await pool.query(sql, [id]);
 
-      if (res.rowCount === 1) {
-        const row = res.rows[0];
-        return {
-          id: row.id,
-          name: row.name,
-          version: row.version,
-          status: row.status,
-          slot: row.slot,
-          code: row.code,
-        };
-      }
+      if (res.rowCount !== 1) return undefined;
 
-      const candidate = BUNDLED_DEFAULT_PLUGINS.filter(
-        (plugin) =>
-          plugin.status !== "inactive" && plugin.status !== "deprecated",
-      )
-        .map((row) => {
-          return {
-            id: row.pluginId,
-            name: row.pluginName,
-            version: row.pluginVersion,
-            status: row.status,
-            slot: row.pluginType,
-            code: row.bundledSourcePath, // In a real implementation, you'd read the file content here
-          };
-        })
-        .find((plugin) => plugin.id === id);
+      const row = res.rows[0];
+      const code = await readMinioObjectAsString(row.pluginMinioObjectPath);
 
-      return candidate || undefined;
+      return {
+        id: row.pluginId,
+        name: row.pluginName,
+        version: row.pluginVersion,
+        status: row.status,
+        slot: row.pluginType,
+        code,
+        createdAt: row.createdAt,
+      };
     } catch (error: any) {
       logger.error(
         { error: error.message, stack: error.stack },
@@ -187,7 +163,6 @@ export const db = {
       );
       throw error;
     }
-    // plugins.find((p) => p.id === id)
   },
 
   // Assignments
@@ -224,15 +199,8 @@ export const db = {
     a: DataFeedPluginAssignment,
   ): Promise<DataFeedPluginAssignment> => {
     try {
-      // Bundled plugins only exist in memory — their IDs are not in the plugins
-      // table, so they would violate the FK constraint. Store null for those
-      // columns; the runtime resolves bundled plugins by ID from memory.
-      const bundledIds = new Set(
-        BUNDLED_DEFAULT_PLUGINS.map((p) => p.pluginId),
-      );
-      const toDb = (id: string | null) =>
-        id && !bundledIds.has(id) ? id : null;
-
+      // Bundled plugin IDs are now stored in the database, so all plugin IDs
+      // (including bundled ones) can be stored directly as FK references.
       const sql = `
         UPDATE "dataFeeds"
         SET "schemaPluginId"    = $2,
@@ -242,9 +210,9 @@ export const db = {
       `;
       await pool.query(sql, [
         a.feedId,
-        toDb(a.validationPluginId),
-        toDb(a.mappingPluginId),
-        toDb(a.outpostPluginId),
+        a.validationPluginId,
+        a.mappingPluginId,
+        a.outpostPluginId,
       ]);
       return a;
     } catch (error: any) {

@@ -16,6 +16,7 @@ import type {
   CreateDataFeedRequest,
   CreatePluginRequest,
   PluginSlotType,
+  DataFeedPluginAssignment,
 } from "@/types/plugin-test.types";
 
 const ENV = import.meta.env;
@@ -174,9 +175,10 @@ export const pluginTestApi = {
     ),
 
   getAssignment: (token: any, feedId: string, signal?: AbortSignal) =>
-    request<{
-      assignment: ReturnType<
-        typeof import("@/lib/restClients/pluginTestClient").pluginTestApi.getAssignment
-      >;
-    }>(token, `/assignments/${feedId}`, undefined, signal),
+    request<{ assignment: DataFeedPluginAssignment }>(
+      token,
+      `/assignments/${feedId}`,
+      undefined,
+      signal,
+    ).then((r) => r.assignment),
 };
