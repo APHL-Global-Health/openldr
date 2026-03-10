@@ -61,7 +61,7 @@ import {
 } from "@/components/ui/input-group";
 import { CopyIcon } from "@radix-ui/react-icons";
 
-import JsonView from "@uiw/react-json-view";
+// import JsonView from "@uiw/react-json-view";
 import { lightTheme } from "@uiw/react-json-view/light";
 import { vscodeTheme as darkTheme } from "@uiw/react-json-view/vscode";
 import { toast } from "sonner";
@@ -73,12 +73,6 @@ import { LanguageSwitcher } from "@/components/language-switcher";
 import JSZip from "jszip";
 import Papa from "papaparse";
 
-const getCurrentTheme = () => {
-  if (document.documentElement.classList.contains("dark")) return "dark";
-  if (window.matchMedia("(prefers-color-scheme: dark)").matches) return "dark";
-  return "light";
-};
-
 import {
   Dialog,
   DialogContent,
@@ -88,6 +82,13 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useSQLiteClient } from "@/components/sqlite-client-provider";
+
+import CodeMirror from "@uiw/react-codemirror";
+// import { white as lightTheme } from '@uiw/codemirror-theme-white';
+import { vscodeDark, vscodeLight } from "@uiw/codemirror-theme-vscode";
+import { json } from "@codemirror/lang-json";
+import { EditorView } from "@codemirror/view";
+import { getCurrentTheme } from "@/lib/theme";
 
 function DataEntryPage() {
   const { t } = useMultiNamespaceTranslation(["common", "app"]);
@@ -170,7 +171,22 @@ function DataEntryPage() {
     refetchIntervalInBackground: false,
   });
 
-  const theme = localStorage.getItem("theme") || getCurrentTheme();
+  const [theme, setTheme] = useState(getCurrentTheme);
+
+  useEffect(() => {
+    const onThemeChange = () => {
+      setTheme(getCurrentTheme());
+    };
+    window.addEventListener("themechange", onThemeChange);
+
+    const mq = window.matchMedia("(prefers-color-scheme: dark)");
+    mq.addEventListener("change", onThemeChange);
+
+    return () => {
+      window.removeEventListener("themechange", onThemeChange);
+      mq.removeEventListener("change", onThemeChange);
+    };
+  }, []);
 
   async function onSubmit(values: any, _form?: any) {
     if (values && selectedFeed && selectedFeed.feed) {
@@ -652,7 +668,7 @@ function DataEntryPage() {
                 {pageOption === "schema" && (
                   <div className="flex gap-y-2 w-full px-2 py-3">
                     <InputGroup className="flex flex-1 ">
-                      <JsonView
+                      {/* <JsonView
                         className="flex flex-1 w-full"
                         value={data.code}
                         style={theme === "dark" ? darkTheme : lightTheme}
@@ -661,6 +677,13 @@ function DataEntryPage() {
                         enableClipboard={false}
                         displayDataTypes={false}
                         displayObjectSize={false}
+                      /> */}
+
+                      <CodeMirror
+                        value={JSON.stringify(data.code, null, 2)}
+                        className="w-full"
+                        theme={theme === "dark" ? vscodeDark : vscodeLight}
+                        extensions={[json(), EditorView.lineWrapping]}
                       />
                       {/* 
                     <InputGroupTextarea

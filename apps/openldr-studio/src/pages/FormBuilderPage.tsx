@@ -611,14 +611,14 @@ function FormBuilderPage() {
         {/* ── Sidebar ── */}
         <aside
           className={cn(
-            "flex-shrink-0 w-full md:w-[320px] lg:w-[360px] border-r border-border overflow-hidden flex-col",
+            "shrink-0 w-full md:w-[320px] lg:w-90 border-r border-border overflow-hidden flex-col",
             mobileTab === "builder" ? "flex" : "hidden",
             "md:flex",
           )}
         >
           <div className="flex flex-col h-full overflow-hidden">
             {/* ── Form selector ── */}
-            <div className="flex-shrink-0 border-b border-border">
+            <div className="shrink-0 border-b border-border">
               <ButtonGroup className="w-full p-3 focus-visible:outline-none">
                 <Select
                   disabled={(data?.items || []).length === 0 ? true : false}
