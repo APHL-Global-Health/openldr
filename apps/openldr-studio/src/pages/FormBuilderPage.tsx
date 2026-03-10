@@ -2,12 +2,7 @@ import { ContentLayout } from "@/components/admin-panel/content-layout";
 import { Separator } from "@/components/ui/separator";
 import { useAppTranslation } from "@/i18n/hooks";
 import { cn } from "@/lib/utils";
-import type {
-  TabId,
-  FormField,
-  FieldType,
-  JSONSchemaProperty,
-} from "@/types/forms";
+import type { TabId, FormField, FieldType } from "@/types/forms";
 
 import React, { useCallback, useRef, useState } from "react";
 import {
@@ -127,14 +122,17 @@ function jsonSchemaToFields(schema: any): FormField[] {
   );
 }
 
-/** Rebuild a JSON Schema object from FormField[] (preserving the original schema envelope) */
+/** Rebuild a JSON Schema object from FormField[], preserving original properties for existing fields */
 function fieldsToJsonSchema(fields: FormField[], baseSchema: any): any {
-  const properties: Record<string, JSONSchemaProperty> = {};
+  const originalProps: Record<string, any> = baseSchema?.properties ?? {};
+  const properties: Record<string, any> = {};
   const required: string[] = [];
 
   for (const field of fields) {
     const key = field.key || generateKey(field.label) || `field_${field.id}`;
-    properties[key] = fieldToSchemaProperty(field);
+    // Preserve the original rich property (with x-zodType, x-zodOptions, etc.)
+    // Only fall back to generating a simplified property for brand-new fields
+    properties[key] = originalProps[key] ?? fieldToSchemaProperty(field);
     if (field.required) required.push(key);
   }
 
