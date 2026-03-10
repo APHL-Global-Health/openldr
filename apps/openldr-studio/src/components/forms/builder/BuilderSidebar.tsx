@@ -19,6 +19,37 @@ import { AddFieldPanel } from "./AddFieldPanel";
 import { FormSelector } from "./FormSelector";
 import { Button } from "@/components/ui/button";
 
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+
+import { toast } from "sonner";
+
+import {
+  ButtonGroup,
+  ButtonGroupSeparator,
+} from "@/components/ui/button-group";
+import { MoreHorizontalIcon, Pencil, Plus, Trash2Icon } from "lucide-react";
+
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
 export const BuilderSidebar: React.FC = () => {
   const {
     forms,
@@ -55,13 +86,97 @@ export const BuilderSidebar: React.FC = () => {
     <div className="flex flex-col h-full overflow-hidden">
       {/* ── Top section (sticky) ── */}
       <div className="flex-shrink-0 p-4 border-b border-border space-y-4">
-        <FormSelector
+        {/* <FormSelector
           forms={forms}
           activeId={activeFormId}
           onSelect={setActiveFormId}
           onCreate={(name) => createForm(name)}
           onDelete={deleteForm}
-        />
+        /> */}
+
+        <ButtonGroup className="w-full px-2 pb-2 focus-visible:outline-none">
+          <Select
+            disabled={forms.length === 0}
+            value={activeFormId || undefined}
+            onValueChange={setActiveFormId}
+          >
+            <SelectTrigger className="flex flex-1 rounded-sm text-sm focus-visible:outline-none">
+              <SelectValue placeholder="Form" />
+            </SelectTrigger>
+            <SelectContent
+              className="rounded-xs"
+              side="bottom"
+              avoidCollisions={false}
+              position="popper"
+            >
+              <SelectGroup>
+                {forms?.map((f: any) => {
+                  return (
+                    <SelectItem value={f.id} description={f.description}>
+                      {f.name}
+                    </SelectItem>
+                  );
+                })}
+              </SelectGroup>
+            </SelectContent>
+          </Select>
+          <div className="flex justify-center items-center min-h-9 max-h-9 w-[0.5px]">
+            <div className="flex bg-border min-h-7 max-h-7  w-[0.5px]"></div>
+          </div>
+          <DropdownMenu>
+            <DropdownMenuTrigger
+              asChild
+              className="disabled:cursor-not-allowed"
+            >
+              <Button
+                className="rounded-sm disabled:cursor-not-allowed"
+                variant="outline"
+                size="icon"
+                aria-label="More Options"
+              >
+                <MoreHorizontalIcon />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-40">
+              <DropdownMenuGroup>
+                <DropdownMenuItem
+                // onClick={() => EditData("Internal", "projects")}
+                >
+                  <Plus width={16} height={16} />
+                  New
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                // disabled={!state.selectedProjectId}
+                // onClick={() => {
+                //   const item = state.projects.find(
+                //     (uc: any) =>
+                //       uc.projectId === state.selectedProjectId,
+                //   );
+                //   EditData("Internal", "projects", item, true);
+                // }}
+                >
+                  <Pencil width={16} height={16} />
+                  Edit
+                </DropdownMenuItem>
+              </DropdownMenuGroup>
+              <DropdownMenuSeparator />
+              <DropdownMenuGroup>
+                <DropdownMenuItem
+                  variant="destructive"
+                  // disabled={!state.selectedProjectId}
+                  // onClick={() => {
+                  //   DeleteData("Internal", "projects", [
+                  //     state.selectedProjectId,
+                  //   ]);
+                  // }}
+                >
+                  <Trash2Icon />
+                  Delete
+                </DropdownMenuItem>
+              </DropdownMenuGroup>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </ButtonGroup>
       </div>
 
       {/* ── Fields header ── */}
