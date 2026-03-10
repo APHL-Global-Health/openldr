@@ -2,7 +2,17 @@ import { ContentLayout } from "@/components/admin-panel/content-layout";
 import { Separator } from "@/components/ui/separator";
 import { useAppTranslation } from "@/i18n/hooks";
 import { cn } from "@/lib/utils";
-import type { TabId, FormField, FieldType } from "@/types/forms";
+import type {
+  TabId,
+  FormField,
+  FieldType,
+  DateConfig,
+  OptionsConfig,
+  ReferenceConfig,
+  FileConfig,
+  StringConfig,
+  NumberConfig,
+} from "@/types/forms";
 
 import React, { useCallback, useRef, useState } from "react";
 import {
@@ -94,16 +104,65 @@ function jsonSchemaToFields(schema: any): FormField[] {
 
   return Object.entries(schema.properties).map(
     ([key, val]: [string, any], i) => {
+      // Detect type via x-zodType first, then fall back to format/type
       let fieldType: FieldType = "string";
-      if (val.enum) fieldType = "select";
-      else if (val.format === "date" || val.format === "datetime")
+      let dateConfig: DateConfig | undefined;
+      let optionsConfig: OptionsConfig | undefined;
+      let referenceConfig: ReferenceConfig | undefined;
+      let fileConfig: FileConfig | undefined;
+      let stringConfig: StringConfig | undefined;
+      let numberConfig: NumberConfig | undefined;
+
+      const xType = val["x-zodType"];
+
+      if (xType === "date") {
         fieldType = "date";
-      else if (val.format === "reference") fieldType = "reference";
-      else if (val.format === "binary") fieldType = "file";
-      else if (val.type === "boolean") fieldType = "boolean";
-      else if (val.type === "number" || val.type === "integer")
+        const opts: [string, string][] = val["x-zodOptions"] ?? [];
+        const fmt = opts.find(([k]) => k === "format")?.[1];
+        dateConfig = { format: fmt ?? "yyyy-MM-dd" };
+      } else if (xType === "options") {
+        fieldType = "options";
+        const entries: [string, string][] = val["x-zodOptions"] ?? [];
+        optionsConfig = { entries };
+      } else if (xType === "reference") {
+        fieldType = "reference";
+        const ref = val["x-zodReference"];
+        if (ref) {
+          referenceConfig = {
+            table: ref.table ?? "",
+            key: ref.key ?? "",
+            attributes: ref.attributes ?? [],
+          };
+        }
+      } else if (xType === "file") {
+        fieldType = "file";
+        const file = val["x-zodFile"];
+        if (file) {
+          fileConfig = { mimes: file.mimes ?? [] };
+        }
+      } else if (val.enum) {
+        fieldType = "select";
+      } else if (val.format === "date" || val.format === "datetime") {
+        fieldType = "date";
+        dateConfig = {
+          format: val.format === "datetime" ? "yyyy-MM-dd HH:mm:ss" : "yyyy-MM-dd",
+        };
+      } else if (val.type === "boolean") {
+        fieldType = "boolean";
+      } else if (val.type === "number" || val.type === "integer") {
         fieldType = "number";
-      else if (val["x-zodType"] === "options") fieldType = "options";
+        numberConfig = {
+          exclusiveMin: val.exclusiveMinimum,
+          exclusiveMax: val.exclusiveMaximum,
+          multipleOf: val.multipleOf,
+        };
+      } else {
+        // Plain string — check for format
+        const fmt = val.format;
+        if (fmt === "email" || fmt === "uuid" || fmt === "url") {
+          stringConfig = { format: fmt };
+        }
+      }
 
       return {
         id: `field-${key}-${i}`,
@@ -123,22 +182,27 @@ function jsonSchemaToFields(schema: any): FormField[] {
           pattern: val.pattern,
         },
         expanded: false,
+        dateConfig,
+        optionsConfig,
+        referenceConfig,
+        fileConfig,
+        stringConfig,
+        numberConfig,
+        _schemaProperty: structuredClone(val),
       };
     },
   );
 }
 
-/** Rebuild a JSON Schema object from FormField[], preserving original properties for existing fields */
+/** Rebuild a JSON Schema from FormField[]. Always regenerates via fieldToSchemaProperty()
+ *  which uses _schemaProperty internally to preserve unknown extensions while applying edits. */
 function fieldsToJsonSchema(fields: FormField[], baseSchema: any): any {
-  const originalProps: Record<string, any> = baseSchema?.properties ?? {};
   const properties: Record<string, any> = {};
   const required: string[] = [];
 
   for (const field of fields) {
     const key = field.key || generateKey(field.label) || `field_${field.id}`;
-    // Preserve the original rich property (with x-zodType, x-zodOptions, etc.)
-    // Only fall back to generating a simplified property for brand-new fields
-    properties[key] = originalProps[key] ?? fieldToSchemaProperty(field);
+    properties[key] = fieldToSchemaProperty(field);
     if (field.required) required.push(key);
   }
 
