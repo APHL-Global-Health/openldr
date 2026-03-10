@@ -2,7 +2,12 @@ import { ContentLayout } from "@/components/admin-panel/content-layout";
 import { Separator } from "@/components/ui/separator";
 import { useAppTranslation } from "@/i18n/hooks";
 import { cn } from "@/lib/utils";
-import type { TabId, FormField, FieldType, JSONSchemaProperty } from "@/types/forms";
+import type {
+  TabId,
+  FormField,
+  FieldType,
+  JSONSchemaProperty,
+} from "@/types/forms";
 
 import React, { useCallback, useRef, useState } from "react";
 import {
@@ -33,7 +38,16 @@ import {
 import { toast } from "sonner";
 
 import { ButtonGroup } from "@/components/ui/button-group";
-import { MoreHorizontalIcon, Pencil, Plus, Trash2Icon } from "lucide-react";
+import {
+  Braces,
+  Eye,
+  Form,
+  MoreHorizontalIcon,
+  Pencil,
+  Plus,
+  Save,
+  Trash2Icon,
+} from "lucide-react";
 
 import {
   Select,
@@ -59,11 +73,18 @@ import { AutoFormProvider } from "@/components/autoform-provider";
 import { FieldCard } from "@/components/forms/builder/FieldCard";
 import { JsonTree } from "@/components/projects/JsonTree";
 import { generateKey, fieldToSchemaProperty } from "@/lib/schema";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 
-const TABS = [
-  { id: "preview" as TabId, label: "Preview" },
-  { id: "schema" as TabId, label: "Schema" },
-];
+import {
+  Sheet,
+  SheetClose,
+  SheetContent,
+  SheetDescription,
+  SheetFooter,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 
 /** Convert a JSON Schema `properties` object + `required` array into FormField[] */
 function jsonSchemaToFields(schema: any): FormField[] {
@@ -74,11 +95,13 @@ function jsonSchemaToFields(schema: any): FormField[] {
     ([key, val]: [string, any], i) => {
       let fieldType: FieldType = "string";
       if (val.enum) fieldType = "select";
-      else if (val.format === "date" || val.format === "datetime") fieldType = "date";
+      else if (val.format === "date" || val.format === "datetime")
+        fieldType = "date";
       else if (val.format === "reference") fieldType = "reference";
       else if (val.format === "binary") fieldType = "file";
       else if (val.type === "boolean") fieldType = "boolean";
-      else if (val.type === "number" || val.type === "integer") fieldType = "number";
+      else if (val.type === "number" || val.type === "integer")
+        fieldType = "number";
       else if (val["x-zodType"] === "options") fieldType = "options";
 
       return {
@@ -135,12 +158,21 @@ function FormBuilderPage() {
 
   const [schema, setSchema] = useState<string | undefined>("Internal");
   const [table, setTable] = useState<string | undefined>("formSchemas");
+  const [formSchemaId, setFormSchemaId] = useState<string | undefined>(
+    undefined,
+  );
 
-  const [rawJsonSchema, setRawJsonSchema] = useState<any | undefined>(undefined);
-  const [jsonSchema, setJsonSchema] = useState<ZodProvider<any> | undefined>(undefined);
+  const [rawJsonSchema, setRawJsonSchema] = useState<any | undefined>(
+    undefined,
+  );
+  const [jsonSchema, setJsonSchema] = useState<ZodProvider<any> | undefined>(
+    undefined,
+  );
   const [fields, setFields] = useState<FormField[]>([]);
 
-  const [selectedRecordItem, setSelectedRecordItem] = useState<any | undefined>(undefined);
+  const [selectedRecordItem, setSelectedRecordItem] = useState<any | undefined>(
+    undefined,
+  );
 
   const [form, setForm] = useState<UseFormReturn<any, any, any> | null>(null);
   const formRef = useRef<HTMLFormElement>(null);
@@ -253,16 +285,11 @@ function FormBuilderPage() {
     [fields, rebuildSchemas],
   );
 
-  const toggleFieldExpanded = useCallback(
-    (fieldId: string) => {
-      setFields((prev) =>
-        prev.map((f) =>
-          f.id === fieldId ? { ...f, expanded: !f.expanded } : f,
-        ),
-      );
-    },
-    [],
-  );
+  const toggleFieldExpanded = useCallback((fieldId: string) => {
+    setFields((prev) =>
+      prev.map((f) => (f.id === fieldId ? { ...f, expanded: !f.expanded } : f)),
+    );
+  }, []);
 
   // ── Drag & Drop ──
   const sensors = useSensors(
@@ -287,24 +314,28 @@ function FormBuilderPage() {
   );
 
   // ── Form selection ──
-  const handleFormSelect = useCallback((val: string) => {
-    const item = data?.items.find((f: any) => f.schemaId === val);
-    if (item) {
-      const schemaData = item.schema;
-      setRawJsonSchema(schemaData);
-      setFields(jsonSchemaToFields(schemaData));
-      try {
-        const zodSchema = toZodSchema(schemaData);
-        setJsonSchema(new ZodProvider(zodSchema as any));
-      } catch {
+  const handleFormSelect = useCallback(
+    (val: string) => {
+      setFormSchemaId(val);
+      const item = data?.items.find((f: any) => f.schemaId === val);
+      if (item) {
+        const schemaData = item.schema;
+        setRawJsonSchema(schemaData);
+        setFields(jsonSchemaToFields(schemaData));
+        try {
+          const zodSchema = toZodSchema(schemaData);
+          setJsonSchema(new ZodProvider(zodSchema as any));
+        } catch {
+          setJsonSchema(undefined);
+        }
+      } else {
+        setRawJsonSchema(undefined);
         setJsonSchema(undefined);
+        setFields([]);
       }
-    } else {
-      setRawJsonSchema(undefined);
-      setJsonSchema(undefined);
-      setFields([]);
-    }
-  }, [data]);
+    },
+    [data],
+  );
 
   // ── CRUD helpers ──
   const onSubmit = async (submitData: any) => {
@@ -329,13 +360,17 @@ function FormBuilderPage() {
       const failed = results.filter((r) => r.status === "rejected");
       if (successful.length > 0) {
         toast.success(
-          `(${successful.length}) ${!selectedRecordItem ? "created" : "updated"} successfully`,
+          `(${successful.length}) ${
+            !selectedRecordItem ? "created" : "updated"
+          } successfully`,
           { className: "bg-card text-card-foreground border-border" },
         );
       }
       if (failed.length > 0) {
         toast.error(
-          `Failed to ${!selectedRecordItem ? "create" : "update"}. Please try again.`,
+          `Failed to ${
+            !selectedRecordItem ? "create" : "update"
+          }. Please try again.`,
           { className: "bg-card text-card-foreground border-border" },
         );
       }
@@ -345,7 +380,11 @@ function FormBuilderPage() {
     }
   };
 
-  const onDelete = async (deleteData: any, _table?: string, _schema?: string) => {
+  const onDelete = async (
+    deleteData: any,
+    _table?: string,
+    _schema?: string,
+  ) => {
     const effectiveTable = _table ?? table;
     const effectiveSchema = _schema ?? schema;
     if (effectiveTable && effectiveSchema) {
@@ -398,21 +437,26 @@ function FormBuilderPage() {
       <Separator orientation="vertical" className="mx-2 min-h-6" />
       <div className="flex flex-1" />
 
-      <div className="hidden md:flex items-center gap-1 bg-[#111E30] rounded-lg p-1 border border-border">
-        {TABS.map((tab) => (
-          <button
-            key={tab.id}
-            onClick={() => setActiveTab(tab.id)}
-            className={cn(
-              "px-3 py-1.5 rounded-md text-xs font-semibold transition-all",
-              activeTab === tab.id
-                ? "bg-[#1A2C40] text-[#6EE7B7]"
-                : "text-[#607A94] hover:text-[#A0B4C8]",
-            )}
+      <div className="flex flex-row items-center px-2">
+        <ToggleGroup
+          type="single"
+          size="sm"
+          variant="outline"
+          value={activeTab}
+          onValueChange={(val) => {
+            setActiveTab(val as TabId);
+          }}
+        >
+          <ToggleGroupItem
+            value="preview"
+            className="text-sm items-center px-4 rounded-none"
           >
-            {tab.label}
-          </button>
-        ))}
+            <Eye width={16} height={16} />
+          </ToggleGroupItem>
+          <ToggleGroupItem value="schema" className="text-sm items-center px-4">
+            <Braces width={16} height={16} />
+          </ToggleGroupItem>
+        </ToggleGroup>
       </div>
 
       <div className="flex md:hidden items-center gap-1 bg-[#111E30] rounded-lg p-1 border border-border">
@@ -456,7 +500,8 @@ function FormBuilderPage() {
             <div className="flex-shrink-0 border-b border-border">
               <ButtonGroup className="w-full p-3 focus-visible:outline-none">
                 <Select
-                  disabled={data?.items.length === 0}
+                  disabled={(data?.items || []).length === 0 ? true : false}
+                  value={formSchemaId}
                   onValueChange={handleFormSelect}
                 >
                   <SelectTrigger className="flex flex-1 rounded-sm text-sm focus-visible:outline-none">
@@ -481,7 +526,10 @@ function FormBuilderPage() {
                   <div className="flex bg-border min-h-7 max-h-7 w-[0.5px]" />
                 </div>
                 <DropdownMenu>
-                  <DropdownMenuTrigger asChild className="disabled:cursor-not-allowed">
+                  <DropdownMenuTrigger
+                    asChild
+                    className="disabled:cursor-not-allowed"
+                  >
                     <Button
                       className="rounded-sm disabled:cursor-not-allowed"
                       variant="outline"
@@ -493,18 +541,43 @@ function FormBuilderPage() {
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-40">
                     <DropdownMenuGroup>
-                      <DropdownMenuItem onClick={() => EditData("Internal", "formSchemas")}>
+                      <DropdownMenuItem
+                        onClick={() => EditData("Internal", "formSchemas")}
+                      >
                         <Plus width={16} height={16} />
                         New
                       </DropdownMenuItem>
-                      <DropdownMenuItem>
+                      <DropdownMenuItem
+                        disabled={!formSchemaId}
+                        onClick={() => {
+                          const item = data?.items.find(
+                            (f: any) => f.schemaId === formSchemaId,
+                          );
+                          EditData("Internal", "formSchemas", item);
+                        }}
+                      >
                         <Pencil width={16} height={16} />
                         Edit
                       </DropdownMenuItem>
                     </DropdownMenuGroup>
                     <DropdownMenuSeparator />
                     <DropdownMenuGroup>
-                      <DropdownMenuItem variant="destructive">
+                      <DropdownMenuItem
+                        disabled={activeTab !== "preview" || !formSchemaId}
+                        onClick={() => {
+                          setShowAddPanel((v) => !v);
+                        }}
+                      >
+                        <Form width={16} height={16} />
+                        Fields
+                      </DropdownMenuItem>
+                    </DropdownMenuGroup>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuGroup>
+                      <DropdownMenuItem
+                        variant="destructive"
+                        disabled={!formSchemaId}
+                      >
                         <Trash2Icon />
                         Delete
                       </DropdownMenuItem>
@@ -515,36 +588,25 @@ function FormBuilderPage() {
             </div>
 
             {/* ── Fields header ── */}
-            <div className="flex-shrink-0 flex items-center justify-between px-4 py-2.5 border-b border-border">
+            <div className="shrink-0 flex items-center justify-between px-3 py-2.5 border-b border-border">
               <span className="text-[10px] font-bold uppercase tracking-widest">
                 Fields {fields.length > 0 ? `(${fields.length})` : ""}
               </span>
               {rawJsonSchema && (
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  className="border border-border"
-                  onClick={() => setShowAddPanel((v) => !v)}
-                >
-                  <span className="text-base leading-none">+</span>
-                  Add Field
-                </Button>
+                <div className="flex gap-2">
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="border border-border rounnded-sm"
+                    onClick={() => {
+                      //save
+                    }}
+                  >
+                    <Save width={16} height={16} />
+                  </Button>
+                </div>
               )}
             </div>
-
-            {/* ── Add panel (inline) ── */}
-            {showAddPanel && (
-              <div className="flex-shrink-0 px-3 py-2 border-b border-border">
-                <AddFieldPanel
-                  inline
-                  onAdd={(type) => {
-                    addField(type);
-                    setShowAddPanel(false);
-                  }}
-                  onClose={() => setShowAddPanel(false)}
-                />
-              </div>
-            )}
 
             {/* ── Field list (scrollable) ── */}
             <div className="flex-1 overflow-y-auto px-3 py-3 space-y-2">
@@ -619,23 +681,6 @@ function FormBuilderPage() {
             "md:flex",
           )}
         >
-          <div className="flex md:hidden flex-shrink-0 border-b border-border px-4">
-            {TABS.map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={cn(
-                  "px-3 py-3 text-xs font-semibold border-b-2 transition-all",
-                  activeTab === tab.id
-                    ? "border-[#6EE7B7] text-[#6EE7B7]"
-                    : "border-transparent text-[#607A94]",
-                )}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </div>
-
           <div className="flex-1 overflow-y-auto p-3">
             {activeTab === "preview" ? (
               jsonSchema ? (
@@ -685,6 +730,24 @@ function FormBuilderPage() {
           setRecordSheetOpen(value);
         }}
       />
+
+      <Sheet open={showAddPanel} onOpenChange={setShowAddPanel}>
+        <SheetContent showCloseButton={false}>
+          <SheetHeader className="pb-0">
+            <SheetTitle>Field Component</SheetTitle>
+            <SheetDescription>Select one you want</SheetDescription>
+          </SheetHeader>
+
+          <AddFieldPanel
+            inline
+            onAdd={(type) => {
+              addField(type);
+              setShowAddPanel(false);
+            }}
+            onClose={() => setShowAddPanel(false)}
+          />
+        </SheetContent>
+      </Sheet>
     </ContentLayout>
   );
 }

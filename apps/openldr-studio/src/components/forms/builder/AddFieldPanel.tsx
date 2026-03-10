@@ -46,8 +46,8 @@ export const AddFieldPanel: React.FC<AddFieldPanelProps> = ({
 
   if (inline) {
     return (
-      <div className="rounded-md border border-border bg-card p-1">
-        <div className="flex items-center justify-between px-3 py-1.5">
+      <div className="p-1">
+        {/* <div className="flex items-center justify-between px-3 py-1.5">
           <span className="text-[10px] font-bold uppercase tracking-widest text-[#6EE7B7]">
             Choose Field Type
           </span>
@@ -57,7 +57,7 @@ export const AddFieldPanel: React.FC<AddFieldPanelProps> = ({
           >
             ×
           </button>
-        </div>
+        </div> */}
         {list}
       </div>
     );
