@@ -75,12 +75,11 @@ function jsonSchemaToFields(schema: any): FormField[] {
       let fieldType: FieldType = "string";
       if (val.enum) fieldType = "select";
       else if (val.format === "date" || val.format === "datetime") fieldType = "date";
-      else if (val.format === "email") fieldType = "email";
-      else if (val.format === "textarea") fieldType = "textarea";
+      else if (val.format === "reference") fieldType = "reference";
+      else if (val.format === "binary") fieldType = "file";
       else if (val.type === "boolean") fieldType = "boolean";
       else if (val.type === "number" || val.type === "integer") fieldType = "number";
-      else if (val.type === "array") fieldType = "multiselect";
-      else if (val.type === "object") fieldType = "object";
+      else if (val["x-zodType"] === "options") fieldType = "options";
 
       return {
         id: `field-${key}-${i}`,

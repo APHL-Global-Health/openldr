@@ -160,12 +160,14 @@ export const useFormBuilderStore = create<FormBuilderState>((set, get) => ({
             ? "select"
             : val.format === "date"
             ? "date"
+            : val.format === "reference"
+            ? "reference"
+            : val.format === "binary"
+            ? "file"
             : val.type === "boolean"
             ? "boolean"
             : val.type === "number"
             ? "number"
-            : val.type === "array"
-            ? "multiselect"
             : "string",
           label: val.title || key,
           key,

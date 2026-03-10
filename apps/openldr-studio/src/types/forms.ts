@@ -2,12 +2,11 @@ export type FieldType =
   | "string"
   | "number"
   | "boolean"
-  | "select"
-  | "multiselect"
   | "date"
-  | "textarea"
-  | "email"
-  | "object";
+  | "select"
+  | "options"
+  | "reference"
+  | "file";
 
 export interface ValidationRule {
   min?: number;

@@ -30,7 +30,7 @@ function FieldPreview({
           {field.label}
         </span>
         {field.required && (
-          <span className="text-[10px] font-bold" style={{ color: meta.color }}>
+          <span className="text-[10px] font-bold" style={{ color: meta?.color }}>
             *
           </span>
         )}
@@ -57,62 +57,19 @@ function FieldPreview({
           </button>
           <span className="text-sm text-[#A0B4C8]">{value ? "Yes" : "No"}</span>
         </div>
-      ) : field.type === "select" ? (
+      ) : field.type === "select" || field.type === "options" ? (
         <select
           className={baseInput}
           value={value as string}
           onChange={(e) => onChange(e.target.value)}
         >
-          <option value="">Select…</option>
+          <option value="">Select...</option>
           {(field.options ?? "").split(",").map((o) => (
             <option key={o.trim()} value={o.trim()}>
               {o.trim()}
             </option>
           ))}
         </select>
-      ) : field.type === "multiselect" ? (
-        <div className="flex flex-wrap gap-2">
-          {(field.options ?? "").split(",").map((o) => {
-            const opt = o.trim();
-            const selected = Array.isArray(value) && value.includes(opt);
-            return (
-              <button
-                key={opt}
-                type="button"
-                onClick={() => {
-                  const arr = Array.isArray(value) ? value : [];
-                  onChange(
-                    selected ? arr.filter((x) => x !== opt) : [...arr, opt],
-                  );
-                }}
-                className="px-3 py-1 rounded-full text-xs font-semibold border transition-all"
-                style={
-                  selected
-                    ? {
-                        background: meta.color + "20",
-                        borderColor: meta.color + "66",
-                        color: meta.color,
-                      }
-                    : {
-                        background: "#0F1E2E",
-                        borderColor: "#2A3F57",
-                        color: "#607A94",
-                      }
-                }
-              >
-                {opt}
-              </button>
-            );
-          })}
-        </div>
-      ) : field.type === "textarea" ? (
-        <textarea
-          className={baseInput + " resize-y min-h-[80px]"}
-          placeholder={field.placeholder}
-          value={value as string}
-          onChange={(e) => onChange(e.target.value)}
-          rows={3}
-        />
       ) : (
         <input
           type={
@@ -120,8 +77,6 @@ function FieldPreview({
               ? "date"
               : field.type === "number"
               ? "number"
-              : field.type === "email"
-              ? "email"
               : "text"
           }
           className={baseInput}
@@ -168,12 +123,7 @@ export const FormPreview: React.FC<FormPreviewProps> = ({ form }) => {
 
   return (
     <div className="max-w-lg mx-auto w-full py-6 px-4">
-      {/* Form header */}
       <div className="mb-8">
-        {/* <div className="inline-flex items-center gap-1.5 text-[#6EE7B7] text-[10px] font-bold uppercase tracking-widest mb-2">
-          <div className="w-1 h-1 rounded-full bg-[#6EE7B7]" />
-          Live Preview
-        </div> */}
         <h2 className="text-2xl font-bold text-[#E2EAF4] leading-tight">
           {form.name}
         </h2>
@@ -182,7 +132,6 @@ export const FormPreview: React.FC<FormPreviewProps> = ({ form }) => {
         )}
       </div>
 
-      {/* Success banner */}
       {submitted && (
         <div className="mb-6 rounded-xl border border-[#6EE7B7]/30 bg-[#6EE7B7]/10 px-4 py-3 flex items-center gap-3">
           <span className="text-[#6EE7B7] text-lg">✓</span>
@@ -214,11 +163,7 @@ export const FormPreview: React.FC<FormPreviewProps> = ({ form }) => {
                 field={field}
                 value={
                   values[field.key] ??
-                  (field.type === "boolean"
-                    ? false
-                    : field.type === "multiselect"
-                    ? []
-                    : "")
+                  (field.type === "boolean" ? false : "")
                 }
                 onChange={(val) =>
                   setValues((v) => ({ ...v, [field.key]: val }))

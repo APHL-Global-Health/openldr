@@ -53,10 +53,8 @@ export const FieldCard: React.FC<FieldCardProps> = ({
     onUpdate(patch);
   };
 
-  const hasOptions = field.type === "select" || field.type === "multiselect";
-  const hasValidation = ["string", "textarea", "number", "email"].includes(
-    field.type,
-  );
+  const hasOptions = field.type === "select" || field.type === "options";
+  const hasValidation = ["string", "number"].includes(field.type);
 
   return (
     <div ref={setNodeRef} style={style} className="group">
@@ -171,10 +169,7 @@ export const FieldCard: React.FC<FieldCardProps> = ({
             />
 
             {/* Placeholder / Description */}
-            {(field.type === "string" ||
-              field.type === "textarea" ||
-              field.type === "email" ||
-              field.type === "number") && (
+            {(field.type === "string" || field.type === "number") && (
               <Input
                 // label="Placeholder"
                 value={field.placeholder ?? ""}

@@ -22,11 +22,7 @@ export function fieldToSchemaProperty(field: FormField): JSONSchemaProperty {
 
   switch (field.type) {
     case "string":
-    case "textarea":
-    case "email":
       prop.type = "string";
-      if (field.type === "email") prop.format = "email";
-      if (field.type === "textarea") prop.format = "textarea";
       if (field.validation?.minLength)
         prop.minLength = field.validation.minLength;
       if (field.validation?.maxLength)
@@ -48,6 +44,7 @@ export function fieldToSchemaProperty(field: FormField): JSONSchemaProperty {
       prop.format = "date";
       break;
     case "select":
+    case "options":
       prop.type = "string";
       if (field.options) {
         prop.enum = field.options
@@ -56,18 +53,13 @@ export function fieldToSchemaProperty(field: FormField): JSONSchemaProperty {
           .filter(Boolean);
       }
       break;
-    case "multiselect":
-      prop.type = "array";
-      prop.items = { type: "string" };
-      if (field.options) {
-        prop.enum = field.options
-          .split(",")
-          .map((s) => s.trim())
-          .filter(Boolean);
-      }
+    case "reference":
+      prop.type = "string";
+      prop.format = "reference";
       break;
-    case "object":
-      prop.type = "object";
+    case "file":
+      prop.type = "string";
+      prop.format = "binary";
       break;
   }
 
