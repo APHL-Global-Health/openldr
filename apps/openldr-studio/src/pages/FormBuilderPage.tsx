@@ -47,6 +47,7 @@ import { toast } from "sonner";
 import { ButtonGroup } from "@/components/ui/button-group";
 import {
   Braces,
+  CheckIcon,
   CopyIcon,
   Eye,
   Form,
@@ -97,6 +98,7 @@ import {
   InputGroup,
   InputGroupAddon,
   InputGroupButton,
+  InputGroupText,
 } from "@/components/ui/input-group";
 
 /** Convert a JSON Schema `properties` object + `required` array into FormField[] */
@@ -160,7 +162,8 @@ function jsonSchemaToFields(schema: any): FormField[] {
       } else if (val.format === "date" || val.format === "datetime") {
         fieldType = "date";
         dateConfig = {
-          format: val.format === "datetime" ? "yyyy-MM-dd HH:mm:ss" : "yyyy-MM-dd",
+          format:
+            val.format === "datetime" ? "yyyy-MM-dd HH:mm:ss" : "yyyy-MM-dd",
         };
       } else if (val.type === "boolean") {
         fieldType = "boolean";
@@ -244,6 +247,7 @@ function FormBuilderPage() {
   const client = useKeycloakClient();
 
   const [showAddPanel, setShowAddPanel] = useState(false);
+  const [schemaCopied, setSchemaCopied] = useState(false);
   const [isEditMode, setEditMode] = useState(false);
 
   const [schema, setSchema] = useState<string | undefined>("Internal");
@@ -785,9 +789,9 @@ function FormBuilderPage() {
             "md:flex",
           )}
         >
-          <div className="flex-1 overflow-y-auto p-3">
-            {activeTab === "preview" ? (
-              jsonSchema ? (
+          {activeTab === "preview" ? (
+            jsonSchema ? (
+              <div className="flex-1 overflow-y-auto py-3">
                 <AutoForm
                   onFormInit={(initForm: any) => setForm(initForm)}
                   formProps={{
@@ -800,15 +804,38 @@ function FormBuilderPage() {
                   onSubmit={() => {}}
                   withSubmit={false}
                 />
-              ) : (
-                <div className="flex flex-col items-center justify-center h-full gap-3 text-muted-foreground">
-                  <p className="text-sm">Select a form to preview</p>
-                </div>
-              )
-            ) : jsonSchema ? (
-              <div className="flex gap-y-2 w-full px-2 py-3">
-                <InputGroup className="flex flex-1 ">
-                  {/* <JsonView
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center h-full gap-3 text-muted-foreground">
+                <p className="text-sm">Select a form to preview</p>
+              </div>
+            )
+          ) : jsonSchema ? (
+            <div className="flex flex-col w-full h-full py-3">
+              <div className="flex w-full justify-between px-3 border-b border-border min-h-9 max-h-9">
+                <div>{/* Title */}</div>
+                <Button
+                  variant="ghost"
+                  size="icon-xs"
+                  onClick={() => {
+                    if (rawJsonSchema) {
+                      navigator.clipboard.writeText(
+                        JSON.stringify(rawJsonSchema, null, 2),
+                      );
+                      setSchemaCopied(true);
+                      setTimeout(() => setSchemaCopied(false), 2000);
+                    }
+                  }}
+                >
+                  {schemaCopied ? (
+                    <CheckIcon className="text-green-500" />
+                  ) : (
+                    <CopyIcon />
+                  )}
+                </Button>
+              </div>
+              <div className="flex w-full flex-1 p-3 overflow-y-auto">
+                {/* <JsonView
                         className="flex flex-1 w-full"
                         value={data.code}
                         style={theme === "dark" ? darkTheme : lightTheme}
@@ -818,26 +845,14 @@ function FormBuilderPage() {
                         displayDataTypes={false}
                         displayObjectSize={false}
                       /> */}
-                  <JsonTree data={jsonSchema} />
-                  <InputGroupAddon align="block-start" className="border-b">
-                    {/* <InputGroupText className=" font-medium">
-                          {t("app:data_entry.json_schema")}
-                        </InputGroupText>
-                        <InputGroupButton className="ml-auto" size="icon-xs">
-                          <RefreshCwIcon />
-                        </InputGroupButton> */}
-                    <InputGroupButton variant="ghost" size="icon-xs">
-                      <CopyIcon />
-                    </InputGroupButton>
-                  </InputGroupAddon>
-                </InputGroup>
+                <JsonTree data={jsonSchema} />
               </div>
-            ) : (
-              <div className="flex flex-col items-center justify-center h-full gap-3 text-muted-foreground">
-                <p className="text-sm">Select a form to view schema</p>
-              </div>
-            )}
-          </div>
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center h-full gap-3 text-muted-foreground">
+              <p className="text-sm">Select a form to view schema</p>
+            </div>
+          )}
         </main>
       </div>
 
