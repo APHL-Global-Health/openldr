@@ -11,6 +11,13 @@ export class MetadataHandler implements RefinementHandler {
       const existing = z.globalRegistry.get(zodSchema as any) ?? {};
       z.globalRegistry.add(zodSchema as any, { ...existing, readOnly: true });
     }
+    if ((schema as any)["x-zodVisibility"]) {
+      const existing = z.globalRegistry.get(zodSchema as any) ?? {};
+      z.globalRegistry.add(zodSchema as any, {
+        ...existing,
+        visibility: (schema as any)["x-zodVisibility"],
+      });
+    }
     return zodSchema;
   }
 }

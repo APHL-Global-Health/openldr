@@ -57,6 +57,9 @@ import { OptionsHandler } from "../custom/primitve/options";
 import { DateHandler } from "../custom/primitve/date";
 import { ReferenceHandler } from "../custom/primitve/reference";
 import { FileHandler } from "../custom/primitve/file";
+import { LabelHandler } from "../custom/primitve/label";
+import { SeparatorHandler } from "../custom/primitve/separator";
+import { TextareaHandler } from "../custom/primitve/textarea";
 
 //Custom Types
 import {
@@ -64,11 +67,16 @@ import {
   $ZodDate,
   $ZodReference,
   $ZodFile,
+  $ZodLabel,
+  $ZodSeparator,
 } from "../../schemaUtils";
 
 // Initialize handlers
 const primitiveHandlers: PrimitiveHandler[] = [
   // Custom types - should run first
+  new LabelHandler(),
+  new SeparatorHandler(),
+  new TextareaHandler(),
   new OptionsHandler(),
   new DateHandler(),
   new ReferenceHandler(),
@@ -156,6 +164,12 @@ export function convertJsonSchemaToZod(
   // Build array of allowed type schemas
   const allowedSchemas: any[] = [];
 
+  if (types.label !== undefined) {
+    allowedSchemas.push(types.label || $ZodLabel({ text: "", variant: "h3" }));
+  }
+  if (types.separator !== undefined) {
+    allowedSchemas.push(types.separator || $ZodSeparator());
+  }
   if (types.reference !== undefined) {
     allowedSchemas.push(types.reference || $ZodReference({} as any));
   }

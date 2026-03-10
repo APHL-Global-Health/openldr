@@ -278,6 +278,66 @@ export const $ZodFile = <T extends ZodFileType>(file: T, params?: any) => {
   });
 };
 
+// ZodLabel — visual-only, passthrough
+export interface $ZodLabelDef extends z.$ZodTypeDef {
+  type: "label";
+  label: { text: string; variant: string };
+}
+
+export interface $ZodLabelInternals
+  extends z.$ZodTypeInternals<undefined, undefined> {
+  def: $ZodLabelDef;
+}
+
+export interface _ZodLabel extends z.$ZodType {
+  _zod: $ZodLabelInternals;
+}
+
+export const ZodLabel: z.$constructor<_ZodLabel> = z.$constructor(
+  "ZodLabel",
+  (inst, def) => {
+    (z.$ZodType.init as any)(inst, def);
+    inst._zod.parse = (payload: z.ParsePayload<any>) => payload;
+  },
+);
+
+export const $ZodLabel = (label: { text: string; variant: string }, params?: any) => {
+  return new ZodLabel({
+    type: "label",
+    label,
+    ...z.util.normalizeParams(params),
+  });
+};
+
+// ZodSeparator — visual-only, passthrough
+export interface $ZodSeparatorDef extends z.$ZodTypeDef {
+  type: "separator";
+}
+
+export interface $ZodSeparatorInternals
+  extends z.$ZodTypeInternals<undefined, undefined> {
+  def: $ZodSeparatorDef;
+}
+
+export interface _ZodSeparator extends z.$ZodType {
+  _zod: $ZodSeparatorInternals;
+}
+
+export const ZodSeparator: z.$constructor<_ZodSeparator> = z.$constructor(
+  "ZodSeparator",
+  (inst, def) => {
+    (z.$ZodType.init as any)(inst, def);
+    inst._zod.parse = (payload: z.ParsePayload<any>) => payload;
+  },
+);
+
+export const $ZodSeparator = (params?: any) => {
+  return new ZodSeparator({
+    type: "separator",
+    ...z.util.normalizeParams(params),
+  });
+};
+
 //Other
 export const toJsonSchema = (zodSchema: any) => {
   return z.toJSONSchema(zodSchema, {

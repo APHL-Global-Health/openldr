@@ -1,12 +1,17 @@
 import React from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import type { FormField, FieldType } from "@/types/forms";
+import type {
+  FormField,
+  FieldType,
+  VisibilityCondition,
+} from "@/types/forms";
 import { FIELD_TYPE_META } from "@/lib/constants";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
+import { Textarea } from "@/components/ui/textarea";
 import { generateKey } from "@/lib/schema";
 import { ChevronUp, ChevronDown, Plus, Trash2, X } from "lucide-react";
 import {
@@ -20,6 +25,7 @@ import {
 
 interface FieldCardProps {
   field: FormField;
+  allFields: FormField[];
   onUpdate: (patch: Partial<FormField>) => void;
   onRemove: () => void;
   onToggleExpand: () => void;
@@ -45,16 +51,38 @@ const STRING_FORMAT_OPTIONS = [
   { value: "url", label: "URL" },
 ];
 
+const LABEL_VARIANT_OPTIONS = [
+  { value: "h1", label: "Heading 1" },
+  { value: "h2", label: "Heading 2" },
+  { value: "h3", label: "Heading 3" },
+  { value: "body", label: "Body" },
+  { value: "muted", label: "Muted" },
+];
+
+const OPERATOR_OPTIONS = [
+  { value: "equals", label: "Equals" },
+  { value: "notEquals", label: "Not equals" },
+  { value: "contains", label: "Contains" },
+  { value: "isEmpty", label: "Is empty" },
+  { value: "isNotEmpty", label: "Is not empty" },
+  { value: "gt", label: "Greater than" },
+  { value: "lt", label: "Less than" },
+];
+
+const VISUAL_TYPES: FieldType[] = ["label", "separator"];
+
 const sectionLabel =
   "text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-2";
 
 export const FieldCard: React.FC<FieldCardProps> = ({
   field,
+  allFields,
   onUpdate,
   onRemove,
   onToggleExpand,
 }) => {
   const meta = FIELD_TYPE_META.find((m) => m.type === field.type)!;
+  const isVisual = VISUAL_TYPES.includes(field.type);
 
   const {
     attributes,
@@ -74,7 +102,11 @@ export const FieldCard: React.FC<FieldCardProps> = ({
 
   const handleLabelChange = (label: string) => {
     const patch: Partial<FormField> = { label };
-    if (!field.key) patch.key = generateKey(label);
+    if (!field.key) {
+      patch.key = isVisual
+        ? `__${field.type}_${field.id}`
+        : generateKey(label);
+    }
     onUpdate(patch);
   };
 
@@ -88,9 +120,25 @@ export const FieldCard: React.FC<FieldCardProps> = ({
       fileConfig: undefined,
       stringConfig: undefined,
       numberConfig: undefined,
+      labelConfig: undefined,
     };
+    // Auto-generate key for visual types
+    if (["label", "separator"].includes(newType)) {
+      patch.key = `__${newType}_${field.id}`;
+    }
     onUpdate(patch);
   };
+
+  // Sibling fields for visibility condition dropdown (only fields before this one)
+  const siblingFields = allFields
+    .slice(
+      0,
+      allFields.findIndex((f) => f.id === field.id),
+    )
+    .filter((f) => !VISUAL_TYPES.includes(f.type));
+
+  const hasVisibility =
+    field.visibility && field.visibility.conditions.length > 0;
 
   return (
     <div ref={setNodeRef} style={style} className="group">
@@ -132,13 +180,16 @@ export const FieldCard: React.FC<FieldCardProps> = ({
             </p>
             <p className="text-[10px] leading-tight mt-0.5 text-muted-foreground">
               {meta?.label ?? field.type}
-              {field.key && (
+              {!isVisual && field.key && (
                 <span className="ml-1 opacity-60">· {field.key}</span>
               )}
-              {field.required && (
+              {!isVisual && field.required && (
                 <span style={{ color: meta?.color }} className="ml-1">
                   · required
                 </span>
+              )}
+              {hasVisibility && (
+                <span className="ml-1 text-amber-500">· conditional</span>
               )}
             </p>
           </div>
@@ -171,19 +222,21 @@ export const FieldCard: React.FC<FieldCardProps> = ({
         {/* ── Expanded Properties ── */}
         {field.expanded && (
           <div className="px-3 pb-3 pt-1 border-t border-border flex flex-col gap-3">
-            {/* Label + Key */}
-            <div className="grid grid-cols-2 gap-2">
+            {/* Label + Key (key hidden for visual types) */}
+            <div className={isVisual ? "" : "grid grid-cols-2 gap-2"}>
               <Input
                 value={field.label}
-                placeholder="Field label"
+                placeholder={isVisual ? "Label text" : "Field label"}
                 onChange={(e) => handleLabelChange(e.target.value)}
               />
-              <Input
-                value={field.key}
-                placeholder="field_key"
-                onChange={(e) => onUpdate({ key: e.target.value })}
-                className="text-xs"
-              />
+              {!isVisual && (
+                <Input
+                  value={field.key}
+                  placeholder="field_key"
+                  onChange={(e) => onUpdate({ key: e.target.value })}
+                  className="text-xs"
+                />
+              )}
             </div>
 
             {/* Type */}
@@ -192,7 +245,7 @@ export const FieldCard: React.FC<FieldCardProps> = ({
               onValueChange={(val) => handleTypeChange(val as FieldType)}
             >
               <SelectTrigger className="w-full flex flex-1 rounded-sm text-sm focus-visible:outline-none">
-                <SelectValue placeholder="Form" />
+                <SelectValue placeholder="Type" />
               </SelectTrigger>
               <SelectContent
                 className="rounded-xs"
@@ -201,15 +254,73 @@ export const FieldCard: React.FC<FieldCardProps> = ({
                 position="popper"
               >
                 <SelectGroup>
-                  {FIELD_TYPE_OPTIONS.map((o: any) => (
-                    <SelectItem value={o.value}>{o.label}</SelectItem>
+                  {FIELD_TYPE_OPTIONS.map((o) => (
+                    <SelectItem key={o.value} value={o.value}>
+                      {o.label}
+                    </SelectItem>
                   ))}
                 </SelectGroup>
               </SelectContent>
             </Select>
 
-            {/* Placeholder (string/number) */}
-            {(field.type === "string" || field.type === "number") && (
+            {/* ── LABEL config ── */}
+            {field.type === "label" && (
+              <div className="flex flex-col gap-2">
+                <div>
+                  <p className={sectionLabel}>Display Text</p>
+                  <Textarea
+                    value={field.labelConfig?.text ?? ""}
+                    placeholder="Enter heading or instruction text..."
+                    rows={2}
+                    onChange={(e) =>
+                      onUpdate({
+                        labelConfig: {
+                          text: e.target.value,
+                          variant: field.labelConfig?.variant ?? "h3",
+                        },
+                      })
+                    }
+                  />
+                </div>
+                <div>
+                  <p className={sectionLabel}>Variant</p>
+                  <Select
+                    value={field.labelConfig?.variant ?? "h3"}
+                    onValueChange={(val) =>
+                      onUpdate({
+                        labelConfig: {
+                          text: field.labelConfig?.text ?? "",
+                          variant: val as any,
+                        },
+                      })
+                    }
+                  >
+                    <SelectTrigger className="w-full flex flex-1 rounded-sm text-sm focus-visible:outline-none">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent
+                      className="rounded-xs"
+                      side="bottom"
+                      avoidCollisions={false}
+                      position="popper"
+                    >
+                      <SelectGroup>
+                        {LABEL_VARIANT_OPTIONS.map((o) => (
+                          <SelectItem key={o.value} value={o.value}>
+                            {o.label}
+                          </SelectItem>
+                        ))}
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            )}
+
+            {/* Placeholder (string/number/textarea) */}
+            {(field.type === "string" ||
+              field.type === "number" ||
+              field.type === "textarea") && (
               <Input
                 value={field.placeholder ?? ""}
                 placeholder="Hint text shown in input..."
@@ -217,12 +328,14 @@ export const FieldCard: React.FC<FieldCardProps> = ({
               />
             )}
 
-            {/* Description */}
-            <Input
-              value={field.description ?? ""}
-              placeholder="Shown below the field..."
-              onChange={(e) => onUpdate({ description: e.target.value })}
-            />
+            {/* Description (not for visual types) */}
+            {!isVisual && (
+              <Input
+                value={field.description ?? ""}
+                placeholder="Shown below the field..."
+                onChange={(e) => onUpdate({ description: e.target.value })}
+              />
+            )}
 
             {/* ── Type-specific config ── */}
 
@@ -243,7 +356,7 @@ export const FieldCard: React.FC<FieldCardProps> = ({
                     }
                   >
                     <SelectTrigger className="w-full flex flex-1 rounded-sm text-sm focus-visible:outline-none">
-                      <SelectValue placeholder="Form" />
+                      <SelectValue />
                     </SelectTrigger>
                     <SelectContent
                       className="rounded-xs"
@@ -252,62 +365,22 @@ export const FieldCard: React.FC<FieldCardProps> = ({
                       position="popper"
                     >
                       <SelectGroup>
-                        {STRING_FORMAT_OPTIONS.map((o: any) => (
-                          <SelectItem value={o.value}>{o.label}</SelectItem>
+                        {STRING_FORMAT_OPTIONS.map((o) => (
+                          <SelectItem key={o.value} value={o.value}>
+                            {o.label}
+                          </SelectItem>
                         ))}
                       </SelectGroup>
                     </SelectContent>
                   </Select>
                 </div>
-                <div>
-                  <p className={sectionLabel}>Validation</p>
-                  <div className="grid grid-cols-2 gap-2">
-                    <Input
-                      type="number"
-                      value={field.validation?.minLength ?? ""}
-                      placeholder="Min length"
-                      onChange={(e) =>
-                        onUpdate({
-                          validation: {
-                            ...field.validation,
-                            minLength: e.target.value
-                              ? +e.target.value
-                              : undefined,
-                          },
-                        })
-                      }
-                    />
-                    <Input
-                      type="number"
-                      value={field.validation?.maxLength ?? ""}
-                      placeholder="Max length"
-                      onChange={(e) =>
-                        onUpdate({
-                          validation: {
-                            ...field.validation,
-                            maxLength: e.target.value
-                              ? +e.target.value
-                              : undefined,
-                          },
-                        })
-                      }
-                    />
-                  </div>
-                  <Input
-                    value={field.validation?.pattern ?? ""}
-                    placeholder="Regex pattern"
-                    className="mt-2"
-                    onChange={(e) =>
-                      onUpdate({
-                        validation: {
-                          ...field.validation,
-                          pattern: e.target.value || undefined,
-                        },
-                      })
-                    }
-                  />
-                </div>
+                <StringValidationPanel field={field} onUpdate={onUpdate} />
               </>
+            )}
+
+            {/* TEXTAREA: validation (reuse string validation) */}
+            {field.type === "textarea" && (
+              <StringValidationPanel field={field} onUpdate={onUpdate} />
             )}
 
             {/* NUMBER: min/max + multipleOf */}
@@ -372,7 +445,7 @@ export const FieldCard: React.FC<FieldCardProps> = ({
                   }
                 >
                   <SelectTrigger className="w-full flex flex-1 rounded-sm text-sm focus-visible:outline-none">
-                    <SelectValue placeholder="Form" />
+                    <SelectValue />
                   </SelectTrigger>
                   <SelectContent
                     className="rounded-xs"
@@ -381,8 +454,10 @@ export const FieldCard: React.FC<FieldCardProps> = ({
                     position="popper"
                   >
                     <SelectGroup>
-                      {DATE_FORMAT_OPTIONS.map((o: any) => (
-                        <SelectItem value={o.value}>{o.label}</SelectItem>
+                      {DATE_FORMAT_OPTIONS.map((o) => (
+                        <SelectItem key={o.value} value={o.value}>
+                          {o.label}
+                        </SelectItem>
                       ))}
                     </SelectGroup>
                   </SelectContent>
@@ -537,25 +612,279 @@ export const FieldCard: React.FC<FieldCardProps> = ({
               </div>
             )}
 
-            {/* Default value */}
-            <Input
-              value={field.defaultValue ?? ""}
-              placeholder="Default value (leave blank for none)"
-              onChange={(e) => onUpdate({ defaultValue: e.target.value })}
-            />
-
-            {/* Required */}
-            <div className="flex items-center justify-between pt-1 border-t border-border">
-              <span className={sectionLabel + " mb-0"}>Required</span>
-              <Switch
-                checked={field.required}
-                onCheckedChange={(v) => onUpdate({ required: v })}
-                size="sm"
+            {/* Default value (not for visual types) */}
+            {!isVisual && (
+              <Input
+                value={field.defaultValue ?? ""}
+                placeholder="Default value (leave blank for none)"
+                onChange={(e) => onUpdate({ defaultValue: e.target.value })}
               />
-            </div>
+            )}
+
+            {/* ── Visibility conditions ── */}
+            {!isVisual && siblingFields.length > 0 && (
+              <div className="pt-1 border-t border-border">
+                <div className="flex items-center justify-between mb-2">
+                  <span className={sectionLabel + " mb-0"}>Visibility</span>
+                  <Switch
+                    checked={hasVisibility ?? false}
+                    onCheckedChange={(checked) => {
+                      if (checked) {
+                        onUpdate({
+                          visibility: {
+                            conditions: [
+                              {
+                                field: siblingFields[0]?.key ?? "",
+                                operator: "equals",
+                                value: "",
+                              },
+                            ],
+                            logic: "and",
+                          },
+                        });
+                      } else {
+                        onUpdate({ visibility: undefined });
+                      }
+                    }}
+                    size="sm"
+                  />
+                </div>
+                {hasVisibility && field.visibility && (
+                  <div className="flex flex-col gap-2">
+                    {field.visibility.conditions.length > 1 && (
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] text-muted-foreground">
+                          Match
+                        </span>
+                        <Select
+                          value={field.visibility.logic}
+                          onValueChange={(val) =>
+                            onUpdate({
+                              visibility: {
+                                ...field.visibility!,
+                                logic: val as "and" | "or",
+                              },
+                            })
+                          }
+                        >
+                          <SelectTrigger className="h-7 w-16 rounded-sm text-xs">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent
+                            className="rounded-xs"
+                            position="popper"
+                          >
+                            <SelectItem value="and">All</SelectItem>
+                            <SelectItem value="or">Any</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    )}
+                    {field.visibility.conditions.map((cond, idx) => (
+                      <div
+                        key={idx}
+                        className="grid grid-cols-[1fr_1fr_1fr_28px] gap-1.5 items-start"
+                      >
+                        <Select
+                          value={cond.field}
+                          onValueChange={(val) => {
+                            const conditions = [
+                              ...field.visibility!.conditions,
+                            ];
+                            conditions[idx] = { ...conditions[idx], field: val };
+                            onUpdate({
+                              visibility: {
+                                ...field.visibility!,
+                                conditions,
+                              },
+                            });
+                          }}
+                        >
+                          <SelectTrigger className="h-7 rounded-sm text-xs">
+                            <SelectValue placeholder="Field" />
+                          </SelectTrigger>
+                          <SelectContent
+                            className="rounded-xs"
+                            position="popper"
+                          >
+                            {siblingFields.map((f) => (
+                              <SelectItem key={f.key} value={f.key}>
+                                {f.label || f.key}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <Select
+                          value={cond.operator}
+                          onValueChange={(val) => {
+                            const conditions = [
+                              ...field.visibility!.conditions,
+                            ];
+                            conditions[idx] = {
+                              ...conditions[idx],
+                              operator: val as VisibilityCondition["operator"],
+                            };
+                            onUpdate({
+                              visibility: {
+                                ...field.visibility!,
+                                conditions,
+                              },
+                            });
+                          }}
+                        >
+                          <SelectTrigger className="h-7 rounded-sm text-xs">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent
+                            className="rounded-xs"
+                            position="popper"
+                          >
+                            {OPERATOR_OPTIONS.map((o) => (
+                              <SelectItem key={o.value} value={o.value}>
+                                {o.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        {cond.operator !== "isEmpty" &&
+                        cond.operator !== "isNotEmpty" ? (
+                          <Input
+                            value={cond.value ?? ""}
+                            placeholder="Value"
+                            className="h-7 text-xs"
+                            onChange={(e) => {
+                              const conditions = [
+                                ...field.visibility!.conditions,
+                              ];
+                              conditions[idx] = {
+                                ...conditions[idx],
+                                value: e.target.value,
+                              };
+                              onUpdate({
+                                visibility: {
+                                  ...field.visibility!,
+                                  conditions,
+                                },
+                              });
+                            }}
+                          />
+                        ) : (
+                          <div />
+                        )}
+                        <Button
+                          variant="ghost"
+                          size="icon-xs"
+                          className="hover:bg-destructive/10 hover:text-destructive"
+                          onClick={() => {
+                            const conditions =
+                              field.visibility!.conditions.filter(
+                                (_, i) => i !== idx,
+                              );
+                            if (conditions.length === 0) {
+                              onUpdate({ visibility: undefined });
+                            } else {
+                              onUpdate({
+                                visibility: {
+                                  ...field.visibility!,
+                                  conditions,
+                                },
+                              });
+                            }
+                          }}
+                        >
+                          <Trash2 className="size-3" />
+                        </Button>
+                      </div>
+                    ))}
+                    <button
+                      type="button"
+                      className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors py-1"
+                      onClick={() => {
+                        const conditions: VisibilityCondition[] = [
+                          ...field.visibility!.conditions,
+                          {
+                            field: siblingFields[0]?.key ?? "",
+                            operator: "equals",
+                            value: "",
+                          },
+                        ];
+                        onUpdate({
+                          visibility: { ...field.visibility!, conditions },
+                        });
+                      }}
+                    >
+                      <Plus className="size-3" /> Add condition
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Required (not for visual types) */}
+            {!isVisual && (
+              <div className="flex items-center justify-between pt-1 border-t border-border">
+                <span className={sectionLabel + " mb-0"}>Required</span>
+                <Switch
+                  checked={field.required}
+                  onCheckedChange={(v) => onUpdate({ required: v })}
+                  size="sm"
+                />
+              </div>
+            )}
           </div>
         )}
       </div>
     </div>
   );
 };
+
+/** Shared string/textarea validation panel */
+const StringValidationPanel: React.FC<{
+  field: FormField;
+  onUpdate: (patch: Partial<FormField>) => void;
+}> = ({ field, onUpdate }) => (
+  <div>
+    <p className={sectionLabel}>Validation</p>
+    <div className="grid grid-cols-2 gap-2">
+      <Input
+        type="number"
+        value={field.validation?.minLength ?? ""}
+        placeholder="Min length"
+        onChange={(e) =>
+          onUpdate({
+            validation: {
+              ...field.validation,
+              minLength: e.target.value ? +e.target.value : undefined,
+            },
+          })
+        }
+      />
+      <Input
+        type="number"
+        value={field.validation?.maxLength ?? ""}
+        placeholder="Max length"
+        onChange={(e) =>
+          onUpdate({
+            validation: {
+              ...field.validation,
+              maxLength: e.target.value ? +e.target.value : undefined,
+            },
+          })
+        }
+      />
+    </div>
+    <Input
+      value={field.validation?.pattern ?? ""}
+      placeholder="Regex pattern"
+      className="mt-2"
+      onChange={(e) =>
+        onUpdate({
+          validation: {
+            ...field.validation,
+            pattern: e.target.value || undefined,
+          },
+        })
+      }
+    />
+  </div>
+);

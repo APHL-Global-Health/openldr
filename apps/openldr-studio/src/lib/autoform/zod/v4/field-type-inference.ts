@@ -1,5 +1,5 @@
 import { type FieldConfig } from "@/lib/autoform/core";
-import { ZodOptions, ZodDate, ZodReference, ZodFile } from "@/lib/schemaUtils";
+import { ZodOptions, ZodDate, ZodReference, ZodFile, ZodLabel, ZodSeparator } from "@/lib/schemaUtils";
 import * as z from "zod/v4/core";
 
 export function inferFieldType(
@@ -10,6 +10,14 @@ export function inferFieldType(
     return fieldConfig.fieldType;
   }
 
+  // Check globalRegistry for fieldType (used by textarea handler)
+  const registryMeta = z.globalRegistry.get(schema) as any;
+  if (registryMeta?.fieldType) {
+    return registryMeta.fieldType;
+  }
+
+  if (schema instanceof ZodLabel) return "label";
+  if (schema instanceof ZodSeparator) return "separator";
   if (schema instanceof ZodReference) return "reference";
   if (schema instanceof ZodFile) return "file";
   if (schema instanceof z.$ZodObject) return "object";

@@ -17,6 +17,9 @@ import { ArrayWrapper } from "@/components/autoform/components/ArrayWrapper";
 import { ArrayElementWrapper } from "@/components/autoform/components/ArrayElementWrapper";
 import { ReferenceField } from "@/components/autoform/components/ReferenceField";
 import { FileField } from "@/components/autoform/components/FileField";
+import { LabelField } from "@/components/autoform/components/LabelField";
+import { SeparatorField } from "@/components/autoform/components/SeparatorField";
+import { TextareaField } from "@/components/autoform/components/TextareaField";
 
 const ShadcnUIComponents: AutoFormUIComponents = {
   Form,
@@ -37,6 +40,9 @@ export const ShadcnAutoFormFieldComponents = {
   options: SelectField,
   reference: ReferenceField,
   file: FileField,
+  label: LabelField,
+  separator: SeparatorField,
+  textarea: TextareaField,
 } as const;
 export type FieldTypes = keyof typeof ShadcnAutoFormFieldComponents;
 

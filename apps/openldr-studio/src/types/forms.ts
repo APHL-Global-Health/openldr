@@ -6,7 +6,10 @@ export type FieldType =
   | "select"
   | "options"
   | "reference"
-  | "file";
+  | "file"
+  | "label"
+  | "separator"
+  | "textarea";
 
 export interface ValidationRule {
   min?: number;
@@ -45,6 +48,29 @@ export interface NumberConfig {
   multipleOf?: number;
 }
 
+export interface LabelConfig {
+  text: string;
+  variant: "h1" | "h2" | "h3" | "body" | "muted";
+}
+
+export interface VisibilityCondition {
+  field: string; // key of the controlling field
+  operator:
+    | "equals"
+    | "notEquals"
+    | "contains"
+    | "isEmpty"
+    | "isNotEmpty"
+    | "gt"
+    | "lt";
+  value?: string; // not needed for isEmpty/isNotEmpty
+}
+
+export interface VisibilityRule {
+  conditions: VisibilityCondition[];
+  logic: "and" | "or";
+}
+
 export interface FormField {
   id: string;
   type: FieldType;
@@ -65,6 +91,10 @@ export interface FormField {
   fileConfig?: FileConfig;
   stringConfig?: StringConfig;
   numberConfig?: NumberConfig;
+  labelConfig?: LabelConfig;
+
+  // Conditional visibility
+  visibility?: VisibilityRule;
 
   /** Original JSON Schema property preserved for round-tripping */
   _schemaProperty?: Record<string, any>;
@@ -107,7 +137,17 @@ export interface JSONSchemaProperty {
   "x-zodType"?: string;
   "x-zodOptions"?: [string, string][];
   "x-zodReference"?: { table: string; key: string; attributes: string[] };
-  "x-zodFile"?: { file: string; key: string; content: string; mimes: string[] };
+  "x-zodFile"?: {
+    file: string;
+    key: string;
+    content: string;
+    mimes: string[];
+  };
+  "x-zodLabel"?: { text: string; variant: string };
+  "x-zodVisibility"?: {
+    conditions: VisibilityCondition[];
+    logic: "and" | "or";
+  };
   [key: string]: unknown;
 }
 
@@ -119,4 +159,5 @@ export interface FieldTypeMeta {
   icon: string;
   color: string;
   description: string;
+  category?: "data" | "layout";
 }

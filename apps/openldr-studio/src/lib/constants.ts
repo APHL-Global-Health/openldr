@@ -920,6 +920,29 @@ export const FIELD_TYPE_META: FieldTypeMeta[] = [
     color: "#FCD34D",
     description: "File upload",
   },
+  {
+    type: "textarea",
+    label: "Long Text",
+    icon: "¶",
+    color: "#6EE7B7",
+    description: "Multiline text",
+  },
+  {
+    type: "label",
+    label: "Label",
+    icon: "Aa",
+    color: "#94A3B8",
+    description: "Heading / instruction",
+    category: "layout",
+  },
+  {
+    type: "separator",
+    label: "Divider",
+    icon: "—",
+    color: "#94A3B8",
+    description: "Horizontal divider",
+    category: "layout",
+  },
 ];
 
 export const SAMPLE_FORMS: FormDefinition[] = [

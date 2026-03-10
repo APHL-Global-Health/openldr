@@ -92,6 +92,18 @@ function parseField(key: string, schema: z.$ZodType): ParsedField {
     };
   }
 
+  // Read visibility conditions from registry
+  const visibility = getVisibility(schema);
+  if (visibility) {
+    fieldConfig = {
+      ...fieldConfig,
+      customData: {
+        ...(fieldConfig?.customData as any),
+        visibility,
+      },
+    };
+  }
+
   return {
     key,
     type,
@@ -169,4 +181,19 @@ function getReadOnly<SchemaType extends z.$ZodType>(
   }
 
   return false;
+}
+
+function getVisibility<SchemaType extends z.$ZodType>(
+  schema: SchemaType,
+): any | undefined {
+  const meta = z.globalRegistry.get(schema) as any;
+  if (meta?.visibility) {
+    return meta.visibility;
+  }
+
+  if ("innerType" in schema._zod.def) {
+    return getVisibility(schema._zod.def.innerType as SchemaType);
+  }
+
+  return undefined;
 }

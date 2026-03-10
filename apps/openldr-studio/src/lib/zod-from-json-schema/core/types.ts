@@ -5,6 +5,8 @@ import {
   type _ZodDate,
   type _ZodReference,
   type _ZodFile,
+  type _ZodLabel,
+  type _ZodSeparator,
 } from "../../schemaUtils";
 
 export interface TypeSchemas {
@@ -19,6 +21,8 @@ export interface TypeSchemas {
   date?: _ZodDate<any> | false;
   reference?: _ZodReference<any> | false;
   file?: _ZodFile<any> | false;
+  label?: _ZodLabel | false;
+  separator?: _ZodSeparator | false;
 }
 
 export interface PrimitiveHandler {

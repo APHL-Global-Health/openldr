@@ -12,6 +12,8 @@ import type {
   FileConfig,
   StringConfig,
   NumberConfig,
+  LabelConfig,
+  VisibilityRule,
 } from "@/types/forms";
 
 import React, { useCallback, useRef, useState } from "react";
@@ -114,8 +116,21 @@ function jsonSchemaToFields(schema: any): FormField[] {
       let numberConfig: NumberConfig | undefined;
 
       const xType = val["x-zodType"];
+      let labelConfig: LabelConfig | undefined;
+      let visibility: VisibilityRule | undefined;
 
-      if (xType === "date") {
+      if (xType === "label") {
+        fieldType = "label";
+        const lbl = val["x-zodLabel"];
+        labelConfig = {
+          text: lbl?.text ?? "",
+          variant: lbl?.variant ?? "h3",
+        };
+      } else if (xType === "separator") {
+        fieldType = "separator";
+      } else if (xType === "textarea") {
+        fieldType = "textarea";
+      } else if (xType === "date") {
         fieldType = "date";
         const opts: [string, string][] = val["x-zodOptions"] ?? [];
         const fmt = opts.find(([k]) => k === "format")?.[1];
@@ -164,6 +179,11 @@ function jsonSchemaToFields(schema: any): FormField[] {
         }
       }
 
+      // Read visibility conditions
+      if (val["x-zodVisibility"]) {
+        visibility = val["x-zodVisibility"] as VisibilityRule;
+      }
+
       return {
         id: `field-${key}-${i}`,
         type: fieldType,
@@ -188,6 +208,8 @@ function jsonSchemaToFields(schema: any): FormField[] {
         fileConfig,
         stringConfig,
         numberConfig,
+        labelConfig,
+        visibility,
         _schemaProperty: structuredClone(val),
       };
     },
@@ -742,6 +764,7 @@ function FormBuilderPage() {
                       <FieldCard
                         key={field.id}
                         field={field}
+                        allFields={fields}
                         onUpdate={(patch) => updateField(field.id, patch)}
                         onRemove={() => removeField(field.id)}
                         onToggleExpand={() => toggleFieldExpanded(field.id)}

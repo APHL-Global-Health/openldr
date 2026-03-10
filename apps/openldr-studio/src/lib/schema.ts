@@ -1,9 +1,12 @@
 import type {
   FormDefinition,
   FormField,
+  FieldType,
   JSONSchema,
   JSONSchemaProperty,
 } from "@/types/forms";
+
+const VISUAL_TYPES: FieldType[] = ["label", "separator"];
 
 export function generateKey(label: string): string {
   return label
@@ -31,13 +34,19 @@ export function fieldToSchemaProperty(field: FormField): JSONSchemaProperty {
     delete prop.description;
   }
 
+  // Helper to clean custom extensions
+  const clearExtensions = () => {
+    delete prop["x-zodType"];
+    delete prop["x-zodOptions"];
+    delete prop["x-zodReference"];
+    delete prop["x-zodFile"];
+    delete prop["x-zodLabel"];
+  };
+
   switch (field.type) {
     case "string": {
       prop.type = "string";
-      delete prop["x-zodType"];
-      delete prop["x-zodOptions"];
-      delete prop["x-zodReference"];
-      delete prop["x-zodFile"];
+      clearExtensions();
 
       const fmt = field.stringConfig?.format;
       if (fmt) prop.format = fmt;
@@ -52,12 +61,23 @@ export function fieldToSchemaProperty(field: FormField): JSONSchemaProperty {
       break;
     }
 
+    case "textarea": {
+      prop.type = "string";
+      clearExtensions();
+      prop["x-zodType"] = "textarea";
+
+      if (field.validation?.minLength) prop.minLength = field.validation.minLength;
+      else delete prop.minLength;
+      if (field.validation?.maxLength) prop.maxLength = field.validation.maxLength;
+      else delete prop.maxLength;
+      if (field.validation?.pattern) prop.pattern = field.validation.pattern;
+      else delete prop.pattern;
+      break;
+    }
+
     case "number": {
       prop.type = "number";
-      delete prop["x-zodType"];
-      delete prop["x-zodOptions"];
-      delete prop["x-zodReference"];
-      delete prop["x-zodFile"];
+      clearExtensions();
 
       if (field.validation?.min !== undefined) prop.minimum = field.validation.min;
       else delete prop.minimum;
@@ -77,10 +97,7 @@ export function fieldToSchemaProperty(field: FormField): JSONSchemaProperty {
 
     case "boolean":
       prop.type = "boolean";
-      delete prop["x-zodType"];
-      delete prop["x-zodOptions"];
-      delete prop["x-zodReference"];
-      delete prop["x-zodFile"];
+      clearExtensions();
       break;
 
     case "date": {
@@ -88,20 +105,16 @@ export function fieldToSchemaProperty(field: FormField): JSONSchemaProperty {
       const hasTime = fmt.includes("H") || fmt.includes("h") || fmt.includes("m");
       prop.type = ["object", "string"];
       prop.format = hasTime ? "datetime" : "date";
+      clearExtensions();
       prop["x-zodType"] = "date";
       prop["x-zodOptions"] = [["format", fmt]];
-      delete prop["x-zodReference"];
-      delete prop["x-zodFile"];
       delete prop.enum;
       break;
     }
 
     case "select": {
       prop.type = "string";
-      delete prop["x-zodType"];
-      delete prop["x-zodOptions"];
-      delete prop["x-zodReference"];
-      delete prop["x-zodFile"];
+      clearExtensions();
       if (field.options) {
         prop.enum = field.options.split(",").map((s) => s.trim()).filter(Boolean);
       } else {
@@ -113,11 +126,10 @@ export function fieldToSchemaProperty(field: FormField): JSONSchemaProperty {
     case "options": {
       const entries = field.optionsConfig?.entries ?? [];
       prop.type = ["object", "enum"];
+      clearExtensions();
       prop["x-zodType"] = "options";
       prop["x-zodOptions"] = entries;
       prop.enum = entries.map(([, label]) => label);
-      delete prop["x-zodReference"];
-      delete prop["x-zodFile"];
       break;
     }
 
@@ -125,6 +137,7 @@ export function fieldToSchemaProperty(field: FormField): JSONSchemaProperty {
       const cfg = field.referenceConfig;
       prop.type = ["object", "string"];
       prop.format = "uuid";
+      clearExtensions();
       prop["x-zodType"] = "reference";
       if (cfg) {
         prop["x-zodReference"] = {
@@ -133,8 +146,6 @@ export function fieldToSchemaProperty(field: FormField): JSONSchemaProperty {
           attributes: cfg.attributes,
         };
       }
-      delete prop["x-zodOptions"];
-      delete prop["x-zodFile"];
       delete prop.enum;
       break;
     }
@@ -142,6 +153,7 @@ export function fieldToSchemaProperty(field: FormField): JSONSchemaProperty {
     case "file": {
       const cfg = field.fileConfig;
       prop.type = ["object", "string"];
+      clearExtensions();
       prop["x-zodType"] = "file";
       if (cfg) {
         prop["x-zodFile"] = {
@@ -151,15 +163,43 @@ export function fieldToSchemaProperty(field: FormField): JSONSchemaProperty {
           mimes: cfg.mimes,
         };
       }
-      delete prop["x-zodOptions"];
-      delete prop["x-zodReference"];
+      delete prop.enum;
+      break;
+    }
+
+    case "label": {
+      prop.type = "null";
+      clearExtensions();
+      prop["x-zodType"] = "label";
+      prop["x-zodLabel"] = {
+        text: field.labelConfig?.text ?? field.label,
+        variant: field.labelConfig?.variant ?? "h3",
+      };
+      delete prop.enum;
+      break;
+    }
+
+    case "separator": {
+      prop.type = "null";
+      clearExtensions();
+      prop["x-zodType"] = "separator";
       delete prop.enum;
       break;
     }
   }
 
-  if (field.defaultValue) prop.default = field.defaultValue;
-  else delete prop.default;
+  // Default value (not for visual types)
+  if (!VISUAL_TYPES.includes(field.type)) {
+    if (field.defaultValue) prop.default = field.defaultValue;
+    else delete prop.default;
+  }
+
+  // Visibility conditions
+  if (field.visibility && field.visibility.conditions.length > 0) {
+    prop["x-zodVisibility"] = field.visibility;
+  } else {
+    delete prop["x-zodVisibility"];
+  }
 
   return prop;
 }
@@ -171,7 +211,14 @@ export function formToJSONSchema(form: FormDefinition): JSONSchema {
   for (const field of form.fields) {
     const key = field.key || generateKey(field.label) || `field_${field.id}`;
     properties[key] = fieldToSchemaProperty(field);
-    if (field.required) required.push(key);
+    // Skip visual types and conditionally-visible fields from required
+    if (
+      field.required &&
+      !VISUAL_TYPES.includes(field.type) &&
+      !field.visibility?.conditions.length
+    ) {
+      required.push(key);
+    }
   }
 
   return {
