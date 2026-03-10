@@ -98,7 +98,8 @@ async function deleteBucket(bucketName: string) {
     // Check if bucket exists before attempting to delete
     const exists = await minioClient.bucketExists(bucketName);
     if (!exists) {
-      throw new Error(`Bucket ${bucketName} does not exist`);
+      console.log(`Bucket ${bucketName} does not exist, skipping deletion`);
+      return;
     }
 
     await minioClient.removeBucket(bucketName);

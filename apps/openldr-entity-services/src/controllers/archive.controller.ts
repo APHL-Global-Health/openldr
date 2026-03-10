@@ -351,7 +351,29 @@ router.delete(
       } else if (name === "projects") {
         let _data = Array.isArray(data) ? data : [data];
         for (let x = 0; x < _data.length; x++) {
-          await minioUtil.deleteBucket(_data[x]);
+          const projectId = _data[x];
+
+          // Find all useCases for this project
+          const useCaseResult = await pool.query(
+            `SELECT "useCaseId" FROM "useCases" WHERE "projectId" = $1`,
+            [projectId],
+          );
+          const useCaseIds = useCaseResult.rows.map((r: any) => r.useCaseId);
+
+          // Delete dataFeeds for each useCase
+          if (useCaseIds.length > 0) {
+            const placeholders = useCaseIds.map((_: any, i: number) => `$${i + 1}`).join(", ");
+            await pool.query(
+              `DELETE FROM "dataFeeds" WHERE "useCaseId" IN (${placeholders})`,
+              useCaseIds,
+            );
+            await pool.query(
+              `DELETE FROM "useCases" WHERE "useCaseId" IN (${placeholders})`,
+              useCaseIds,
+            );
+          }
+
+          await minioUtil.deleteBucket(projectId);
         }
       }
 
@@ -377,7 +399,7 @@ router.delete(
         keys: data,
       });
     } catch (error: any) {
-      res.status(200).json({ status: "Failed", data: error });
+      res.status(200).json({ status: "Failed", data: error?.message ?? String(error) });
     }
   },
 );
