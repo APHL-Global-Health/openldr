@@ -16,7 +16,7 @@ import type {
   VisibilityRule,
 } from "@/types/forms";
 
-import React, { useCallback, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   DndContext,
   closestCenter,
@@ -100,6 +100,13 @@ import {
   InputGroupButton,
   InputGroupText,
 } from "@/components/ui/input-group";
+
+import CodeMirror from "@uiw/react-codemirror";
+// import { white as lightTheme } from '@uiw/codemirror-theme-white';
+import { vscodeDark, vscodeLight } from "@uiw/codemirror-theme-vscode";
+import { json } from "@codemirror/lang-json";
+import { EditorView } from "@codemirror/view";
+import { getCurrentTheme } from "@/lib/theme";
 
 /** Convert a JSON Schema `properties` object + `required` array into FormField[] */
 function jsonSchemaToFields(schema: any): FormField[] {
@@ -240,6 +247,23 @@ function fieldsToJsonSchema(fields: FormField[], baseSchema: any): any {
 
 function FormBuilderPage() {
   const { t } = useAppTranslation();
+
+  const [theme, setTheme] = useState(getCurrentTheme);
+
+  useEffect(() => {
+    const onThemeChange = () => {
+      setTheme(getCurrentTheme());
+    };
+    window.addEventListener("themechange", onThemeChange);
+
+    const mq = window.matchMedia("(prefers-color-scheme: dark)");
+    mq.addEventListener("change", onThemeChange);
+
+    return () => {
+      window.removeEventListener("themechange", onThemeChange);
+      mq.removeEventListener("change", onThemeChange);
+    };
+  }, []);
 
   const [activeTab, setActiveTab] = useState<TabId>("preview");
   const [mobileTab, setMobileTab] = useState<"builder" | "right">("builder");
@@ -834,18 +858,13 @@ function FormBuilderPage() {
                   )}
                 </Button>
               </div>
-              <div className="flex w-full flex-1 p-3 overflow-y-auto">
-                {/* <JsonView
-                        className="flex flex-1 w-full"
-                        value={data.code}
-                        style={theme === "dark" ? darkTheme : lightTheme}
-                        shouldExpandNodeInitially={() => true}
-                        collapsed={false}
-                        enableClipboard={false}
-                        displayDataTypes={false}
-                        displayObjectSize={false}
-                      /> */}
-                <JsonTree data={jsonSchema} />
+              <div className="flex w-full flex-1 overflow-y-auto">
+                <CodeMirror
+                  value={JSON.stringify(rawJsonSchema, null, 2)}
+                  className="w-full"
+                  theme={theme === "dark" ? vscodeDark : vscodeLight}
+                  extensions={[json(), EditorView.lineWrapping]}
+                />
               </div>
             </div>
           ) : (

@@ -9,34 +9,7 @@ import {
   TooltipTrigger,
   TooltipProvider,
 } from "@/components/ui/tooltip";
-
-const getCurrentTheme = () => {
-  if (document.documentElement.classList.contains("dark")) return "dark";
-  if (window.matchMedia("(prefers-color-scheme: dark)").matches) return "dark";
-  return "light";
-};
-
-const handleThemeChange = (value: "light" | "dark" | "system") => {
-  requestAnimationFrame(() => {
-    localStorage.setItem("theme", value);
-
-    if (
-      document.documentElement.classList.contains("dark") ===
-      (value === "dark")
-    ) {
-      document.documentElement.classList.remove("light");
-      return;
-    }
-
-    if (value === "light") {
-      document.documentElement.classList.add("light");
-      document.documentElement.classList.remove("dark");
-    } else {
-      document.documentElement.classList.add("dark");
-      document.documentElement.classList.remove("light");
-    }
-  });
-};
+import { getCurrentTheme, handleThemeChange } from "@/lib/theme";
 
 export function ModeToggle() {
   return (

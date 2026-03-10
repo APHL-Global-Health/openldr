@@ -16,12 +16,7 @@ import { useMultiNamespaceTranslation } from "@/i18n/hooks";
 import ui_light from "@/assets/images/ui-light.png";
 import ui_dark from "@/assets/images/ui-dark.png";
 // import ui_system from "@/assets/images/ui-system.png";
-
-const getCurrentTheme = () => {
-  if (document.documentElement.classList.contains("dark")) return "dark";
-  if (window.matchMedia("(prefers-color-scheme: dark)").matches) return "dark";
-  return "light";
-};
+import { getCurrentTheme, handleThemeChange } from "@/lib/theme";
 
 export function SettingsAppearance() {
   const { t } = useMultiNamespaceTranslation(["common", "app"]);
@@ -48,27 +43,6 @@ export function SettingsAppearance() {
 
   const id = useId();
   const theme = localStorage.getItem("theme") || getCurrentTheme();
-
-  const handleThemeChange = (value: "light" | "dark" | "system") => {
-    requestAnimationFrame(() => {
-      localStorage.setItem("theme", value);
-      if (
-        document.documentElement.classList.contains("dark") ===
-        (value === "dark")
-      ) {
-        document.documentElement.classList.remove("light");
-        return;
-      }
-
-      if (value === "light") {
-        document.documentElement.classList.add("light");
-        document.documentElement.classList.remove("dark");
-      } else {
-        document.documentElement.classList.add("dark");
-        document.documentElement.classList.remove("light");
-      }
-    });
-  };
 
   return (
     <div className="flex w-full h-full justify-center overflow-y-auto pt-4">
