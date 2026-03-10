@@ -280,7 +280,7 @@ export const $ZodFile = <T extends ZodFileType>(file: T, params?: any) => {
 
 // ZodLabel — visual-only, passthrough
 export interface $ZodLabelDef extends z.$ZodTypeDef {
-  type: "label";
+  type: "custom";
   label: { text: string; variant: string };
 }
 
@@ -303,7 +303,7 @@ export const ZodLabel: z.$constructor<_ZodLabel> = z.$constructor(
 
 export const $ZodLabel = (label: { text: string; variant: string }, params?: any) => {
   return new ZodLabel({
-    type: "label",
+    type: "custom",
     label,
     ...z.util.normalizeParams(params),
   });
@@ -311,7 +311,7 @@ export const $ZodLabel = (label: { text: string; variant: string }, params?: any
 
 // ZodSeparator — visual-only, passthrough
 export interface $ZodSeparatorDef extends z.$ZodTypeDef {
-  type: "separator";
+  type: "custom";
 }
 
 export interface $ZodSeparatorInternals
@@ -333,7 +333,7 @@ export const ZodSeparator: z.$constructor<_ZodSeparator> = z.$constructor(
 
 export const $ZodSeparator = (params?: any) => {
   return new ZodSeparator({
-    type: "separator",
+    type: "custom",
     ...z.util.normalizeParams(params),
   });
 };

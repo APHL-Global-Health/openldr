@@ -1,4 +1,4 @@
-import * as z from "zod/v4/core";
+import { z } from "zod/v4";
 import type { JSONSchema } from "zod/v4/core";
 import { type PrimitiveHandler, type TypeSchemas } from "../../core/types";
 
