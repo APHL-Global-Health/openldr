@@ -1,77 +1,442 @@
 import { ContentLayout } from "@/components/admin-panel/content-layout";
-import { BuilderSidebar } from "@/components/forms/builder/BuilderSidebar";
-import { FormPreview } from "@/components/forms/builder/FormPreview";
-import { SchemaView } from "@/components/forms/builder/SchemaView";
 import { Separator } from "@/components/ui/separator";
 import { useAppTranslation } from "@/i18n/hooks";
 import { cn } from "@/lib/utils";
-import { useActiveForm } from "@/store/formBuilderStore";
-import type { TabId } from "@/types/forms";
-import { useState } from "react";
+import type { TabId, FormField, FieldType, JSONSchemaProperty } from "@/types/forms";
+
+import React, { useCallback, useRef, useState } from "react";
+import {
+  DndContext,
+  closestCenter,
+  PointerSensor,
+  TouchSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  verticalListSortingStrategy,
+  arrayMove,
+} from "@dnd-kit/sortable";
+import { Button } from "@/components/ui/button";
+
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+
+import { toast } from "sonner";
+
+import { ButtonGroup } from "@/components/ui/button-group";
+import { MoreHorizontalIcon, Pencil, Plus, Trash2Icon } from "lucide-react";
+
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useKeycloakClient } from "@/components/react-keycloak-provider";
+import { useQuery } from "@tanstack/react-query";
+import type { TableData } from "@/pages/ArchivePage";
+
+import * as SchemaRestClient from "@/lib/restClients/schemaRestClient";
+import { manipulateData } from "@/lib/restClients/schemaRestClient";
+import SchemaRecordSheet from "@/components/forms/schema-record-sheet";
+import { AddFieldPanel } from "@/components/forms/builder/AddFieldPanel";
+import { AutoForm } from "@/components/autoform";
+import type { UseFormReturn } from "react-hook-form";
+import { toZodSchema } from "@/lib/schemaUtils";
+import { ZodProvider } from "@/lib/autoform/zod";
+import { AutoFormProvider } from "@/components/autoform-provider";
+import { FieldCard } from "@/components/forms/builder/FieldCard";
+import { JsonTree } from "@/components/projects/JsonTree";
+import { generateKey, fieldToSchemaProperty } from "@/lib/schema";
 
 const TABS = [
   { id: "preview" as TabId, label: "Preview" },
   { id: "schema" as TabId, label: "Schema" },
 ];
 
-function LogsPage() {
+/** Convert a JSON Schema `properties` object + `required` array into FormField[] */
+function jsonSchemaToFields(schema: any): FormField[] {
+  if (!schema?.properties) return [];
+  const required: string[] = schema.required ?? [];
+
+  return Object.entries(schema.properties).map(
+    ([key, val]: [string, any], i) => {
+      let fieldType: FieldType = "string";
+      if (val.enum) fieldType = "select";
+      else if (val.format === "date" || val.format === "datetime") fieldType = "date";
+      else if (val.format === "email") fieldType = "email";
+      else if (val.format === "textarea") fieldType = "textarea";
+      else if (val.type === "boolean") fieldType = "boolean";
+      else if (val.type === "number" || val.type === "integer") fieldType = "number";
+      else if (val.type === "array") fieldType = "multiselect";
+      else if (val.type === "object") fieldType = "object";
+
+      return {
+        id: `field-${key}-${i}`,
+        type: fieldType,
+        label: val.title || key,
+        key,
+        required: required.includes(key),
+        placeholder: val.description ?? "",
+        description: val.description ?? "",
+        options: val.enum ? val.enum.join(", ") : undefined,
+        defaultValue: val.default != null ? String(val.default) : undefined,
+        validation: {
+          min: val.minimum,
+          max: val.maximum,
+          minLength: val.minLength,
+          maxLength: val.maxLength,
+          pattern: val.pattern,
+        },
+        expanded: false,
+      };
+    },
+  );
+}
+
+/** Rebuild a JSON Schema object from FormField[] (preserving the original schema envelope) */
+function fieldsToJsonSchema(fields: FormField[], baseSchema: any): any {
+  const properties: Record<string, JSONSchemaProperty> = {};
+  const required: string[] = [];
+
+  for (const field of fields) {
+    const key = field.key || generateKey(field.label) || `field_${field.id}`;
+    properties[key] = fieldToSchemaProperty(field);
+    if (field.required) required.push(key);
+  }
+
+  return {
+    ...baseSchema,
+    properties,
+    ...(required.length ? { required } : { required: undefined }),
+  };
+}
+
+function FormBuilderPage() {
   const { t } = useAppTranslation();
 
   const [activeTab, setActiveTab] = useState<TabId>("preview");
   const [mobileTab, setMobileTab] = useState<"builder" | "right">("builder");
-  const activeForm = useActiveForm();
 
-  const navComponents = () => {
-    return (
-      <div className="flex min-h-13 max-h-13 w-full items-center pr-2 py-2">
-        <h1 className="font-bold">{t("forms.title")}</h1>
+  const client = useKeycloakClient();
 
-        <Separator orientation="vertical" className="mx-2 min-h-6" />
+  const [showAddPanel, setShowAddPanel] = useState(false);
+  const [isEditMode, setEditMode] = useState(false);
 
-        <div className="flex flex-1"></div>
+  const [schema, setSchema] = useState<string | undefined>("Internal");
+  const [table, setTable] = useState<string | undefined>("formSchemas");
 
-        <div className="hidden md:flex items-center gap-1 bg-[#111E30] rounded-lg p-1 border border-border">
-          {TABS.map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${
-                activeTab === tab.id
-                  ? "bg-[#1A2C40] text-[#6EE7B7]"
-                  : "text-[#607A94] hover:text-[#A0B4C8]"
-              }`}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </div>
-        <div className="flex md:hidden items-center gap-1 bg-[#111E30] rounded-lg p-1 border border-border">
-          <button
-            onClick={() => setMobileTab("builder")}
-            className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${
-              mobileTab === "builder"
-                ? "bg-[#1A2C40] text-[#6EE7B7]"
-                : "text-[#607A94]"
-            }`}
-          >
-            Builder
-          </button>
-          <button
-            onClick={() => setMobileTab("right")}
-            className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${
-              mobileTab === "right"
-                ? "bg-[#1A2C40] text-[#6EE7B7]"
-                : "text-[#607A94]"
-            }`}
-          >
-            Preview
-          </button>
-        </div>
+  const [rawJsonSchema, setRawJsonSchema] = useState<any | undefined>(undefined);
+  const [jsonSchema, setJsonSchema] = useState<ZodProvider<any> | undefined>(undefined);
+  const [fields, setFields] = useState<FormField[]>([]);
 
-        <Separator orientation="vertical" className="mx-2 min-h-6" />
-      </div>
-    );
+  const [selectedRecordItem, setSelectedRecordItem] = useState<any | undefined>(undefined);
+
+  const [form, setForm] = useState<UseFormReturn<any, any, any> | null>(null);
+  const formRef = useRef<HTMLFormElement>(null);
+
+  const [isRecordSheetOpen, setRecordSheetOpen] = useState(false);
+
+  const { data, refetch } = useQuery<TableData>({
+    queryKey: ["Data", "ProjectsPage", table, schema],
+    queryFn: async () => {
+      if (table && schema) {
+        const filter: any = {};
+
+        const cols = await SchemaRestClient.getTableColumns(
+          table,
+          client.kc.token,
+        );
+
+        const msg = await SchemaRestClient.getTableData(
+          table,
+          filter,
+          client.kc.token,
+        );
+
+        const { rows } = msg.data;
+
+        return {
+          totalPages: 1,
+          items: rows,
+          columns: (cols?.data || []).map((row) => {
+            return {
+              id: row.Name,
+              name: row.Name.replace(/([A-Z]+)/g, " $1")
+                .replace(/([A-Z][a-z])/g, " $1")
+                .trim()
+                .replace(/^./, (str) => str.toUpperCase())
+                .replace(/\s+/g, " "),
+              type: row.Type,
+              nullable: row.Nullable,
+              primaryKey: row.PrimaryKey || false,
+              constraint: row.Constraint,
+            };
+          }),
+        };
+      }
+      return { items: [] };
+    },
+    refetchInterval: false,
+    refetchOnMount: true,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    refetchIntervalInBackground: false,
+  });
+
+  // ── Rebuild schemas from fields ──
+  const rebuildSchemas = useCallback(
+    (updatedFields: FormField[]) => {
+      if (!rawJsonSchema) return;
+      const newSchema = fieldsToJsonSchema(updatedFields, rawJsonSchema);
+      setRawJsonSchema(newSchema);
+      try {
+        const zodSchema = toZodSchema(newSchema);
+        setJsonSchema(new ZodProvider(zodSchema as any));
+      } catch {
+        // schema may be temporarily invalid while editing
+      }
+    },
+    [rawJsonSchema],
+  );
+
+  // ── Field management ──
+  const addField = useCallback(
+    (type: FieldType) => {
+      const newField: FormField = {
+        id: `field-${Date.now()}`,
+        type,
+        label: "",
+        key: "",
+        required: false,
+        expanded: true,
+      };
+      const next = [...fields, newField];
+      setFields(next);
+      rebuildSchemas(next);
+    },
+    [fields, rebuildSchemas],
+  );
+
+  const updateField = useCallback(
+    (fieldId: string, patch: Partial<FormField>) => {
+      const next = fields.map((f) => {
+        if (f.id !== fieldId) return f;
+        const updated = { ...f, ...patch };
+        if (patch.label !== undefined && !f.key) {
+          updated.key = generateKey(patch.label);
+        }
+        return updated;
+      });
+      setFields(next);
+      rebuildSchemas(next);
+    },
+    [fields, rebuildSchemas],
+  );
+
+  const removeField = useCallback(
+    (fieldId: string) => {
+      const next = fields.filter((f) => f.id !== fieldId);
+      setFields(next);
+      rebuildSchemas(next);
+    },
+    [fields, rebuildSchemas],
+  );
+
+  const toggleFieldExpanded = useCallback(
+    (fieldId: string) => {
+      setFields((prev) =>
+        prev.map((f) =>
+          f.id === fieldId ? { ...f, expanded: !f.expanded } : f,
+        ),
+      );
+    },
+    [],
+  );
+
+  // ── Drag & Drop ──
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
+    useSensor(TouchSensor, {
+      activationConstraint: { delay: 200, tolerance: 5 },
+    }),
+  );
+
+  const handleDragEnd = useCallback(
+    (event: DragEndEvent) => {
+      const { active, over } = event;
+      if (!over || active.id === over.id) return;
+      const oldIndex = fields.findIndex((f) => f.id === active.id);
+      const newIndex = fields.findIndex((f) => f.id === over.id);
+      if (oldIndex === -1 || newIndex === -1) return;
+      const next = arrayMove(fields, oldIndex, newIndex);
+      setFields(next);
+      rebuildSchemas(next);
+    },
+    [fields, rebuildSchemas],
+  );
+
+  // ── Form selection ──
+  const handleFormSelect = useCallback((val: string) => {
+    const item = data?.items.find((f: any) => f.schemaId === val);
+    if (item) {
+      const schemaData = item.schema;
+      setRawJsonSchema(schemaData);
+      setFields(jsonSchemaToFields(schemaData));
+      try {
+        const zodSchema = toZodSchema(schemaData);
+        setJsonSchema(new ZodProvider(zodSchema as any));
+      } catch {
+        setJsonSchema(undefined);
+      }
+    } else {
+      setRawJsonSchema(undefined);
+      setJsonSchema(undefined);
+      setFields([]);
+    }
+  }, [data]);
+
+  // ── CRUD helpers ──
+  const onSubmit = async (submitData: any) => {
+    let _data = submitData;
+    if (selectedRecordItem) {
+      _data = { ...selectedRecordItem, ...submitData };
+    }
+
+    if (table && schema) {
+      const results = await Promise.allSettled([
+        manipulateData(
+          table,
+          schema,
+          "archive",
+          _data,
+          client.kc.token,
+          !isEditMode ? "POST" : "PUT",
+        ),
+      ]);
+
+      const successful = results.filter((r) => r.status === "fulfilled");
+      const failed = results.filter((r) => r.status === "rejected");
+      if (successful.length > 0) {
+        toast.success(
+          `(${successful.length}) ${!selectedRecordItem ? "created" : "updated"} successfully`,
+          { className: "bg-card text-card-foreground border-border" },
+        );
+      }
+      if (failed.length > 0) {
+        toast.error(
+          `Failed to ${!selectedRecordItem ? "create" : "update"}. Please try again.`,
+          { className: "bg-card text-card-foreground border-border" },
+        );
+      }
+      refetch();
+      setSelectedRecordItem(undefined);
+      setRecordSheetOpen(false);
+    }
   };
+
+  const onDelete = async (deleteData: any, _table?: string, _schema?: string) => {
+    const effectiveTable = _table ?? table;
+    const effectiveSchema = _schema ?? schema;
+    if (effectiveTable && effectiveSchema) {
+      const results = await Promise.allSettled([
+        manipulateData(
+          effectiveTable,
+          effectiveSchema,
+          "archive",
+          deleteData,
+          client.kc.token,
+          "DELETE",
+        ),
+      ]);
+
+      const successful = results.filter((r) => r.status === "fulfilled");
+      const failed = results.filter((r) => r.status === "rejected");
+      if (successful.length > 0) {
+        toast.success(`(${successful.length}) deleted successfully`, {
+          className: "bg-card text-card-foreground border-border",
+        });
+      }
+      if (failed.length > 0) {
+        toast.error("Failed to delete. Please try again.", {
+          className: "bg-card text-card-foreground border-border",
+        });
+      }
+      refetch();
+      setSelectedRecordItem(undefined);
+      setRecordSheetOpen(false);
+    }
+  };
+
+  const EditData = (
+    schemaName: string,
+    tableName: string,
+    item: any = undefined,
+    editMode: boolean = false,
+  ) => {
+    setEditMode(editMode);
+    setSchema(schemaName);
+    setTable(tableName);
+    setSelectedRecordItem(item);
+    setRecordSheetOpen(true);
+  };
+
+  // ── Nav tabs ──
+  const navComponents = () => (
+    <div className="flex min-h-13 max-h-13 w-full items-center pr-2 py-2">
+      <h1 className="font-bold">{t("forms.title")}</h1>
+      <Separator orientation="vertical" className="mx-2 min-h-6" />
+      <div className="flex flex-1" />
+
+      <div className="hidden md:flex items-center gap-1 bg-[#111E30] rounded-lg p-1 border border-border">
+        {TABS.map((tab) => (
+          <button
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id)}
+            className={cn(
+              "px-3 py-1.5 rounded-md text-xs font-semibold transition-all",
+              activeTab === tab.id
+                ? "bg-[#1A2C40] text-[#6EE7B7]"
+                : "text-[#607A94] hover:text-[#A0B4C8]",
+            )}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      <div className="flex md:hidden items-center gap-1 bg-[#111E30] rounded-lg p-1 border border-border">
+        {(["builder", "right"] as const).map((t) => (
+          <button
+            key={t}
+            onClick={() => setMobileTab(t)}
+            className={cn(
+              "px-3 py-1.5 rounded-md text-xs font-semibold transition-all",
+              mobileTab === t
+                ? "bg-[#1A2C40] text-[#6EE7B7]"
+                : "text-[#607A94]",
+            )}
+          >
+            {t === "builder" ? "Builder" : "Preview"}
+          </button>
+        ))}
+      </div>
+
+      <Separator orientation="vertical" className="mx-2 min-h-6" />
+    </div>
+  );
+
   return (
     <ContentLayout nav={navComponents()}>
       <div
@@ -79,45 +444,258 @@ function LogsPage() {
           "flex flex-row min-h-[calc(100vh-26px-56px)] max-h-[calc(100vh-26px-56px)] w-full h-full",
         )}
       >
+        {/* ── Sidebar ── */}
         <aside
-          className={`flex-shrink-0 w-full md:w-[320px] lg:w-[360px] border-r border-border  overflow-hidden flex-col ${
-            mobileTab === "builder" ? "flex" : "hidden"
-          } md:flex`}
+          className={cn(
+            "flex-shrink-0 w-full md:w-[320px] lg:w-[360px] border-r border-border overflow-hidden flex-col",
+            mobileTab === "builder" ? "flex" : "hidden",
+            "md:flex",
+          )}
         >
-          <BuilderSidebar />
+          <div className="flex flex-col h-full overflow-hidden">
+            {/* ── Form selector ── */}
+            <div className="flex-shrink-0 border-b border-border">
+              <ButtonGroup className="w-full p-3 focus-visible:outline-none">
+                <Select
+                  disabled={data?.items.length === 0}
+                  onValueChange={handleFormSelect}
+                >
+                  <SelectTrigger className="flex flex-1 rounded-sm text-sm focus-visible:outline-none">
+                    <SelectValue placeholder="Form" />
+                  </SelectTrigger>
+                  <SelectContent
+                    className="rounded-xs"
+                    side="bottom"
+                    avoidCollisions={false}
+                    position="popper"
+                  >
+                    <SelectGroup>
+                      {data?.items?.map((f: any) => (
+                        <SelectItem key={f.schemaId} value={f.schemaId}>
+                          {f.schemaName}
+                        </SelectItem>
+                      ))}
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
+                <div className="flex justify-center items-center min-h-9 max-h-9 w-[0.5px]">
+                  <div className="flex bg-border min-h-7 max-h-7 w-[0.5px]" />
+                </div>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild className="disabled:cursor-not-allowed">
+                    <Button
+                      className="rounded-sm disabled:cursor-not-allowed"
+                      variant="outline"
+                      size="icon"
+                      aria-label="More Options"
+                    >
+                      <MoreHorizontalIcon />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-40">
+                    <DropdownMenuGroup>
+                      <DropdownMenuItem onClick={() => EditData("Internal", "formSchemas")}>
+                        <Plus width={16} height={16} />
+                        New
+                      </DropdownMenuItem>
+                      <DropdownMenuItem>
+                        <Pencil width={16} height={16} />
+                        Edit
+                      </DropdownMenuItem>
+                    </DropdownMenuGroup>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuGroup>
+                      <DropdownMenuItem variant="destructive">
+                        <Trash2Icon />
+                        Delete
+                      </DropdownMenuItem>
+                    </DropdownMenuGroup>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </ButtonGroup>
+            </div>
+
+            {/* ── Fields header ── */}
+            <div className="flex-shrink-0 flex items-center justify-between px-4 py-2.5 border-b border-border">
+              <span className="text-[10px] font-bold uppercase tracking-widest">
+                Fields {fields.length > 0 ? `(${fields.length})` : ""}
+              </span>
+              {rawJsonSchema && (
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="border border-border"
+                  onClick={() => setShowAddPanel((v) => !v)}
+                >
+                  <span className="text-base leading-none">+</span>
+                  Add Field
+                </Button>
+              )}
+            </div>
+
+            {/* ── Add panel (inline) ── */}
+            {showAddPanel && (
+              <div className="flex-shrink-0 px-3 py-2 border-b border-border">
+                <AddFieldPanel
+                  inline
+                  onAdd={(type) => {
+                    addField(type);
+                    setShowAddPanel(false);
+                  }}
+                  onClose={() => setShowAddPanel(false)}
+                />
+              </div>
+            )}
+
+            {/* ── Field list (scrollable) ── */}
+            <div className="flex-1 overflow-y-auto px-3 py-3 space-y-2">
+              {!rawJsonSchema && (
+                <div className="flex flex-col items-center justify-center h-40 gap-3">
+                  <svg
+                    width="36"
+                    height="36"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                  >
+                    <rect x="3" y="3" width="18" height="18" rx="3" />
+                    <path d="M9 12h6M12 9v6" />
+                  </svg>
+                  <p className="text-sm">Select or create a form above</p>
+                </div>
+              )}
+
+              {rawJsonSchema && fields.length === 0 && !showAddPanel && (
+                <div className="flex flex-col items-center justify-center h-48 gap-3">
+                  <svg
+                    width="40"
+                    height="40"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.2"
+                  >
+                    <rect x="2" y="5" width="20" height="14" rx="2" />
+                    <path d="M8 10h8M8 14h5" />
+                  </svg>
+                  <p className="text-sm font-medium">No fields yet</p>
+                  <p className="text-xs">
+                    Click "+ Add Field" to start building
+                  </p>
+                </div>
+              )}
+
+              <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragEnd={handleDragEnd}
+              >
+                <SortableContext
+                  items={fields.map((f) => f.id)}
+                  strategy={verticalListSortingStrategy}
+                >
+                  <div className="space-y-2">
+                    {fields.map((field) => (
+                      <FieldCard
+                        key={field.id}
+                        field={field}
+                        onUpdate={(patch) => updateField(field.id, patch)}
+                        onRemove={() => removeField(field.id)}
+                        onToggleExpand={() => toggleFieldExpanded(field.id)}
+                      />
+                    ))}
+                  </div>
+                </SortableContext>
+              </DndContext>
+            </div>
+          </div>
         </aside>
 
+        {/* ── Main panel ── */}
         <main
-          className={`flex-1 flex flex-col overflow-hidden  ${
-            mobileTab === "right" ? "flex" : "hidden"
-          } md:flex`}
+          className={cn(
+            "flex-1 flex flex-col overflow-hidden",
+            mobileTab === "right" ? "flex" : "hidden",
+            "md:flex",
+          )}
         >
           <div className="flex md:hidden flex-shrink-0 border-b border-border px-4">
             {TABS.map((tab) => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`px-3 py-3 text-xs font-semibold border-b-2 transition-all ${
+                className={cn(
+                  "px-3 py-3 text-xs font-semibold border-b-2 transition-all",
                   activeTab === tab.id
                     ? "border-[#6EE7B7] text-[#6EE7B7]"
-                    : "border-transparent text-[#607A94]"
-                }`}
+                    : "border-transparent text-[#607A94]",
+                )}
               >
                 {tab.label}
               </button>
             ))}
           </div>
-          <div className="flex-1 overflow-y-auto">
+
+          <div className="flex-1 overflow-y-auto p-3">
             {activeTab === "preview" ? (
-              <FormPreview form={activeForm} />
+              jsonSchema ? (
+                <AutoForm
+                  onFormInit={(initForm: any) => setForm(initForm)}
+                  formProps={{
+                    ref: formRef,
+                    className:
+                      "grid grid-cols-[24px_auto_1fr] h-fit gap-y-2 w-full px-2 py-3",
+                  }}
+                  uiComponents={{}}
+                  schema={jsonSchema}
+                  onSubmit={() => {}}
+                  withSubmit={false}
+                />
+              ) : (
+                <div className="flex flex-col items-center justify-center h-full gap-3 text-muted-foreground">
+                  <p className="text-sm">Select a form to preview</p>
+                </div>
+              )
+            ) : jsonSchema ? (
+              <JsonTree data={jsonSchema} />
             ) : (
-              <SchemaView form={activeForm} />
+              <div className="flex flex-col items-center justify-center h-full gap-3 text-muted-foreground">
+                <p className="text-sm">Select a form to view schema</p>
+              </div>
             )}
           </div>
         </main>
       </div>
+
+      {/* ── Record Sheet Modal ── */}
+      <SchemaRecordSheet
+        isOpen={isRecordSheetOpen}
+        data={{
+          columns: data ? data.columns : [],
+          table: table || "",
+          schema: schema || "",
+        }}
+        onSubmit={onSubmit}
+        onDelete={onDelete}
+        onCleared={() => {}}
+        value={selectedRecordItem}
+        setOpen={setRecordSheetOpen}
+        onOpenChange={(value: boolean) => {
+          if (!value) setSelectedRecordItem(undefined);
+          setRecordSheetOpen(value);
+        }}
+      />
     </ContentLayout>
   );
 }
 
-export default LogsPage;
+function HelperPage() {
+  return (
+    <AutoFormProvider>
+      <FormBuilderPage />
+    </AutoFormProvider>
+  );
+}
+
+export default HelperPage;
