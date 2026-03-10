@@ -19,7 +19,7 @@
   --color-purple: #a78bfa;
 
   --font-sans: "DM Sans", sans-serif;
-  --: "JetBrains Mono", monospace;
+  --font-mono: "JetBrains Mono", monospace;
   --font-display: "Syne", sans-serif;
 
   --radius-sm: 4px;
@@ -66,9 +66,6 @@
 @layer utilities {
   .font-display {
     font-family: var(--font-display);
-  }
-  . {
-    font-family: var(--);
   }
 
   .text-gradient-amber {
