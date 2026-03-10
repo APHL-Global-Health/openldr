@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import type { FormDefinition, FormField } from "@/types/forms";
 import { FIELD_TYPE_META } from "@/lib/constants";
-import { Button } from "./ui";
+import { Button } from "@/components/ui/button";
 
 interface FormPreviewProps {
   form: FormDefinition | null;
@@ -173,7 +173,7 @@ export const FormPreview: React.FC<FormPreviewProps> = ({ form }) => {
           ))}
 
           <Button
-            variant="primary"
+            variant="default"
             className="w-full justify-center py-3"
             onClick={handleSubmit}
           >

@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import type { FormDefinition } from "@/types/forms";
 import { formatSchemaJson } from "@/lib/schema";
 import { useFormBuilderStore } from "@/store/formBuilderStore";
-import { Button } from "./ui";
+import { Button } from "@/components/ui/button";
 
 interface SchemaViewProps {
   form: FormDefinition | null;
@@ -132,7 +132,7 @@ export const SchemaView: React.FC<SchemaViewProps> = ({ form }) => {
           {form && (
             <Button
               size="sm"
-              variant={copied ? "primary" : "secondary"}
+              variant={copied ? "default" : "secondary"}
               onClick={handleCopy}
             >
               {copied ? (
@@ -191,7 +191,7 @@ export const SchemaView: React.FC<SchemaViewProps> = ({ form }) => {
           )}
           <div className="flex gap-2">
             <Button
-              variant="primary"
+              variant="default"
               size="sm"
               onClick={handleImport}
               disabled={!importText.trim()}

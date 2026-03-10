@@ -51,20 +51,5 @@ export const FieldWrapper: React.FC<FieldWrapperProps> = ({
       </label>
       <div className="col-start-3 flex flex-1 w-full">{children}</div>
     </Fragment>
-    // <div className="space-y-2">
-    //   {!isDisabled && (
-    //     <Label htmlFor={id}>
-    //       {label}
-    //       {field.required && <span className="text-destructive"> *</span>}
-    //     </Label>
-    //   )}
-    //   {children}
-    //   {field.fieldConfig?.description && (
-    //     <p className="text-sm text-muted-foreground">
-    //       {field.fieldConfig.description}
-    //     </p>
-    //   )}
-    //   {error && <p className="text-sm text-destructive">{error}</p>}
-    // </div>
   );
 };

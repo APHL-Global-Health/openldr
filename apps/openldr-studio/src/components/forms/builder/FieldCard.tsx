@@ -3,10 +3,20 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import type { FormField, FieldType } from "@/types/forms";
 import { FIELD_TYPE_META } from "@/lib/constants";
-import { IconButton, Badge, Toggle, Select } from "./ui";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
 import { generateKey } from "@/lib/schema";
-import { Plus, Trash2Icon } from "lucide-react";
+import { ChevronUp, ChevronDown, Plus, Trash2, X } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface FieldCardProps {
   field: FormField;
@@ -22,17 +32,21 @@ const FIELD_TYPE_OPTIONS = FIELD_TYPE_META.map((m) => ({
 
 const DATE_FORMAT_OPTIONS = [
   { value: "yyyy-MM-dd", label: "Date (yyyy-MM-dd)" },
-  { value: "yyyy-MM-dd HH:mm:ss", label: "Date & Time (yyyy-MM-dd HH:mm:ss)" },
+  {
+    value: "yyyy-MM-dd HH:mm:ss",
+    label: "Date & Time (yyyy-MM-dd HH:mm:ss)",
+  },
 ];
 
 const STRING_FORMAT_OPTIONS = [
-  { value: "", label: "None" },
+  { value: "none", label: "None" },
   { value: "uuid", label: "UUID" },
   { value: "email", label: "Email" },
   { value: "url", label: "URL" },
 ];
 
-const sectionLabel = "text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-2";
+const sectionLabel =
+  "text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-2";
 
 export const FieldCard: React.FC<FieldCardProps> = ({
   field,
@@ -67,7 +81,6 @@ export const FieldCard: React.FC<FieldCardProps> = ({
   const handleTypeChange = (newType: FieldType) => {
     const patch: Partial<FormField> = {
       type: newType,
-      // Clear all type-specific configs — the new type starts fresh
       _schemaProperty: undefined,
       dateConfig: undefined,
       optionsConfig: undefined,
@@ -91,38 +104,67 @@ export const FieldCard: React.FC<FieldCardProps> = ({
           >
             {[0, 1, 2].map((r) => (
               <div key={r} className="flex gap-[3px]">
-                <div className="w-[3px] h-[3px] rounded-full bg-[#607A94]" />
-                <div className="w-[3px] h-[3px] rounded-full bg-[#607A94]" />
+                <div className="w-[3px] h-[3px] rounded-full bg-muted-foreground/50" />
+                <div className="w-[3px] h-[3px] rounded-full bg-muted-foreground/50" />
               </div>
             ))}
           </button>
 
-          <Badge color={meta?.color ?? "#607A94"}>{meta?.icon ?? "?"}</Badge>
+          <Badge
+            variant="outline"
+            className="size-6 rounded-md justify-center p-0 text-xs font-bold"
+            style={{
+              background: (meta?.color ?? "#607A94") + "22",
+              color: meta?.color ?? "#607A94",
+              borderColor: (meta?.color ?? "#607A94") + "44",
+            }}
+          >
+            {meta?.icon ?? "?"}
+          </Badge>
 
           <div className="flex-1 min-w-0">
             <p className="text-sm font-semibold truncate leading-tight">
-              {field.label || <span className="italic text-muted-foreground">Unnamed field</span>}
+              {field.label || (
+                <span className="italic text-muted-foreground">
+                  Unnamed field
+                </span>
+              )}
             </p>
             <p className="text-[10px] leading-tight mt-0.5 text-muted-foreground">
               {meta?.label ?? field.type}
-              {field.key && <span className="ml-1 opacity-60">· {field.key}</span>}
+              {field.key && (
+                <span className="ml-1 opacity-60">· {field.key}</span>
+              )}
               {field.required && (
-                <span style={{ color: meta?.color }} className="ml-1">· required</span>
+                <span style={{ color: meta?.color }} className="ml-1">
+                  · required
+                </span>
               )}
             </p>
           </div>
 
           <div className="flex items-center gap-1">
-            <IconButton variant="accent" onClick={onToggleExpand} title="Edit">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                {field.expanded ? <path d="M18 15l-6-6-6 6" /> : <path d="M6 9l6 6 6-6" />}
-              </svg>
-            </IconButton>
-            <IconButton variant="danger" onClick={onRemove} title="Remove">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                <path d="M18 6L6 18M6 6l12 12" />
-              </svg>
-            </IconButton>
+            <Button
+              variant="ghost"
+              size="icon-xs"
+              onClick={onToggleExpand}
+              title="Edit"
+            >
+              {field.expanded ? (
+                <ChevronUp className="size-3.5" />
+              ) : (
+                <ChevronDown className="size-3.5" />
+              )}
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon-xs"
+              onClick={onRemove}
+              title="Remove"
+              className="hover:bg-destructive/10 hover:text-destructive"
+            >
+              <X className="size-3.5" />
+            </Button>
           </div>
         </div>
 
@@ -147,9 +189,24 @@ export const FieldCard: React.FC<FieldCardProps> = ({
             {/* Type */}
             <Select
               value={field.type}
-              options={FIELD_TYPE_OPTIONS}
-              onChange={(e) => handleTypeChange(e.target.value as FieldType)}
-            />
+              onValueChange={(val) => handleTypeChange(val as FieldType)}
+            >
+              <SelectTrigger className="w-full flex flex-1 rounded-sm text-sm focus-visible:outline-none">
+                <SelectValue placeholder="Form" />
+              </SelectTrigger>
+              <SelectContent
+                className="rounded-xs"
+                side="bottom"
+                avoidCollisions={false}
+                position="popper"
+              >
+                <SelectGroup>
+                  {FIELD_TYPE_OPTIONS.map((o: any) => (
+                    <SelectItem value={o.value}>{o.label}</SelectItem>
+                  ))}
+                </SelectGroup>
+              </SelectContent>
+            </Select>
 
             {/* Placeholder (string/number) */}
             {(field.type === "string" || field.type === "number") && (
@@ -175,17 +232,32 @@ export const FieldCard: React.FC<FieldCardProps> = ({
                 <div>
                   <p className={sectionLabel}>Format</p>
                   <Select
-                    value={field.stringConfig?.format ?? ""}
-                    options={STRING_FORMAT_OPTIONS}
-                    onChange={(e) =>
+                    value={field.stringConfig?.format || "none"}
+                    onValueChange={(val) =>
                       onUpdate({
                         stringConfig: {
                           ...field.stringConfig,
-                          format: e.target.value as any,
+                          format: (val === "none" ? "" : val) as any,
                         },
                       })
                     }
-                  />
+                  >
+                    <SelectTrigger className="w-full flex flex-1 rounded-sm text-sm focus-visible:outline-none">
+                      <SelectValue placeholder="Form" />
+                    </SelectTrigger>
+                    <SelectContent
+                      className="rounded-xs"
+                      side="bottom"
+                      avoidCollisions={false}
+                      position="popper"
+                    >
+                      <SelectGroup>
+                        {STRING_FORMAT_OPTIONS.map((o: any) => (
+                          <SelectItem value={o.value}>{o.label}</SelectItem>
+                        ))}
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div>
                   <p className={sectionLabel}>Validation</p>
@@ -196,7 +268,12 @@ export const FieldCard: React.FC<FieldCardProps> = ({
                       placeholder="Min length"
                       onChange={(e) =>
                         onUpdate({
-                          validation: { ...field.validation, minLength: e.target.value ? +e.target.value : undefined },
+                          validation: {
+                            ...field.validation,
+                            minLength: e.target.value
+                              ? +e.target.value
+                              : undefined,
+                          },
                         })
                       }
                     />
@@ -206,7 +283,12 @@ export const FieldCard: React.FC<FieldCardProps> = ({
                       placeholder="Max length"
                       onChange={(e) =>
                         onUpdate({
-                          validation: { ...field.validation, maxLength: e.target.value ? +e.target.value : undefined },
+                          validation: {
+                            ...field.validation,
+                            maxLength: e.target.value
+                              ? +e.target.value
+                              : undefined,
+                          },
                         })
                       }
                     />
@@ -217,7 +299,10 @@ export const FieldCard: React.FC<FieldCardProps> = ({
                     className="mt-2"
                     onChange={(e) =>
                       onUpdate({
-                        validation: { ...field.validation, pattern: e.target.value || undefined },
+                        validation: {
+                          ...field.validation,
+                          pattern: e.target.value || undefined,
+                        },
                       })
                     }
                   />
@@ -225,7 +310,7 @@ export const FieldCard: React.FC<FieldCardProps> = ({
               </>
             )}
 
-            {/* NUMBER: min/max + exclusive + multipleOf */}
+            {/* NUMBER: min/max + multipleOf */}
             {field.type === "number" && (
               <div>
                 <p className={sectionLabel}>Validation</p>
@@ -236,7 +321,10 @@ export const FieldCard: React.FC<FieldCardProps> = ({
                     placeholder="Min"
                     onChange={(e) =>
                       onUpdate({
-                        validation: { ...field.validation, min: e.target.value ? +e.target.value : undefined },
+                        validation: {
+                          ...field.validation,
+                          min: e.target.value ? +e.target.value : undefined,
+                        },
                       })
                     }
                   />
@@ -246,7 +334,10 @@ export const FieldCard: React.FC<FieldCardProps> = ({
                     placeholder="Max"
                     onChange={(e) =>
                       onUpdate({
-                        validation: { ...field.validation, max: e.target.value ? +e.target.value : undefined },
+                        validation: {
+                          ...field.validation,
+                          max: e.target.value ? +e.target.value : undefined,
+                        },
                       })
                     }
                   />
@@ -260,7 +351,9 @@ export const FieldCard: React.FC<FieldCardProps> = ({
                     onUpdate({
                       numberConfig: {
                         ...field.numberConfig,
-                        multipleOf: e.target.value ? +e.target.value : undefined,
+                        multipleOf: e.target.value
+                          ? +e.target.value
+                          : undefined,
                       },
                     })
                   }
@@ -274,11 +367,26 @@ export const FieldCard: React.FC<FieldCardProps> = ({
                 <p className={sectionLabel}>Date Format</p>
                 <Select
                   value={field.dateConfig?.format ?? "yyyy-MM-dd"}
-                  options={DATE_FORMAT_OPTIONS}
-                  onChange={(e) =>
-                    onUpdate({ dateConfig: { format: e.target.value } })
+                  onValueChange={(val) =>
+                    onUpdate({ dateConfig: { format: val } })
                   }
-                />
+                >
+                  <SelectTrigger className="w-full flex flex-1 rounded-sm text-sm focus-visible:outline-none">
+                    <SelectValue placeholder="Form" />
+                  </SelectTrigger>
+                  <SelectContent
+                    className="rounded-xs"
+                    side="bottom"
+                    avoidCollisions={false}
+                    position="popper"
+                  >
+                    <SelectGroup>
+                      {DATE_FORMAT_OPTIONS.map((o: any) => (
+                        <SelectItem value={o.value}>{o.label}</SelectItem>
+                      ))}
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
               </div>
             )}
 
@@ -296,37 +404,50 @@ export const FieldCard: React.FC<FieldCardProps> = ({
               <div>
                 <p className={sectionLabel}>Options (key / label)</p>
                 <div className="flex flex-col gap-1.5">
-                  {(field.optionsConfig?.entries ?? []).map(([val, label], idx) => (
-                    <div key={idx} className="grid grid-cols-[1fr_1fr_28px] gap-1.5">
-                      <Input
-                        value={val}
-                        placeholder="Value"
-                        onChange={(e) => {
-                          const entries = [...(field.optionsConfig?.entries ?? [])];
-                          entries[idx] = [e.target.value, entries[idx][1]];
-                          onUpdate({ optionsConfig: { entries } });
-                        }}
-                      />
-                      <Input
-                        value={label}
-                        placeholder="Label"
-                        onChange={(e) => {
-                          const entries = [...(field.optionsConfig?.entries ?? [])];
-                          entries[idx] = [entries[idx][0], e.target.value];
-                          onUpdate({ optionsConfig: { entries } });
-                        }}
-                      />
-                      <IconButton
-                        variant="danger"
-                        onClick={() => {
-                          const entries = (field.optionsConfig?.entries ?? []).filter((_, i) => i !== idx);
-                          onUpdate({ optionsConfig: { entries } });
-                        }}
+                  {(field.optionsConfig?.entries ?? []).map(
+                    ([val, label], idx) => (
+                      <div
+                        key={idx}
+                        className="grid grid-cols-[1fr_1fr_28px] gap-1.5"
                       >
-                        <Trash2Icon width={12} height={12} />
-                      </IconButton>
-                    </div>
-                  ))}
+                        <Input
+                          value={val}
+                          placeholder="Value"
+                          onChange={(e) => {
+                            const entries = [
+                              ...(field.optionsConfig?.entries ?? []),
+                            ];
+                            entries[idx] = [e.target.value, entries[idx][1]];
+                            onUpdate({ optionsConfig: { entries } });
+                          }}
+                        />
+                        <Input
+                          value={label}
+                          placeholder="Label"
+                          onChange={(e) => {
+                            const entries = [
+                              ...(field.optionsConfig?.entries ?? []),
+                            ];
+                            entries[idx] = [entries[idx][0], e.target.value];
+                            onUpdate({ optionsConfig: { entries } });
+                          }}
+                        />
+                        <Button
+                          variant="ghost"
+                          size="icon-xs"
+                          className="hover:bg-destructive/10 hover:text-destructive"
+                          onClick={() => {
+                            const entries = (
+                              field.optionsConfig?.entries ?? []
+                            ).filter((_, i) => i !== idx);
+                            onUpdate({ optionsConfig: { entries } });
+                          }}
+                        >
+                          <Trash2 className="size-3" />
+                        </Button>
+                      </div>
+                    ),
+                  )}
                   <button
                     type="button"
                     className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors py-1"
@@ -338,7 +459,7 @@ export const FieldCard: React.FC<FieldCardProps> = ({
                       onUpdate({ optionsConfig: { entries } });
                     }}
                   >
-                    <Plus width={12} height={12} /> Add option
+                    <Plus className="size-3" /> Add option
                   </button>
                 </div>
               </div>
@@ -426,9 +547,10 @@ export const FieldCard: React.FC<FieldCardProps> = ({
             {/* Required */}
             <div className="flex items-center justify-between pt-1 border-t border-border">
               <span className={sectionLabel + " mb-0"}>Required</span>
-              <Toggle
+              <Switch
                 checked={field.required}
-                onChange={(v) => onUpdate({ required: v })}
+                onCheckedChange={(v) => onUpdate({ required: v })}
+                size="sm"
               />
             </div>
           </div>
