@@ -668,41 +668,12 @@ function DataEntryPage() {
                 {pageOption === "schema" && (
                   <div className="flex gap-y-2 w-full px-2 py-3">
                     <InputGroup className="flex flex-1 ">
-                      {/* <JsonView
-                        className="flex flex-1 w-full"
-                        value={data.code}
-                        style={theme === "dark" ? darkTheme : lightTheme}
-                        shouldExpandNodeInitially={() => true}
-                        collapsed={false}
-                        enableClipboard={false}
-                        displayDataTypes={false}
-                        displayObjectSize={false}
-                      /> */}
-
                       <CodeMirror
                         value={JSON.stringify(data.code, null, 2)}
                         className="w-full"
                         theme={theme === "dark" ? vscodeDark : vscodeLight}
                         extensions={[json(), EditorView.lineWrapping]}
                       />
-                      {/* 
-                    <InputGroupTextarea
-                      id="textarea-code-32"
-                      //   placeholder="console.log('Hello, world!');"
-                      value={data.code}
-                      className="flex flex-1"
-                      readOnly={true}
-                    />
-                    <InputGroupAddon align="block-end" className="border-t">
-                      <InputGroupText>Line 1, Column 1</InputGroupText>
-                      <InputGroupButton
-                        size="sm"
-                        className="ml-auto"
-                        variant="default"
-                      >
-                        Run <PlayIcon />
-                      </InputGroupButton>
-                    </InputGroupAddon> */}
                       <InputGroupAddon align="block-start" className="border-b">
                         <InputGroupText className=" font-medium">
                           {t("app:data_entry.json_schema")}
