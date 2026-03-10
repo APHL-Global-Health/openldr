@@ -1,11 +1,7 @@
 import React from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import type {
-  FormField,
-  FieldType,
-  VisibilityCondition,
-} from "@/types/forms";
+import type { FormField, FieldType, VisibilityCondition } from "@/types/forms";
 import { FIELD_TYPE_META } from "@/lib/constants";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -103,9 +99,7 @@ export const FieldCard: React.FC<FieldCardProps> = ({
   const handleLabelChange = (label: string) => {
     const patch: Partial<FormField> = { label };
     if (!field.key) {
-      patch.key = isVisual
-        ? `__${field.type}_${field.id}`
-        : generateKey(label);
+      patch.key = isVisual ? `__${field.type}_${field.id}` : generateKey(label);
     }
     onUpdate(patch);
   };
@@ -683,7 +677,7 @@ export const FieldCard: React.FC<FieldCardProps> = ({
                     {field.visibility.conditions.map((cond, idx) => (
                       <div
                         key={idx}
-                        className="grid grid-cols-[1fr_1fr_1fr_28px] gap-1.5 items-start"
+                        className="grid grid-cols-[84px_84px_1fr_24px] gap-1 items-center h-7"
                       >
                         <Select
                           value={cond.field}
@@ -691,7 +685,10 @@ export const FieldCard: React.FC<FieldCardProps> = ({
                             const conditions = [
                               ...field.visibility!.conditions,
                             ];
-                            conditions[idx] = { ...conditions[idx], field: val };
+                            conditions[idx] = {
+                              ...conditions[idx],
+                              field: val,
+                            };
                             onUpdate({
                               visibility: {
                                 ...field.visibility!,
@@ -700,7 +697,7 @@ export const FieldCard: React.FC<FieldCardProps> = ({
                             });
                           }}
                         >
-                          <SelectTrigger className="h-7 rounded-sm text-xs">
+                          <SelectTrigger className="h-7 w-full rounded-sm text-[10px]">
                             <SelectValue placeholder="Field" />
                           </SelectTrigger>
                           <SelectContent
@@ -732,7 +729,7 @@ export const FieldCard: React.FC<FieldCardProps> = ({
                             });
                           }}
                         >
-                          <SelectTrigger className="h-7 rounded-sm text-xs">
+                          <SelectTrigger className="h-7 w-full rounded-sm text-[10px]">
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent
@@ -751,7 +748,7 @@ export const FieldCard: React.FC<FieldCardProps> = ({
                           <Input
                             value={cond.value ?? ""}
                             placeholder="Value"
-                            className="h-7 text-xs"
+                            className="min-h-9 max-h-9 w-full text-[10px]"
                             onChange={(e) => {
                               const conditions = [
                                 ...field.visibility!.conditions,
@@ -774,7 +771,7 @@ export const FieldCard: React.FC<FieldCardProps> = ({
                         <Button
                           variant="ghost"
                           size="icon-xs"
-                          className="hover:bg-destructive/10 hover:text-destructive"
+                          className="h-7 w-6 shrink-0 hover:bg-destructive/10 hover:text-destructive"
                           onClick={() => {
                             const conditions =
                               field.visibility!.conditions.filter(
