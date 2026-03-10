@@ -35,6 +35,7 @@ import { toast } from "sonner";
 import { ButtonGroup } from "@/components/ui/button-group";
 import {
   Braces,
+  CopyIcon,
   Eye,
   Form,
   MoreHorizontalIcon,
@@ -80,6 +81,11 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupButton,
+} from "@/components/ui/input-group";
 
 /** Convert a JSON Schema `properties` object + `required` array into FormField[] */
 function jsonSchemaToFields(schema: any): FormField[] {
@@ -336,11 +342,14 @@ function FormBuilderPage() {
   );
 
   // ── CRUD helpers ──
-  const onSubmit = async (submitData: any) => {
+  const onSubmit = async (submitData: any, _isEditMode?: boolean) => {
     let _data = submitData;
     if (selectedRecordItem) {
       _data = { ...selectedRecordItem, ...submitData };
     }
+
+    const effectiveEditMode = _isEditMode ?? isEditMode;
+    console.log(_data, effectiveEditMode);
 
     if (table && schema) {
       const results = await Promise.allSettled([
@@ -350,7 +359,7 @@ function FormBuilderPage() {
           "archive",
           _data,
           client.kc.token,
-          !isEditMode ? "POST" : "PUT",
+          !effectiveEditMode ? "POST" : "PUT",
         ),
       ]);
 
@@ -410,6 +419,7 @@ function FormBuilderPage() {
         });
       }
       refetch();
+      setFormSchemaId(undefined);
       setSelectedRecordItem(undefined);
       setRecordSheetOpen(false);
     }
@@ -551,7 +561,7 @@ function FormBuilderPage() {
                           const item = data?.items.find(
                             (f: any) => f.schemaId === formSchemaId,
                           );
-                          EditData("Internal", "formSchemas", item);
+                          EditData("Internal", "formSchemas", item, true);
                         }}
                       >
                         <Pencil width={16} height={16} />
@@ -575,6 +585,10 @@ function FormBuilderPage() {
                       <DropdownMenuItem
                         variant="destructive"
                         disabled={!formSchemaId}
+                        onClick={() => {
+                          if (formSchemaId)
+                            onDelete([formSchemaId], "formSchemas", "Internal");
+                        }}
                       >
                         <Trash2Icon />
                         Delete
@@ -597,7 +611,13 @@ function FormBuilderPage() {
                     variant="ghost"
                     className="border border-border rounnded-sm"
                     onClick={() => {
-                      //save
+                      const item = data?.items.find(
+                        (f: any) => f.schemaId === formSchemaId,
+                      );
+                      if (item) {
+                        item.schema = JSON.stringify(rawJsonSchema);
+                        onSubmit(item, true);
+                      }
                     }}
                   >
                     <Save width={16} height={16} />
@@ -700,7 +720,32 @@ function FormBuilderPage() {
                 </div>
               )
             ) : jsonSchema ? (
-              <JsonTree data={jsonSchema} />
+              <div className="flex gap-y-2 w-full px-2 py-3">
+                <InputGroup className="flex flex-1 ">
+                  {/* <JsonView
+                        className="flex flex-1 w-full"
+                        value={data.code}
+                        style={theme === "dark" ? darkTheme : lightTheme}
+                        shouldExpandNodeInitially={() => true}
+                        collapsed={false}
+                        enableClipboard={false}
+                        displayDataTypes={false}
+                        displayObjectSize={false}
+                      /> */}
+                  <JsonTree data={jsonSchema} />
+                  <InputGroupAddon align="block-start" className="border-b">
+                    {/* <InputGroupText className=" font-medium">
+                          {t("app:data_entry.json_schema")}
+                        </InputGroupText>
+                        <InputGroupButton className="ml-auto" size="icon-xs">
+                          <RefreshCwIcon />
+                        </InputGroupButton> */}
+                    <InputGroupButton variant="ghost" size="icon-xs">
+                      <CopyIcon />
+                    </InputGroupButton>
+                  </InputGroupAddon>
+                </InputGroup>
+              </div>
             ) : (
               <div className="flex flex-col items-center justify-center h-full gap-3 text-muted-foreground">
                 <p className="text-sm">Select a form to view schema</p>
@@ -718,7 +763,9 @@ function FormBuilderPage() {
           table: table || "",
           schema: schema || "",
         }}
-        onSubmit={onSubmit}
+        onSubmit={(data) => {
+          onSubmit(data);
+        }}
         onDelete={onDelete}
         onCleared={() => {}}
         value={selectedRecordItem}
