@@ -83,16 +83,6 @@ export function getMenuList(
       groupLabel: "navigation.contents",
       menus: [
         {
-          href: `${baseUrl}data-entry`,
-          label: "navigation.data_entry",
-          icon: SquareLibrary,
-        },
-        {
-          href: `${baseUrl}archives`,
-          label: "navigation.archives",
-          icon: Archive,
-        },
-        {
           href: `${baseUrl}projects`,
           label: "navigation.projects",
           icon: Layers,
@@ -103,15 +93,28 @@ export function getMenuList(
           icon: Form,
         },
         {
+          href: `${baseUrl}data-entry`,
+          label: "navigation.data_entry",
+          icon: SquareLibrary,
+        },
+        {
           href: `${baseUrl}reports`,
           label: "navigation.reports",
           icon: FileText,
         },
-        {
-          href: `${baseUrl}chats`,
-          label: "navigation.chats",
-          icon: Bot,
-        },
+
+        //TODO add later
+        // {
+        //   href: `${baseUrl}archives`,
+        //   label: "navigation.archives",
+        //   icon: Archive,
+        // },
+        //TODO add later
+        // {
+        //   href: `${baseUrl}chats`,
+        //   label: "navigation.chats",
+        //   icon: Bot,
+        // },
         //TODO add later
         // {
         //   href: `${baseUrl}docs`,

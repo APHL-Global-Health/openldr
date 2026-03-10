@@ -349,7 +349,6 @@ function FormBuilderPage() {
     }
 
     const effectiveEditMode = _isEditMode ?? isEditMode;
-    console.log(_data, effectiveEditMode);
 
     if (table && schema) {
       const results = await Promise.allSettled([

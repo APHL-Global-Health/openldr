@@ -12,7 +12,7 @@ import "@/styles/index.css";
 const LandingPage = React.lazy(() => import("@/pages/LandingPage"));
 const NotFoundPage = React.lazy(() => import("@/pages/NotFoundPage"));
 const DashboardPage = React.lazy(() => import("@/pages/DashboardPage"));
-const ArchivePage = React.lazy(() => import("@/pages/ArchivePage"));
+// const ArchivePage = React.lazy(() => import("@/pages/ArchivePage"));
 const ExtensionsPage = React.lazy(() => import("@/pages/ExtensionsPage"));
 const DataEntryPage = React.lazy(() => import("@/pages/DataEntry"));
 const ExtensionPage = React.lazy(() => import("@/pages/ExtensionPage"));
@@ -52,11 +52,13 @@ const router = createBrowserRouter([
     children: [
       { path: baseUrl, element: <DashboardPage /> },
       { path: `${baseUrl}data-entry`, element: <DataEntryPage /> },
-      { path: `${baseUrl}archives`, element: <ArchivePage /> },
+      //TODO add later
+      // { path: `${baseUrl}archives`, element: <ArchivePage /> },
       { path: `${baseUrl}extension/:extId`, element: <ExtensionPage /> },
       { path: `${baseUrl}extensions`, element: <ExtensionsPage /> },
       { path: `${baseUrl}reports`, element: <ReportsPage /> },
-      { path: `${baseUrl}chats`, element: <ChatPage /> },
+      //TODO add later
+      // { path: `${baseUrl}chats`, element: <ChatPage /> },
       { path: `${baseUrl}logs`, element: <LogsPage /> },
       { path: `${baseUrl}forms`, element: <FormBuilderPage /> },
       { path: `${baseUrl}projects`, element: <ProjectsPage /> },
