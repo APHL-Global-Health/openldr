@@ -104,6 +104,18 @@ function parseField(key: string, schema: z.$ZodType): ParsedField {
     };
   }
 
+  // Read label data from ZodLabel def
+  const labelDef = (baseSchema as any)._zod?.def?.label;
+  if (type === "label" && labelDef) {
+    fieldConfig = {
+      ...fieldConfig,
+      customData: {
+        ...(fieldConfig?.customData as any),
+        labelData: labelDef,
+      },
+    };
+  }
+
   return {
     key,
     type,

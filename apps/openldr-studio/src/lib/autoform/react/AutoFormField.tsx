@@ -102,17 +102,20 @@ export const AutoFormField: React.FC<{
   }
 
   // Visual-only fields: render without Controller/FieldWrapper
+  // Use col-span-3 to span the full grid (icon + label + input columns)
   if (VISUAL_FIELD_TYPES.includes(field.type)) {
     return (
-      <FieldComponent
-        label={getLabel(field)}
-        field={field}
-        value={undefined}
-        error={undefined}
-        id={fullPath}
-        path={path}
-        inputProps={{}}
-      />
+      <div className="col-span-3">
+        <FieldComponent
+          label={getLabel(field)}
+          field={field}
+          value={undefined}
+          error={undefined}
+          id={fullPath}
+          path={path}
+          inputProps={{}}
+        />
+      </div>
     );
   }
 

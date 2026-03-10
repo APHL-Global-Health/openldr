@@ -2,15 +2,12 @@ import { type AutoFormFieldProps } from "@/lib/autoform/react";
 import React from "react";
 
 export const LabelField: React.FC<AutoFormFieldProps> = ({ field }) => {
-  const options = field.options as any;
-  // Label data is stored in the field's options via the schema parser
-  // or directly from the x-zodLabel config
-  const labelDef = (field as any)._zod?.def?.label ?? {};
-  const text = labelDef.text || field.key || "";
-  const variant = labelDef.variant || "h3";
+  const labelData = (field.fieldConfig?.customData as any)?.labelData as
+    | { text: string; variant: string }
+    | undefined;
 
-  // Also check if text/variant came through via description or label
-  const displayText = text || (field as any).description || field.key;
+  const text = labelData?.text || field.description || field.key || "";
+  const variant = labelData?.variant || "h3";
 
   const variantClasses: Record<string, string> = {
     h1: "text-2xl font-bold",
@@ -22,7 +19,7 @@ export const LabelField: React.FC<AutoFormFieldProps> = ({ field }) => {
 
   return (
     <div className={variantClasses[variant] ?? variantClasses.h3}>
-      {displayText}
+      {text}
     </div>
   );
 };
