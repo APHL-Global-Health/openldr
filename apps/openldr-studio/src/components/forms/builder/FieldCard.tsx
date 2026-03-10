@@ -100,12 +100,12 @@ export const FieldCard: React.FC<FieldCardProps> = ({
           <button
             {...attributes}
             {...listeners}
-            className="flex flex-col gap-[3px] p-1 cursor-grab active:cursor-grabbing opacity-30 group-hover:opacity-70 transition-opacity touch-none"
+            className="flex flex-col gap-[3px] p-1 cursor-grab active:cursor-grabbing opacity-30 group-hover:opacity-90 transition-opacity touch-none"
           >
             {[0, 1, 2].map((r) => (
               <div key={r} className="flex gap-[3px]">
-                <div className="w-[3px] h-[3px] rounded-full bg-muted-foreground/50" />
-                <div className="w-[3px] h-[3px] rounded-full bg-muted-foreground/50" />
+                <div className="w-[3px] h-[3px] rounded-full bg-muted-foreground/90" />
+                <div className="w-[3px] h-[3px] rounded-full bg-muted-foreground/90" />
               </div>
             ))}
           </button>
