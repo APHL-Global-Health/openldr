@@ -12,11 +12,9 @@ export function JsonTree({
 
   if (data === null) return <span className="text-slate-500">null</span>;
   if (typeof data === "boolean")
-    return <span className="text-violet-400">{String(data)}</span>;
-  if (typeof data === "number")
-    return <span className="text-sky-400">{data}</span>;
-  if (typeof data === "string")
-    return <span className="text-green-400">"{data}"</span>;
+    return <span className="">{String(data)}</span>;
+  if (typeof data === "number") return <span className="">{data}</span>;
+  if (typeof data === "string") return <span className="">"{data}"</span>;
 
   const isArray = Array.isArray(data);
   const entries = Object.entries(data as Record<string, unknown>);
@@ -30,9 +28,7 @@ export function JsonTree({
         return (
           <div key={k} style={{ paddingLeft: 14 }}>
             <span
-              className={`text-pink-300 ${
-                isObj ? "cursor-pointer select-none" : ""
-              }`}
+              className={` ${isObj ? "cursor-pointer select-none" : ""}`}
               onClick={() =>
                 isObj && setCollapsed((c) => ({ ...c, [k]: !c[k] }))
               }
