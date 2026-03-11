@@ -27,7 +27,7 @@ export function PluginSlot({
 }: PluginSlotProps) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
-  const selected = plugins.find((p) => p.id === selectedId);
+  const selected = plugins.find((p) => p.pluginId === selectedId);
 
   useEffect(() => {
     const h = (e: MouseEvent) => {
@@ -64,8 +64,8 @@ export function PluginSlot({
           >
             {selected ? (
               <div>
-                <p className=" text-[11px] ">{selected.name}</p>
-                <p className=" text-[9px] ">v{selected.version}</p>
+                <p className=" text-[11px] ">{selected.pluginName}</p>
+                <p className=" text-[9px] ">v{selected.pluginVersion}</p>
               </div>
             ) : (
               <span className=" text-[11px] italic ">No plugin selected</span>
@@ -84,17 +84,19 @@ export function PluginSlot({
               {plugins.map((p) => (
                 <Button
                   variant="ghost"
-                  key={p.id}
+                  key={p.pluginId}
                   onClick={() => {
-                    onSelect(p.id);
+                    onSelect(p.pluginId);
                     setOpen(false);
                   }}
                   className={`flex w-full items-center justify-between border-l-2 px-3 py-2 text-left transition hover:bg-slate-800
-                    ${p.id === selectedId ? "" : "border-transparent"}`}
+                    ${p.pluginId === selectedId ? "" : "border-transparent"}`}
                 >
                   <div>
-                    <p className=" text-[11px] text-slate-300">{p.name}</p>
-                    <p className=" text-[9px] ">v{p.version}</p>
+                    <p className=" text-[11px] text-slate-300">
+                      {p.pluginName}
+                    </p>
+                    <p className=" text-[9px] ">v{p.pluginVersion}</p>
                   </div>
                   <StatusBadge status={p.status} />
                 </Button>

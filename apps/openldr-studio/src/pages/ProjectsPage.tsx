@@ -696,14 +696,14 @@ function ProjectsPage() {
                         <SelectGroup>
                           {state.plugins[s.key]?.map((plugin: any) => {
                             return (
-                              <SelectItem value={plugin.id}>
+                              <SelectItem value={plugin.pluginId}>
                                 {/* {plugin.name} */}
                                 <div>
                                   <div className=" text-[11px] text-left truncate w-full">
-                                    {plugin.name}
+                                    {plugin.pluginName}
                                   </div>
                                   <div className=" text-[9px] text-left w-full">
-                                    v{plugin.version}
+                                    v{plugin.pluginVersion}
                                   </div>
                                 </div>
                               </SelectItem>
@@ -743,7 +743,7 @@ function ProjectsPage() {
                             onClick={() => {
                               const item = state.plugins[s.key]?.find(
                                 (plugin: any) =>
-                                  plugin.id === selectedPlugins[s.key],
+                                  plugin.pluginId === selectedPlugins[s.key],
                               );
                               if (item) {
                                 EditData("Internal", "plugins", item, true);

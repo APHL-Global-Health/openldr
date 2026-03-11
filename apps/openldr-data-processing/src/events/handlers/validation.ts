@@ -124,7 +124,10 @@ export async function handleMessage(kafkaMessage: any) {
     });
 
     const { plugin: runtimePlugin, pluginSource } =
-      await runtimePluginService.readPluginSourceWithFallback("schema", plugin);
+      await runtimePluginService.readPluginSourceWithFallback(
+        "validation",
+        plugin,
+      );
 
     const result = await runtimePluginService.executeValidationPlugin(
       pluginSource,

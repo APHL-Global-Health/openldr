@@ -138,7 +138,7 @@ function reducer(s: State, a: Action): State {
       return {
         ...s,
         plugins: { ...s.plugins, [a.slot]: [...s.plugins[a.slot], a.plugin] },
-        selectedPlugins: { ...s.selectedPlugins, [a.slot]: a.plugin.id },
+        selectedPlugins: { ...s.selectedPlugins, [a.slot]: a.plugin.pluginId },
       };
 
     case "SELECT_PROJECT":

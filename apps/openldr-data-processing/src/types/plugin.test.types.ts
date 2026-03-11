@@ -1,4 +1,5 @@
 export type PluginStatus = "active" | "draft" | "inactive" | "deprecated";
+export type PluginSecurityLevel = "low" | "medium" | "high";
 export type PluginSlotType = "validation" | "mapping" | "outpost" | "storage";
 
 // ── Domain entities ───────────────────────────────────────────────────────────
@@ -34,14 +35,19 @@ export interface DataFeed {
 }
 
 export interface Plugin {
-  id: string;
-  name: string;
-  version: string;
+  pluginId: string;
+  pluginName: string;
+  pluginVersion: string;
+  pluginType: PluginSlotType;
+  config?: any;
+  notes?: string;
   status: PluginStatus;
-  slot: PluginSlotType;
+  securityLevel: PluginSecurityLevel;
+  isBundled?: boolean;
   /** JavaScript source executed inside the VM */
-  code: string;
+  pluginMinioObjectPath: string;
   createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface DataFeedPluginAssignment {
@@ -126,4 +132,3 @@ export interface CreatePluginRequest {
   slot: PluginSlotType;
   code?: string;
 }
-

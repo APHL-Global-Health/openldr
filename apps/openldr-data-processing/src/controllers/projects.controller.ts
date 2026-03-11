@@ -119,7 +119,8 @@ router.get("/plugins", async (req, res) => {
  * Returns per-stage results + allPassed flag.
  */
 router.post("/run", async (req: Request<{}, {}, RunPluginTestRequest>, res) => {
-  const { payload, validationPluginId, mappingPluginId, outpostPluginId } = req.body;
+  const { payload, validationPluginId, mappingPluginId, outpostPluginId } =
+    req.body;
 
   if (!payload?.trim()) return err(res, "payload is required");
   if (!validationPluginId && !mappingPluginId && !outpostPluginId)
@@ -141,7 +142,11 @@ router.post("/run", async (req: Request<{}, {}, RunPluginTestRequest>, res) => {
         `Validation plugin "${validationPluginId}" not found`,
         404,
       );
-    validation = { id: p.id, code: p.code, type: p.slot };
+    validation = {
+      id: p.pluginId,
+      code: p.pluginMinioObjectPath,
+      type: p.pluginType,
+    };
   }
 
   if (mappingPluginId) {
@@ -149,7 +154,11 @@ router.post("/run", async (req: Request<{}, {}, RunPluginTestRequest>, res) => {
     if (!p)
       return err(res, `Mapping plugin "${mappingPluginId}" not found`, 404);
 
-    mapping = { id: p.id, code: p.code, type: p.slot };
+    mapping = {
+      id: p.pluginId,
+      code: p.pluginMinioObjectPath,
+      type: p.pluginType,
+    };
   }
 
   if (outpostPluginId) {
@@ -157,11 +166,20 @@ router.post("/run", async (req: Request<{}, {}, RunPluginTestRequest>, res) => {
     if (!p)
       return err(res, `Outpost plugin "${outpostPluginId}" not found`, 404);
 
-    outpost = { id: p.id, code: p.code, type: p.slot };
+    outpost = {
+      id: p.pluginId,
+      code: p.pluginMinioObjectPath,
+      type: p.pluginType,
+    };
   }
 
   try {
-    const result = await runPluginTest({ payload, validation, mapping, outpost });
+    const result = await runPluginTest({
+      payload,
+      validation,
+      mapping,
+      outpost,
+    });
     res.json(result);
   } catch (e) {
     console.error("[plugin-test] run error:", e);

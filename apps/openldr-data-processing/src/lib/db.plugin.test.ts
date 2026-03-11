@@ -12,7 +12,10 @@ import { logger } from "../lib/logger";
 import { getObject } from "../services/minio.service";
 
 async function readMinioObjectAsString(objectPath: string): Promise<string> {
-  const stream = await getObject({ bucketName: "plugins", objectName: objectPath });
+  const stream = await getObject({
+    bucketName: "plugins",
+    objectName: objectPath,
+  });
   let output = "";
   await new Promise<void>((resolve, reject) => {
     stream.on("data", (chunk: any) => (output += chunk.toString()));
@@ -115,15 +118,7 @@ export const db = {
       `;
       const res = await pool.query(sql, [slot]);
 
-      return res.rows.map((row) => ({
-        id: row.pluginId,
-        name: row.pluginName,
-        version: row.pluginVersion,
-        status: row.status,
-        slot: row.pluginType,
-        code: row.pluginMinioObjectPath,
-        createdAt: row.createdAt,
-      }));
+      return res.rows;
     } catch (error: any) {
       logger.error(
         { error: error.message, stack: error.stack },
@@ -136,7 +131,7 @@ export const db = {
   getPluginById: async (id: string): Promise<Plugin | undefined> => {
     try {
       const sql = `
-        SELECT "pluginId", "pluginName", "pluginVersion", status, "pluginType", "pluginMinioObjectPath", "createdAt"
+        SELECT "pluginId", "pluginName", "pluginVersion", status, "pluginType", "pluginMinioObjectPath", "securityLevel", "isBundled", "createdAt"
         FROM plugins
         WHERE "pluginId" = $1;
       `;
@@ -148,12 +143,14 @@ export const db = {
       const code = await readMinioObjectAsString(row.pluginMinioObjectPath);
 
       return {
-        id: row.pluginId,
-        name: row.pluginName,
-        version: row.pluginVersion,
+        pluginId: row.pluginId,
+        pluginName: row.pluginName,
+        pluginVersion: row.pluginVersion,
         status: row.status,
-        slot: row.pluginType,
-        code,
+        pluginType: row.pluginType,
+        pluginMinioObjectPath: code,
+        securityLevel: row.securityLevel,
+        isBundled: row.isBundled,
         createdAt: row.createdAt,
       };
     } catch (error: any) {

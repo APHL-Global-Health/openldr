@@ -1,13 +1,13 @@
-import vm from 'vm';
-import https from 'https';
-import http from 'http';
-import { logger } from '../lib/logger';
-import * as minioUtil from './minio.service';
-import * as pluginService from './plugin.service';
+import vm from "vm";
+import https from "https";
+import http from "http";
+import { logger } from "../lib/logger";
+import * as minioUtil from "./minio.service";
+import * as pluginService from "./plugin.service";
 
 type PluginRecord = any;
 
-type RuntimePluginType = 'schema' | 'mapper' | 'storage' | 'outpost';
+type RuntimePluginType = "validation" | "mapping" | "storage" | "outpost";
 
 function wrapPluginSource(pluginSource: string) {
   return `
@@ -47,27 +47,32 @@ function createBaseContext(pluginId: string) {
   } as Record<string, any>;
 }
 
-async function makeHttpRequest(method: string, url: string, data: any = null, headers: Record<string, any> = {}) {
+async function makeHttpRequest(
+  method: string,
+  url: string,
+  data: any = null,
+  headers: Record<string, any> = {},
+) {
   const urlObj = new URL(url);
-  if (!['http:', 'https:'].includes(urlObj.protocol)) {
+  if (!["http:", "https:"].includes(urlObj.protocol)) {
     throw new Error(`Invalid protocol: ${urlObj.protocol}`);
   }
 
   return await new Promise((resolve, reject) => {
-    const protocol = urlObj.protocol === 'https:' ? https : http;
+    const protocol = urlObj.protocol === "https:" ? https : http;
     const req = protocol.request(
       url,
       {
         method,
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
           ...headers,
         },
       },
       (res: any) => {
-        let responseData = '';
-        res.on('data', (chunk: any) => (responseData += chunk));
-        res.on('end', () => {
+        let responseData = "";
+        res.on("data", (chunk: any) => (responseData += chunk));
+        res.on("end", () => {
           resolve({
             status: res.statusCode,
             statusText: res.statusMessage,
@@ -78,16 +83,18 @@ async function makeHttpRequest(method: string, url: string, data: any = null, he
       },
     );
 
-    req.on('error', reject);
+    req.on("error", reject);
     req.setTimeout(10000, () => req.destroy());
-    if (data) req.write(typeof data === 'string' ? data : JSON.stringify(data));
+    if (data) req.write(typeof data === "string" ? data : JSON.stringify(data));
     req.end();
   });
 }
 
 function getContextForPlugin(plugin: PluginRecord) {
-  const context = createBaseContext(plugin.pluginId || plugin.pluginName || 'bundled');
-  if (plugin.securityLevel === 'high') {
+  const context = createBaseContext(
+    plugin.pluginId || plugin.pluginName || "bundled",
+  );
+  if (plugin.securityLevel === "high") {
     context.http = {
       request: async (method: string, url: string, data = null, headers = {}) =>
         await makeHttpRequest(method, url, data, headers),
@@ -97,31 +104,38 @@ function getContextForPlugin(plugin: PluginRecord) {
 }
 
 async function readStreamToString(stream: any): Promise<string> {
-  let output = '';
+  let output = "";
   await new Promise<void>((resolve, reject) => {
-    stream.on('data', (chunk: any) => {
+    stream.on("data", (chunk: any) => {
       output += chunk.toString();
     });
-    stream.on('end', () => resolve());
-    stream.on('error', (err: any) => reject(err));
+    stream.on("end", () => resolve());
+    stream.on("error", (err: any) => reject(err));
   });
   return output;
 }
 
 export async function readPluginSource(plugin: PluginRecord): Promise<string> {
   if (!plugin?.pluginMinioObjectPath) {
-    throw new Error(`Plugin ${plugin?.pluginId || plugin?.pluginName} does not have a MinIO object path`);
+    throw new Error(
+      `Plugin ${
+        plugin?.pluginId || plugin?.pluginName
+      } does not have a MinIO object path`,
+    );
   }
 
   const pluginStream = await minioUtil.getObject({
-    bucketName: 'plugins',
+    bucketName: "plugins",
     objectName: plugin.pluginMinioObjectPath,
   });
 
   return await readStreamToString(pluginStream);
 }
 
-export async function readPluginSourceWithFallback(pluginType: RuntimePluginType, plugin: PluginRecord) {
+export async function readPluginSourceWithFallback(
+  pluginType: RuntimePluginType,
+  plugin: PluginRecord,
+) {
   try {
     const pluginSource = await readPluginSource(plugin);
     return { plugin, pluginSource };
@@ -133,10 +147,12 @@ export async function readPluginSourceWithFallback(pluginType: RuntimePluginType
         pluginName: plugin?.pluginName,
         error: error.message,
       },
-      'Falling back to bundled default plugin source',
+      "Falling back to bundled default plugin source",
     );
 
-    const fallbackPlugin = await pluginService.getDefaultBundledPluginFromDb({ pluginType });
+    const fallbackPlugin = await pluginService.getDefaultBundledPluginFromDb({
+      pluginType,
+    });
     const pluginSource = await readPluginSource(fallbackPlugin);
     return { plugin: fallbackPlugin, pluginSource };
   }
@@ -144,15 +160,15 @@ export async function readPluginSourceWithFallback(pluginType: RuntimePluginType
 
 function runPluginModule(pluginSource: string, plugin: PluginRecord) {
   const wrappedScript = wrapPluginSource(pluginSource);
-  if (plugin.securityLevel === 'low') {
+  if (plugin.securityLevel === "low") {
     const script = new vm.Script(wrappedScript, {
-      filename: `${plugin.pluginName || plugin.pluginId || 'plugin'}.js`,
+      filename: `${plugin.pluginName || plugin.pluginId || "plugin"}.js`,
     });
     return script.runInThisContext({});
   }
 
   const script = new vm.Script(wrappedScript, {
-    filename: `${plugin.pluginName || plugin.pluginId || 'plugin'}.js`,
+    filename: `${plugin.pluginName || plugin.pluginId || "plugin"}.js`,
   });
   return script.runInNewContext(getContextForPlugin(plugin), {
     timeout: 10000,
@@ -160,28 +176,39 @@ function runPluginModule(pluginSource: string, plugin: PluginRecord) {
   });
 }
 
-async function callWithTimeout<T>(work: Promise<T>, label: string, timeoutMs = 5000): Promise<T> {
+async function callWithTimeout<T>(
+  work: Promise<T>,
+  label: string,
+  timeoutMs = 5000,
+): Promise<T> {
   return await Promise.race([
     work,
     new Promise<T>((_, reject) =>
-      setTimeout(() => reject(new Error(`${label} timeout after ${timeoutMs}ms`)), timeoutMs),
+      setTimeout(
+        () => reject(new Error(`${label} timeout after ${timeoutMs}ms`)),
+        timeoutMs,
+      ),
     ),
   ]);
 }
 
 function normalizeValidationResult(validationResult: any) {
-  if (typeof validationResult === 'boolean') {
+  if (typeof validationResult === "boolean") {
     return {
       valid: validationResult,
-      reason: validationResult ? null : 'Schema plugin validate(message) returned false',
+      reason: validationResult
+        ? null
+        : "Schema plugin validate(message) returned false",
       details: {},
     };
   }
 
-  if (validationResult && typeof validationResult === 'object') {
+  if (validationResult && typeof validationResult === "object") {
     return {
       valid: Boolean(validationResult.valid),
-      reason: validationResult.reason || (validationResult.valid ? null : 'Schema validation failed'),
+      reason:
+        validationResult.reason ||
+        (validationResult.valid ? null : "Schema validation failed"),
       details: validationResult.details || {},
     };
   }
@@ -193,15 +220,22 @@ function normalizeValidationResult(validationResult: any) {
   };
 }
 
-export async function executeValidationPlugin(pluginSource: string, messageContent: any, plugin: PluginRecord) {
+export async function executeValidationPlugin(
+  pluginSource: string,
+  messageContent: any,
+  plugin: PluginRecord,
+) {
   const pluginFunctions = runPluginModule(pluginSource, plugin);
-  if (typeof pluginFunctions.validate !== 'function' || typeof pluginFunctions.convert !== 'function') {
-    throw new Error('Schema plugin must export validate and convert functions');
+  if (
+    typeof pluginFunctions.validate !== "function" ||
+    typeof pluginFunctions.convert !== "function"
+  ) {
+    throw new Error("Schema plugin must export validate and convert functions");
   }
 
   const validationResult = await callWithTimeout(
     Promise.resolve(pluginFunctions.validate(messageContent)),
-    'Plugin validation',
+    "Plugin validation",
   );
 
   const normalizedValidation = normalizeValidationResult(validationResult);
@@ -216,7 +250,7 @@ export async function executeValidationPlugin(pluginSource: string, messageConte
 
   const converted = await callWithTimeout(
     Promise.resolve(pluginFunctions.convert(messageContent)),
-    'Plugin conversion',
+    "Plugin conversion",
   );
 
   return {
@@ -227,16 +261,23 @@ export async function executeValidationPlugin(pluginSource: string, messageConte
   };
 }
 
-export async function executeMapperPlugin(pluginSource: string, messageContent: any, plugin: PluginRecord) {
+export async function executeMapperPlugin(
+  pluginSource: string,
+  messageContent: any,
+  plugin: PluginRecord,
+) {
   const pluginFunctions = runPluginModule(pluginSource, plugin);
   const mapperFn = pluginFunctions.map || pluginFunctions.mapping;
-  if (typeof mapperFn !== 'function') {
-    throw new Error('Mapper plugin must export map or mapping function');
+  if (typeof mapperFn !== "function") {
+    throw new Error("Mapper plugin must export map or mapping function");
   }
 
-  const result = await callWithTimeout(Promise.resolve(mapperFn(messageContent)), 'Plugin mapping');
+  const result = await callWithTimeout(
+    Promise.resolve(mapperFn(messageContent)),
+    "Plugin mapping",
+  );
   if (result === undefined || result === null) {
-    throw new Error('Mapper plugin returned null/undefined');
+    throw new Error("Mapper plugin returned null/undefined");
   }
   return result;
 }
@@ -245,10 +286,10 @@ export async function executeProcessPlugin(
   pluginSource: string,
   messageContent: any,
   plugin: PluginRecord,
-  stageLabel: 'storage' | 'outpost',
+  stageLabel: "storage" | "outpost",
 ) {
   const pluginFunctions = runPluginModule(pluginSource, plugin);
-  if (typeof pluginFunctions.process !== 'function') {
+  if (typeof pluginFunctions.process !== "function") {
     throw new Error(`${stageLabel} plugin must export process function`);
   }
 

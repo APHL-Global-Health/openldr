@@ -206,12 +206,15 @@ export async function handleMessage(kafkaMessage: any) {
 
     const { plugin, selection } = await pluginService.resolvePluginSelection({
       pluginID: dataFeed.mapperPluginId,
-      pluginType: "mapper",
+      pluginType: "mapping",
       pluginVersion: dataFeed.mapperPlugin?.pluginVersion || null,
     });
 
     const { plugin: runtimePlugin, pluginSource } =
-      await runtimePluginService.readPluginSourceWithFallback("mapper", plugin);
+      await runtimePluginService.readPluginSourceWithFallback(
+        "mapping",
+        plugin,
+      );
 
     const pluginMeta = {
       plugin_id: runtimePlugin.pluginId,

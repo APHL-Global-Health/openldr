@@ -231,7 +231,7 @@ async function emptyBucket(bucketName: string): Promise<void> {
 
     // Collect all object keys
     await new Promise<void>((resolve, reject) => {
-      objectsStream.on("data", (obj) => {
+      objectsStream.on("data", (obj: any) => {
         if (obj.name) {
           objectsList.push(obj.name);
         }
@@ -341,7 +341,7 @@ export async function getBucketStats(bucketName: string): Promise<{
     const objectsStream = minioClient.listObjects(bucketName, "", true);
 
     await new Promise<void>((resolve, reject) => {
-      objectsStream.on("data", (obj) => {
+      objectsStream.on("data", (obj: any) => {
         objectCount++;
         totalSize += obj.size || 0;
       });
@@ -373,7 +373,7 @@ export async function bucketExists(bucketName: string): Promise<boolean> {
 export async function listBuckets(): Promise<string[]> {
   try {
     const buckets = await minioClient.listBuckets();
-    return buckets.map((b) => b.name);
+    return buckets.map((b: any) => b.name);
   } catch (error) {
     logger.error(error, "Failed to list buckets");
     throw error;
