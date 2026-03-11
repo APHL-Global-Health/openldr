@@ -791,7 +791,7 @@ function ProjectsPage() {
                 <div className="flex w-full px-2 min-h-12 max-h-12 justify-between border-b border-border items-center">
                   <div>
                     <Select
-                      defaultValue="json"
+                      defaultValue="text"
                       onValueChange={(val) => {
                         if (val === "json") {
                           setExtensions([json(), EditorView.lineWrapping]);
@@ -811,7 +811,7 @@ function ProjectsPage() {
                         }
                       }}
                     >
-                      <SelectTrigger className="flex flex-1 rounded-sm text-sm focus-visible:outline-none">
+                      <SelectTrigger className="flex flex-1 w-31 max-h-8 rounded border bg-transparent dark:bg-transparent">
                         <SelectValue placeholder="Syntax" />
                       </SelectTrigger>
                       <SelectContent
