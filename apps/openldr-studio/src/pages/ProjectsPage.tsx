@@ -769,8 +769,8 @@ function ProjectsPage() {
             </aside>
 
             {/* ── Main panel ──────────────────────────────────────────────────────── */}
-            <main className="flex flex-1 flex-col overflow-hidden">
-              <div className="flex flex-1 flex-col border-b border-border">
+            <main className="flex w-full min-h-[calc(100vh-26px-56px)] max-h-[calc(100vh-26px-56px)] flex-col overflow-hidden">
+              <div className="flex min-h-1/2 max-h-1/2 flex-col border-b border-border">
                 <div className="flex w-full px-2 min-h-12 max-h-12 justify-between border-b border-border items-center">
                   <div></div>
                   <div>
@@ -806,8 +806,8 @@ function ProjectsPage() {
                   />
                 </div>
               </div>
-              <div className="flex flex-1">
-                <Tabs className="w-full gap-0" defaultValue={SLOTS[0].key}>
+              <div className="flex min-h-1/2 max-h-1/2 overflow-hidden">
+                <Tabs className="flex flex-col w-full gap-0 overflow-hidden" defaultValue={SLOTS[0].key}>
                   <div className="border-border border-b w-full">
                     <TabsList className="justify-start rounded-none bg-background p-0">
                       {SLOTS.map((s) => {
@@ -846,7 +846,7 @@ function ProjectsPage() {
                         : null;
 
                     return (
-                      <TabsContent value={s.key} className="flex w-full h-full">
+                      <TabsContent value={s.key} className="flex flex-1 min-h-0 w-full overflow-hidden">
                         <StageOutput
                           key={s.key}
                           label={s.label}

@@ -1,6 +1,14 @@
 import type { CheckResult } from "@/types/plugin-test.types";
 import { JsonTree } from "./JsonTree";
 
+import CodeMirror from "@uiw/react-codemirror";
+import { EditorState } from "@codemirror/state";
+import { vscodeDark, vscodeLight } from "@uiw/codemirror-theme-vscode";
+import { json } from "@codemirror/lang-json";
+import { EditorView } from "@codemirror/view";
+import { getCurrentTheme } from "@/lib/theme";
+import { useEffect, useState } from "react";
+
 // ── Stage Output Panel ────────────────────────────────────────────────────────
 interface StageOutputProps {
   label: string;
@@ -27,9 +35,26 @@ export function StageOutput({
   const warnCount = checks?.filter((c) => c.status === "warn").length ?? 0;
   const failCount = checks?.filter((c) => c.status === "fail").length ?? 0;
 
+  const [theme, setTheme] = useState(getCurrentTheme);
+
+  useEffect(() => {
+    const onThemeChange = () => {
+      setTheme(getCurrentTheme());
+    };
+    window.addEventListener("themechange", onThemeChange);
+
+    const mq = window.matchMedia("(prefers-color-scheme: dark)");
+    mq.addEventListener("change", onThemeChange);
+
+    return () => {
+      window.removeEventListener("themechange", onThemeChange);
+      mq.removeEventListener("change", onThemeChange);
+    };
+  }, []);
+
   return (
     <div
-      className={`overflow-hidden w-full rounded-sm border bg-card transition-colors duration-300 ${
+      className={`flex flex-col overflow-hidden w-full h-full rounded-sm border bg-card transition-colors duration-300 ${
         done ? headerClass : "border-slate-800"
       }`}
     >
@@ -115,12 +140,29 @@ export function StageOutput({
       )}
 
       {/* JSON output */}
-      <div className="min-h-15 max-h-44 overflow-y-auto p-4  text-[11px] leading-relaxed ">
+      <div className="flex-1 min-h-0 overflow-y-auto p-4 text-[11px] leading-relaxed">
         {!done && !running && (
           <span className="text-muted-foreground">— awaiting run —</span>
         )}
         {running && <span className="italic ">Processing…</span>}
-        {done && data && <JsonTree data={data} />}
+        {
+          done && data && (
+            <div>
+              <CodeMirror
+                value={JSON.stringify(data, null, 2)}
+                className="w-full"
+                theme={theme === "dark" ? vscodeDark : vscodeLight}
+                extensions={[
+                  EditorState.readOnly.of(true),
+                  EditorView.editable.of(false),
+                  json(),
+                  EditorView.lineWrapping,
+                ]}
+              />
+            </div>
+          )
+          // <JsonTree data={data} />
+        }
       </div>
     </div>
   );
