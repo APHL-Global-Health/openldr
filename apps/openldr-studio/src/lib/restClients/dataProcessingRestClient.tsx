@@ -115,6 +115,44 @@ export async function sendLiveRun(
   }
 }
 
+export async function getMessageEvents(
+  messageId: string,
+  token: string,
+  signal?: AbortSignal,
+) {
+  const response = await fetch(
+    `${import.meta.env.VITE_PROCESSOR_BASE_URL}/api/v1/processor/messages/${messageId}/events`,
+    {
+      headers: { Authorization: `Bearer ${token}` },
+      signal,
+    },
+  );
+  if (!response.ok)
+    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+  return response.json() as Promise<{
+    messageId: string;
+    count: number;
+    events: LiveEvent[];
+  }>;
+}
+
+export interface LiveEvent {
+  id: string;
+  messageId: string;
+  stage: string;
+  status: string;
+  eventType: string;
+  topic: string | null;
+  objectPath: string | null;
+  pluginName: string | null;
+  pluginVersion: string | null;
+  errorCode: string | null;
+  errorMessage: string | null;
+  errorDetails: Record<string, unknown> | null;
+  metadata: Record<string, unknown> | null;
+  createdAt: string;
+}
+
 export async function processFeedEntry(
   body: any,
   dataFeedId: string,

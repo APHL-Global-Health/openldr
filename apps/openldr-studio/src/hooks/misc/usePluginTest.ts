@@ -1,6 +1,26 @@
 import { useCallback, useEffect, useReducer, useRef } from "react";
 import { pluginTestApi } from "@/lib/restClients/pluginTestClient";
-import { sendLiveRun } from "@/lib/restClients/dataProcessingRestClient";
+import {
+  sendLiveRun,
+  getMessageEvents,
+  type LiveEvent,
+} from "@/lib/restClients/dataProcessingRestClient";
+
+export type { LiveEvent };
+
+// Events emitted by the final pipeline stages indicate the run is complete.
+const TERMINAL_SUCCESS_EVENTS = new Set([
+  "OUTPOST_COMPLETED",
+  "STORAGE_COMPLETED",
+]);
+
+function detectTerminal(events: LiveEvent[]): { done: boolean; failed: boolean } {
+  const failed = events.some(
+    (e) => e.status === "failed" || e.eventType === "DLQ_QUEUED",
+  );
+  const succeeded = events.some((e) => TERMINAL_SUCCESS_EVENTS.has(e.eventType));
+  return { done: failed || succeeded, failed };
+}
 
 const CONTENT_TYPE_MAP: Record<string, string> = {
   json: "application/json",
@@ -66,6 +86,15 @@ interface State {
   // Saved assignment (what is currently persisted in DB for this feed)
   savedAssignment: SavedAssignment | null;
 
+  // Live run tracking (Kafka pipeline events)
+  liveRun: {
+    messageId: string;
+    events: LiveEvent[];
+    polling: boolean;
+    done: boolean;
+    failed: boolean;
+  } | null;
+
   // UI
   loadingCtx: boolean; // context dropdowns loading
   saving: boolean;
@@ -101,6 +130,9 @@ type Action =
   | { type: "SAVE_START" }
   | { type: "SAVE_DONE"; assignment: SavedAssignment }
   | { type: "SAVE_ERROR"; error: string }
+  | { type: "LIVE_RUN_INIT"; messageId: string }
+  | { type: "LIVE_RUN_UPDATE"; events: LiveEvent[] }
+  | { type: "LIVE_RUN_DONE"; failed: boolean }
   | { type: "SET_LOADING_CTX"; loading: boolean }
   | { type: "CLEAR_ERROR" };
 
@@ -122,6 +154,7 @@ const initialState: State = {
   runStatus: "idle",
   testResult: undefined,
   savedAssignment: null,
+  liveRun: null,
   loadingCtx: false,
   saving: false,
   savedOk: false,
@@ -181,6 +214,7 @@ function reducer(s: State, a: Action): State {
           outpost: undefined,
         },
         savedAssignment: null,
+        liveRun: null,
         testResult: undefined,
         runStatus: "idle",
         savedOk: false,
@@ -197,6 +231,7 @@ function reducer(s: State, a: Action): State {
           outpost: undefined,
         },
         savedAssignment: null,
+        liveRun: null,
         testResult: undefined,
         runStatus: "idle",
         savedOk: false,
@@ -211,6 +246,7 @@ function reducer(s: State, a: Action): State {
           outpost: undefined,
         },
         savedAssignment: null,
+        liveRun: null,
         testResult: undefined,
         runStatus: "idle",
         savedOk: false,
@@ -283,6 +319,34 @@ function reducer(s: State, a: Action): State {
     case "SAVE_ERROR":
       return { ...s, saving: false, error: a.error };
 
+    case "LIVE_RUN_INIT":
+      return {
+        ...s,
+        liveRun: {
+          messageId: a.messageId,
+          events: [],
+          polling: true,
+          done: false,
+          failed: false,
+        },
+      };
+    case "LIVE_RUN_UPDATE":
+      return s.liveRun
+        ? { ...s, liveRun: { ...s.liveRun, events: a.events } }
+        : s;
+    case "LIVE_RUN_DONE":
+      return s.liveRun
+        ? {
+            ...s,
+            liveRun: {
+              ...s.liveRun,
+              polling: false,
+              done: true,
+              failed: a.failed,
+            },
+          }
+        : s;
+
     case "SET_LOADING_CTX":
       return { ...s, loadingCtx: a.loading };
     case "CLEAR_ERROR":
@@ -329,6 +393,37 @@ export function usePluginTest(token: any, signal?: AbortSignal) {
       .getDataFeeds(token, state.selectedUseCaseId, signal)
       .then((f) => dispatch({ type: "SET_FEEDS", feeds: f }));
   }, [state.selectedUseCaseId]);
+
+  // ── Live run: poll events when messageId is set ──
+  useEffect(() => {
+    const messageId = state.liveRun?.messageId;
+    if (!messageId) return;
+
+    let stopped = false;
+
+    const poll = async () => {
+      if (stopped) return;
+      try {
+        const data = await getMessageEvents(messageId, token);
+        if (stopped) return;
+        dispatch({ type: "LIVE_RUN_UPDATE", events: data.events });
+        const { done, failed } = detectTerminal(data.events);
+        if (done) {
+          stopped = true;
+          dispatch({ type: "LIVE_RUN_DONE", failed });
+        }
+      } catch {
+        // Network error — keep polling
+      }
+    };
+
+    poll();
+    const id = setInterval(poll, 2000);
+    return () => {
+      stopped = true;
+      clearInterval(id);
+    };
+  }, [state.liveRun?.messageId, token]);
 
   // ── Cascade: load plugin assignment when feed changes ──
   useEffect(() => {
@@ -486,7 +581,14 @@ export function usePluginTest(token: any, signal?: AbortSignal) {
     if (!selectedFeedId || !payload.trim()) return;
     const mimeType =
       CONTENT_TYPE_MAP[payloadContentType] ?? "application/octet-stream";
-    await sendLiveRun(payload, selectedFeedId, mimeType, token, signal);
+    const result = await sendLiveRun(
+      payload,
+      selectedFeedId,
+      mimeType,
+      token,
+      signal,
+    );
+    dispatch({ type: "LIVE_RUN_INIT", messageId: result.messageId });
   }, [state, token]);
 
   // Saves the current plugin selection then sends to the live pipeline.
@@ -514,7 +616,14 @@ export function usePluginTest(token: any, signal?: AbortSignal) {
       dispatch({ type: "SAVE_DONE", assignment });
       const mimeType =
         CONTENT_TYPE_MAP[payloadContentType] ?? "application/octet-stream";
-      await sendLiveRun(payload, selectedFeedId, mimeType, token, signal);
+      const result = await sendLiveRun(
+        payload,
+        selectedFeedId,
+        mimeType,
+        token,
+        signal,
+      );
+      dispatch({ type: "LIVE_RUN_INIT", messageId: result.messageId });
     } catch (e) {
       dispatch({ type: "SAVE_ERROR", error: (e as Error).message });
       throw e;

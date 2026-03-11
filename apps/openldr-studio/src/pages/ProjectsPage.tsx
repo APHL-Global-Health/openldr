@@ -5,6 +5,7 @@ import { ContextDropdown } from "@/components/projects/ContextDropdown";
 import { CreateModal } from "@/components/projects/CreateModal";
 import { PluginSlot } from "@/components/projects/PluginSlot";
 import { StageOutput } from "@/components/projects/StageOutput";
+import { LiveEventFeed } from "@/components/projects/LiveEventFeed";
 import { useKeycloakClient } from "@/components/react-keycloak-provider";
 import { Button } from "@/components/ui/button";
 import { usePluginTest } from "@/hooks/misc/usePluginTest";
@@ -95,6 +96,7 @@ function ProjectsPage() {
     undefined,
   );
 
+  const [outputTab, setOutputTab] = useState("validation");
   const [liveConfirmOpen, setLiveConfirmOpen] = useState(false);
   const [isRecordSheetOpen, setRecordSheetOpen] = useState(false);
   const [isEditMode, setEditMode] = useState(false);
@@ -127,6 +129,7 @@ function ProjectsPage() {
     selectedPlugins,
     selectedFeedId,
     savedAssignment,
+    liveRun,
     payload,
     saving,
     savedOk,
@@ -154,6 +157,20 @@ function ProjectsPage() {
     !isRunning;
 
   const canRunLive = !!selectedFeedId && !!payload.trim() && !isRunning;
+
+  // Keep the active tab in sync with the run mode.
+  useEffect(() => {
+    if (runType === "live") {
+      setOutputTab("live");
+    } else {
+      setOutputTab("validation");
+    }
+  }, [runType]);
+
+  // Auto-switch to Live tab when a live run starts.
+  useEffect(() => {
+    if (liveRun?.messageId) setOutputTab("live");
+  }, [liveRun?.messageId]);
 
   // True when the UI selection matches what is currently saved in the DB.
   const selectionMatchesSaved =
@@ -916,68 +933,111 @@ function ProjectsPage() {
               <div className="flex min-h-1/2 max-h-1/2 overflow-hidden">
                 <Tabs
                   className="flex flex-col w-full gap-0 overflow-hidden"
-                  defaultValue={SLOTS[0].key}
+                  value={outputTab}
+                  onValueChange={setOutputTab}
                 >
-                  <div className="border-border border-b w-full">
-                    <TabsList className="justify-start rounded-none bg-background p-0">
+                  {runType === "dry-run" ? (
+                    <>
+                      <div className="border-border border-b w-full">
+                        <TabsList className="justify-start rounded-none bg-background p-0">
+                          {SLOTS.map((s) => (
+                            <TabsTrigger
+                              key={s.key}
+                              className="h-full rounded-none border-transparent border-t-none border-b-4 bg-background data-[state=active]:border-border data-[state=active]:shadow-none"
+                              value={s.key}
+                            >
+                              {s.label}
+                            </TabsTrigger>
+                          ))}
+                        </TabsList>
+                      </div>
                       {SLOTS.map((s) => {
+                        const stageResult =
+                          testResult?.stages[
+                            s.key as "validation" | "mapping" | "outpost"
+                          ];
+                        const isStageRunning =
+                          (s.key === "validation" &&
+                            runStatus === "running-validation") ||
+                          (s.key === "mapping" &&
+                            runStatus === "running-mapping") ||
+                          (s.key === "outpost" &&
+                            runStatus === "running-outpost");
+                        const isDone = !!stageResult;
+                        const outputData = (stageResult as any)?.output ?? null;
+                        const checks =
+                          s.key === "validation"
+                            ? (testResult?.stages.validation as any)?.checks ??
+                              null
+                            : null;
                         return (
-                          <TabsTrigger
+                          <TabsContent
                             key={s.key}
-                            className="h-full rounded-none border-transparent border-t-none border-b-4 bg-background data-[state=active]:border-border data-[state=active]:shadow-none"
                             value={s.key}
+                            className="flex flex-1 min-h-0 w-full overflow-hidden"
                           >
-                            {s.label}
-                          </TabsTrigger>
+                            <StageOutput
+                              label={s.label}
+                              headerClass={s.headerCls}
+                              dotActiveClass={s.activeDot}
+                              data={outputData}
+                              checks={checks}
+                              running={isStageRunning}
+                              done={isDone}
+                              durationMs={
+                                stageResult
+                                  ? (stageResult as any).durationMs
+                                  : undefined
+                              }
+                            />
+                          </TabsContent>
                         );
                       })}
-                    </TabsList>
-                  </div>
-
-                  {/* ── Validation + Mapping + Outpost outputs ── */}
-                  {SLOTS.map((s) => {
-                    const stageResult =
-                      testResult?.stages[
-                        s.key as "validation" | "mapping" | "outpost"
-                      ];
-                    const isStageRunning =
-                      (s.key === "validation" &&
-                        runStatus === "running-validation") ||
-                      (s.key === "mapping" &&
-                        runStatus === "running-mapping") ||
-                      (s.key === "outpost" && runStatus === "running-outpost");
-                    const isDone = !!stageResult;
-
-                    const outputData = (stageResult as any)?.output ?? null;
-
-                    const checks =
-                      s.key === "validation"
-                        ? (testResult?.stages.validation as any)?.checks ?? null
-                        : null;
-
-                    return (
+                    </>
+                  ) : (
+                    <>
+                      <div className="border-border border-b w-full">
+                        <TabsList className="justify-start rounded-none bg-background p-0">
+                          <TabsTrigger
+                            className="h-full rounded-none border-transparent border-t-none border-b-4 bg-background data-[state=active]:border-border data-[state=active]:shadow-none"
+                            value="live"
+                          >
+                            Live
+                            {liveRun?.polling && (
+                              <span className="ml-1.5 inline-flex gap-0.5">
+                                {[0, 1, 2].map((i) => (
+                                  <span
+                                    key={i}
+                                    className="h-1 w-1 rounded-full bg-amber-400 animate-pulse"
+                                    style={{ animationDelay: `${i * 0.2}s` }}
+                                  />
+                                ))}
+                              </span>
+                            )}
+                            {liveRun?.done && (
+                              <span
+                                className={`ml-1.5 text-[9px] ${liveRun.failed ? "text-red-400" : "text-green-400"}`}
+                              >
+                                {liveRun.failed ? "✗" : "✓"}
+                              </span>
+                            )}
+                          </TabsTrigger>
+                        </TabsList>
+                      </div>
                       <TabsContent
-                        value={s.key}
+                        value="live"
                         className="flex flex-1 min-h-0 w-full overflow-hidden"
                       >
-                        <StageOutput
-                          key={s.key}
-                          label={s.label}
-                          headerClass={s.headerCls}
-                          dotActiveClass={s.activeDot}
-                          data={outputData}
-                          checks={checks}
-                          running={isStageRunning}
-                          done={isDone}
-                          durationMs={
-                            stageResult
-                              ? (stageResult as any).durationMs
-                              : undefined
-                          }
+                        <LiveEventFeed
+                          messageId={liveRun?.messageId ?? null}
+                          events={liveRun?.events ?? []}
+                          polling={liveRun?.polling ?? false}
+                          done={liveRun?.done ?? false}
+                          failed={liveRun?.failed ?? false}
                         />
                       </TabsContent>
-                    );
-                  })}
+                    </>
+                  )}
                 </Tabs>
               </div>
             </main>
