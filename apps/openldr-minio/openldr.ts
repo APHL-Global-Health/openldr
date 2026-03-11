@@ -363,9 +363,14 @@ ON CONFLICT ("pluginId") DO UPDATE SET
  *   mapping    : fbabe1c3-f563-4634-bb41-da53f88e6cf8  (default-mapper v1.2.0)
  *   outpost    : 83d52575-ecf6-4d86-aa8f-30480f883a5b  (default-outpost v1.0.0)
  */
-const BUILTIN_PROJECT_ID  = "00000000-0000-0000-0001-000000000001";
-const BUILTIN_USE_CASE_ID = "00000000-0000-0000-0001-000000000002";
-const BUILTIN_FEED_ID     = "00000000-0000-0000-0001-000000000003";
+const BUILTIN_PROJECT_ID   = "00000000-0000-0000-0001-000000000001";
+const BUILTIN_USE_CASE_ID  = "00000000-0000-0000-0001-000000000002";
+const BUILTIN_FEED_ID      = "00000000-0000-0000-0001-000000000003";
+const BUILTIN_SCHEMA_ID    = "00000000-0000-0000-0001-000000000004";
+
+// Stored as a plain string so that the `$$` PostgreSQL dollar-quoting does not
+// conflict with JavaScript template-literal `${…}` interpolation.
+const BUILTIN_FORM_SCHEMA = '{"$schema":"https://json-schema.org/draft/2020-12/schema","title":"General Data Entry Form","description":"Used for general purpose","type":"object","properties":{"field_field-1773256268036":{"type":"null","x-zodType":"label","x-zodLabel":{"text":"Requests","variant":"h3"}},"field_field-1773256294169":{"type":"null","x-zodType":"separator"},"facilityId":{"type":["object","string"],"format":"uuid","title":"facilityId","x-zodType":"reference","x-zodReference":{"table":"facilities","key":"facilityId","attributes":["facilityCode","facilityName"]}},"firstName":{"type":"string","minLength":2,"title":"firstName"},"lastName":{"type":"string","minLength":2,"title":"lastName"},"dob":{"type":["object","string"],"format":"date","title":"dob","x-zodType":"date","x-zodOptions":[["format","yyyy-MM-dd"]]},"sex":{"type":["object","enum"],"enum":["Male","Female","Other"],"title":"sex","x-zodType":"options","x-zodOptions":[["Male","Male"],["Female","Female"],["Other","Other"]]},"patientId":{"type":"string","minLength":1,"title":"patientId"},"specimenDate":{"type":["object","string"],"format":"datetime","title":"specimenDate","x-zodType":"date","x-zodOptions":[["format","yyyy-MM-dd HH:mm:ss"]]},"orderProvider":{"type":"string","minLength":2,"title":"orderProvider"},"labFacilityCode":{"type":"string","minLength":1,"title":"labFacilityCode"},"panelCode":{"type":"string","minLength":1,"title":"panelCode"},"panelDescription":{"type":"string","title":"panelDescription"},"requestId":{"type":"string","minLength":1,"title":"requestId"},"field_field-1773256334606":{"type":"null","x-zodType":"separator"},"field_field-1773256311605":{"type":"null","x-zodType":"label","x-zodLabel":{"text":"Results","variant":"h3"}},"field_field-1773256351245":{"type":"null","x-zodType":"separator"},"observationCode":{"type":"string","minLength":2,"title":"observationCode"},"observationDescription":{"type":"string","title":"observationDescription"},"interpretation":{"type":"string","title":"interpretation"},"results":{"type":"string","minLength":1,"title":"results"},"resultsDate":{"type":["object","string"],"format":"datetime","title":"resultsDate","x-zodType":"date","x-zodOptions":[["format","yyyy-MM-dd HH:mm:ss"]]},"resultUnits":{"type":"string","minLength":1,"title":"resultUnits"},"referenceRange":{"type":"string","title":"referenceRange"}},"required":["facilityId","firstName","lastName","dob","sex","patientId","specimenDate","orderProvider","labFacilityCode","panelCode","requestId","observationCode","results","resultsDate","resultUnits"],"additionalProperties":false}';
 
 const seedBuiltinProject = (): void => {
   console.log("Seeding built-in project / use case / data feed");
@@ -411,6 +416,21 @@ ON CONFLICT ("dataFeedId") DO UPDATE SET
   "schemaPluginId"    = EXCLUDED."schemaPluginId",
   "mapperPluginId"    = EXCLUDED."mapperPluginId",
   "recipientPluginId" = EXCLUDED."recipientPluginId";
+
+INSERT INTO "formSchemas" (
+  "schemaId", "schemaName", "schemaType", "version",
+  "schema", "dataFeedId", "isActive", "createdAt", "updatedAt"
+) VALUES (
+  '${BUILTIN_SCHEMA_ID}',
+  'Built-in',
+  'form',
+  '1.0.0',
+  '${BUILTIN_FORM_SCHEMA}'::json,
+  '${BUILTIN_FEED_ID}',
+  true,
+  NOW(), NOW()
+)
+ON CONFLICT ("schemaId") DO NOTHING;
 `;
 
   runSqlInPostgres(sql);
