@@ -671,7 +671,9 @@ function ProjectsPage() {
                 {SLOTS.map((s, idx) => (
                   <ButtonGroup className="w-full px-2 pb-2 focus-visible:outline-none">
                     <Select
-                      key={`${state.selectedFeedId}-${s.key}-${selectedPlugins[s.key] ?? "__empty__"}`}
+                      key={`${state.selectedFeedId}-${s.key}-${
+                        selectedPlugins[s.key] ?? "__empty__"
+                      }`}
                       value={selectedPlugins[s.key] || undefined}
                       onValueChange={(val) => {
                         actions.selectPlugin(s.key, val);
@@ -763,6 +765,7 @@ function ProjectsPage() {
                               DeleteData("Internal", "plugins", [
                                 selectedPlugins[s.key],
                               ]);
+                              actions.selectPlugin(s.key, undefined);
                             }}
                           >
                             <Trash2Icon />
