@@ -128,13 +128,13 @@ function ProjectsPage() {
     runStatus === "running-mapping" ||
     runStatus === "running-outpost";
 
-  let parsedPayloadOk = false;
-  try {
-    if (payload.trim()) {
-      JSON.parse(payload);
-      parsedPayloadOk = true;
-    }
-  } catch {}
+  let parsedPayloadOk = true;
+  // try {
+  //   if (payload.trim()) {
+  //     JSON.parse(payload);
+  //     parsedPayloadOk = true;
+  //   }
+  // } catch {}
 
   const canRun =
     (selectedPlugins.validation ||
@@ -858,7 +858,8 @@ function ProjectsPage() {
                   <CodeMirror
                     value={payload}
                     onChange={(value) => actions.setPayload(value)}
-                    className="w-full"
+                    className="w-full h-full"
+                    height="100%"
                     theme={theme === "dark" ? vscodeDark : vscodeLight}
                     extensions={extensions}
                   />
