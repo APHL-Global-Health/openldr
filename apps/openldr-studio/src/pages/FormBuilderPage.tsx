@@ -685,6 +685,7 @@ function FormBuilderPage() {
             <div className="shrink-0 border-b border-border p-3 ">
               <ButtonGroup className="w-full focus-visible:outline-none">
                 <Select
+                  key={formSchemaId ?? "__empty__"}
                   disabled={(data?.items || []).length === 0 ? true : false}
                   value={formSchemaId}
                   onValueChange={handleFormSelect}
