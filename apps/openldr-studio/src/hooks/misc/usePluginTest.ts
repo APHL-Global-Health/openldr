@@ -258,91 +258,91 @@ export function usePluginTest(token: any, signal?: AbortSignal) {
 
   // ── Boot: load projects + all plugin lists ──
   useEffect(() => {
-    pluginTestApi
-      .getProjects(token, signal)
-      .then((p) => dispatch({ type: "SET_PROJECTS", projects: p }))
-      .catch(() => {});
-    (["validation", "mapping", "outpost"] as PluginSlotType[]).forEach((slot) =>
-      pluginTestApi
-        .getPlugins(token, slot, signal)
-        .then((p) => dispatch({ type: "SET_PLUGINS", slot, plugins: p }))
-        .catch(() => {}),
-    );
+    // pluginTestApi
+    //   .getProjects(token, signal)
+    //   .then((p) => dispatch({ type: "SET_PROJECTS", projects: p }))
+    //   .catch(() => {});
+    // (["validation", "mapping", "outpost"] as PluginSlotType[]).forEach((slot) =>
+    //   pluginTestApi
+    //     .getPlugins(token, slot, signal)
+    //     .then((p) => dispatch({ type: "SET_PLUGINS", slot, plugins: p }))
+    //     .catch(() => {}),
+    // );
   }, []);
 
   // ── Cascade: load use cases when project changes ──
   useEffect(() => {
-    if (!state.selectedProjectId) return;
-    dispatch({ type: "SET_LOADING_CTX", loading: true });
-    pluginTestApi
-      .getUseCases(token, state.selectedProjectId, signal)
-      .then((u) => dispatch({ type: "SET_USE_CASES", useCases: u }))
-      .finally(() => dispatch({ type: "SET_LOADING_CTX", loading: false }));
+    // if (!state.selectedProjectId) return;
+    // dispatch({ type: "SET_LOADING_CTX", loading: true });
+    // pluginTestApi
+    //   .getUseCases(token, state.selectedProjectId, signal)
+    //   .then((u) => dispatch({ type: "SET_USE_CASES", useCases: u }))
+    //   .finally(() => dispatch({ type: "SET_LOADING_CTX", loading: false }));
   }, [state.selectedProjectId]);
 
   // ── Cascade: load feeds when use case changes ──
   useEffect(() => {
-    if (!state.selectedUseCaseId) return;
-    pluginTestApi
-      .getDataFeeds(token, state.selectedUseCaseId, signal)
-      .then((f) => dispatch({ type: "SET_FEEDS", feeds: f }));
+    // if (!state.selectedUseCaseId) return;
+    // pluginTestApi
+    //   .getDataFeeds(token, state.selectedUseCaseId, signal)
+    //   .then((f) => dispatch({ type: "SET_FEEDS", feeds: f }));
   }, [state.selectedUseCaseId]);
 
   // ── Cascade: load plugin assignment when feed changes ──
   useEffect(() => {
-    if (!state.selectedFeedId) return;
-    pluginTestApi
-      .getAssignment(token, state.selectedFeedId, signal)
-      .then((a) =>
-        dispatch({
-          type: "SET_ASSIGNMENT",
-          validationPluginId: a.validationPluginId,
-          mappingPluginId: a.mappingPluginId,
-          outpostPluginId: a.outpostPluginId,
-        }),
-      )
-      .catch(() => {
-        // No assignment saved yet — leave plugins cleared
-      });
+    // if (!state.selectedFeedId) return;
+    // pluginTestApi
+    //   .getAssignment(token, state.selectedFeedId, signal)
+    //   .then((a) =>
+    //     dispatch({
+    //       type: "SET_ASSIGNMENT",
+    //       validationPluginId: a.validationPluginId,
+    //       mappingPluginId: a.mappingPluginId,
+    //       outpostPluginId: a.outpostPluginId,
+    //     }),
+    //   )
+    //   .catch(() => {
+    //     // No assignment saved yet — leave plugins cleared
+    //   });
   }, [state.selectedFeedId]);
 
   // ── Actions ──────────────────────────────────────────────────────────────────
 
   const refreshProjects = useCallback(() => {
-    pluginTestApi
-      .getProjects(token, signal)
-      .then((p) => dispatch({ type: "SET_PROJECTS", projects: p }))
-      .catch(() => {});
+    // pluginTestApi
+    //   .getProjects(token, signal)
+    //   .then((p) => dispatch({ type: "SET_PROJECTS", projects: p }))
+    //   .catch(() => {});
   }, [token, signal]);
 
   const refreshUseCases = useCallback(() => {
-    if (!state.selectedProjectId) return;
-    pluginTestApi
-      .getUseCases(token, state.selectedProjectId, signal)
-      .then((u) => dispatch({ type: "SET_USE_CASES", useCases: u }))
-      .catch(() => {});
+    // if (!state.selectedProjectId) return;
+    // pluginTestApi
+    //   .getUseCases(token, state.selectedProjectId, signal)
+    //   .then((u) => dispatch({ type: "SET_USE_CASES", useCases: u }))
+    //   .catch(() => {});
   }, [token, signal, state.selectedProjectId]);
 
   const refreshDataFeeds = useCallback(() => {
-    if (!state.selectedUseCaseId) return;
-    pluginTestApi
-      .getDataFeeds(token, state.selectedUseCaseId, signal)
-      .then((f) => dispatch({ type: "SET_FEEDS", feeds: f }))
-      .catch(() => {});
+    // if (!state.selectedUseCaseId) return;
+    // pluginTestApi
+    //   .getDataFeeds(token, state.selectedUseCaseId, signal)
+    //   .then((f) => dispatch({ type: "SET_FEEDS", feeds: f }))
+    //   .catch(() => {});
   }, [token, signal, state.selectedUseCaseId]);
 
   const refreshPlugins = useCallback(() => {
-    (["validation", "mapping", "outpost"] as PluginSlotType[]).forEach((slot) =>
-      pluginTestApi
-        .getPlugins(token, slot, signal)
-        .then((p) => dispatch({ type: "SET_PLUGINS", slot, plugins: p }))
-        .catch(() => {}),
-    );
+    // (["validation", "mapping", "outpost"] as PluginSlotType[]).forEach((slot) =>
+    //   pluginTestApi
+    //     .getPlugins(token, slot, signal)
+    //     .then((p) => dispatch({ type: "SET_PLUGINS", slot, plugins: p }))
+    //     .catch(() => {}),
+    // );
   }, [token, signal]);
 
   const createProject = useCallback(async (name: string) => {
-    const p = await pluginTestApi.createProject(token, name, signal);
-    dispatch({ type: "ADD_PROJECT", project: p });
+    // const p = await pluginTestApi.createProject(token, name, signal);
+    // dispatch({ type: "ADD_PROJECT", project: p });
   }, []);
 
   const createUseCase = useCallback(
@@ -375,61 +375,59 @@ export function usePluginTest(token: any, signal?: AbortSignal) {
 
   const createPlugin = useCallback(
     async (name: string, slot: PluginSlotType) => {
-      const p = await pluginTestApi.createPlugin(token, { name, slot }, signal);
-      dispatch({ type: "ADD_PLUGIN", slot, plugin: p });
+      // const p = await pluginTestApi.createPlugin(token, { name, slot }, signal);
+      // dispatch({ type: "ADD_PLUGIN", slot, plugin: p });
     },
     [],
   );
 
   const runTest = useCallback(async () => {
-    const { payload, selectedPlugins } = state;
-    if (!payload.trim()) return;
-    if (
-      !selectedPlugins.validation &&
-      !selectedPlugins.mapping &&
-      !selectedPlugins.outpost
-    )
-      return;
-
-    abortRef.current?.abort();
-    dispatch({ type: "RUN_START" });
-
-    try {
-      const result = await pluginTestApi.runTest(
-        token,
-        {
-          payload,
-          validationPluginId: selectedPlugins.validation,
-          mappingPluginId: selectedPlugins.mapping,
-          outpostPluginId: selectedPlugins.outpost,
-        },
-        signal,
-      );
-      dispatch({ type: "RUN_DONE", result });
-    } catch (e) {
-      dispatch({ type: "RUN_ERROR", error: (e as Error).message });
-    }
+    // const { payload, selectedPlugins } = state;
+    // if (!payload.trim()) return;
+    // if (
+    //   !selectedPlugins.validation &&
+    //   !selectedPlugins.mapping &&
+    //   !selectedPlugins.outpost
+    // )
+    //   return;
+    // abortRef.current?.abort();
+    // dispatch({ type: "RUN_START" });
+    // try {
+    //   const result = await pluginTestApi.runTest(
+    //     token,
+    //     {
+    //       payload,
+    //       validationPluginId: selectedPlugins.validation,
+    //       mappingPluginId: selectedPlugins.mapping,
+    //       outpostPluginId: selectedPlugins.outpost,
+    //     },
+    //     signal,
+    //   );
+    //   dispatch({ type: "RUN_DONE", result });
+    // } catch (e) {
+    //   dispatch({ type: "RUN_ERROR", error: (e as Error).message });
+    // }
   }, [state]);
 
   const saveAssignment = useCallback(async () => {
-    const { selectedFeedId, selectedPlugins } = state;
-    if (!selectedFeedId) return;
-    dispatch({ type: "SAVE_START" });
-    try {
-      await pluginTestApi.saveAssignment(
-        token,
-        {
-          feedId: selectedFeedId,
-          validationPluginId: selectedPlugins.validation!,
-          mappingPluginId: selectedPlugins.mapping!,
-          outpostPluginId: selectedPlugins.outpost!,
-        },
-        signal,
-      );
-      dispatch({ type: "SAVE_DONE" });
-    } catch (e) {
-      dispatch({ type: "SAVE_ERROR", error: (e as Error).message });
-    }
+    // const { selectedFeedId, selectedPlugins } = state;
+    // if (!selectedFeedId) return;
+    // dispatch({ type: "SAVE_START" });
+    // try {
+    //   await pluginTestApi.saveAssignment(
+    //     token,
+    //     {
+    //       feedId: selectedFeedId,
+    //       validationPluginId: selectedPlugins.validation!,
+    //       mappingPluginId: selectedPlugins.mapping!,
+    //       outpostPluginId: selectedPlugins.outpost!,
+    //     },
+    //     signal,
+    //   );
+    //   dispatch({ type: "SAVE_DONE" });
+    // } catch (e) {
+    //   dispatch({ type: "SAVE_ERROR", error: (e as Error).message });
+    // }
   }, [state]);
 
   return {

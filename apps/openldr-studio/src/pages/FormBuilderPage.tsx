@@ -104,7 +104,7 @@ import {
 } from "@/components/ui/input-group";
 
 import CodeMirror from "@uiw/react-codemirror";
-// import { white as lightTheme } from '@uiw/codemirror-theme-white';
+import { EditorState } from "@codemirror/state";
 import { vscodeDark, vscodeLight } from "@uiw/codemirror-theme-vscode";
 import { json } from "@codemirror/lang-json";
 import { EditorView } from "@codemirror/view";
@@ -271,7 +271,9 @@ function fieldsToJsonSchema(fields: FormField[], baseSchema: any): any {
     ...baseSchema,
     properties,
     ...(required.length ? { required } : { required: undefined }),
-    ...(conditionalRules.length ? { allOf: conditionalRules } : { allOf: undefined }),
+    ...(conditionalRules.length
+      ? { allOf: conditionalRules }
+      : { allOf: undefined }),
   };
 }
 
@@ -928,7 +930,12 @@ function FormBuilderPage() {
                   value={JSON.stringify(rawJsonSchema, null, 2)}
                   className="w-full"
                   theme={theme === "dark" ? vscodeDark : vscodeLight}
-                  extensions={[json(), EditorView.lineWrapping]}
+                  extensions={[
+                    EditorState.readOnly.of(true),
+                    EditorView.editable.of(false),
+                    json(),
+                    EditorView.lineWrapping,
+                  ]}
                 />
               </div>
             </div>

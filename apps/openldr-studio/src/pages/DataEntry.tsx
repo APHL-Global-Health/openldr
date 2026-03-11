@@ -84,7 +84,7 @@ import {
 import { useSQLiteClient } from "@/components/sqlite-client-provider";
 
 import CodeMirror from "@uiw/react-codemirror";
-// import { white as lightTheme } from '@uiw/codemirror-theme-white';
+import { EditorState } from "@codemirror/state";
 import { vscodeDark, vscodeLight } from "@uiw/codemirror-theme-vscode";
 import { json } from "@codemirror/lang-json";
 import { EditorView } from "@codemirror/view";
@@ -672,7 +672,12 @@ function DataEntryPage() {
                         value={JSON.stringify(data.code, null, 2)}
                         className="w-full"
                         theme={theme === "dark" ? vscodeDark : vscodeLight}
-                        extensions={[json(), EditorView.lineWrapping]}
+                        extensions={[
+                          EditorState.readOnly.of(true),
+                          EditorView.editable.of(false),
+                          json(),
+                          EditorView.lineWrapping,
+                        ]}
                       />
                       <InputGroupAddon align="block-start" className="border-b">
                         <InputGroupText className=" font-medium">

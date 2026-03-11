@@ -29,7 +29,7 @@ export function StageOutput({
 
   return (
     <div
-      className={`overflow-hidden rounded-sm border bg-card transition-colors duration-300 ${
+      className={`overflow-hidden w-full rounded-sm border bg-card transition-colors duration-300 ${
         done ? headerClass : "border-slate-800"
       }`}
     >
