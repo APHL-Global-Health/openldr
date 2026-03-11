@@ -456,6 +456,10 @@ const start = async (dir: string) => {
 
     await seedDefaultPlugins(dir);
     seedBuiltinProject();
+    await minio.createBuckets(
+      [{ id: BUILTIN_PROJECT_ID, name: "built-in" }],
+      events,
+    );
 
     if (
       process.env.INCLUDE_TEST_DATA &&
