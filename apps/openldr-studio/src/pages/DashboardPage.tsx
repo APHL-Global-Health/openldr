@@ -69,9 +69,18 @@ function DashboardPage() {
             <SelectTrigger className="focus:ring-0 w-40 h-8 justify-between ">
               <SelectValue placeholder={t("app:dashboard.title")} />
             </SelectTrigger>
-            <SelectContent className="flex bg-background">
-              <SelectItem value="laboratory">{t("app:dashboard.laboratory")}</SelectItem>
-              <SelectItem value="infrastructure">{t("app:dashboard.infrastructure")}</SelectItem>
+            <SelectContent
+              className="flex bg-background"
+              side="bottom"
+              avoidCollisions={false}
+              position="popper"
+            >
+              <SelectItem value="laboratory">
+                {t("app:dashboard.laboratory")}
+              </SelectItem>
+              <SelectItem value="infrastructure">
+                {t("app:dashboard.infrastructure")}
+              </SelectItem>
             </SelectContent>
           </Select>
           <Separator orientation="vertical" className=" h-6" />
@@ -144,7 +153,9 @@ function DashboardPage() {
                 </Button>
               </TooltipTrigger>
               <TooltipContent>
-                <span className="ml-auto text-sm">{t("common:actions.refresh")}</span>
+                <span className="ml-auto text-sm">
+                  {t("common:actions.refresh")}
+                </span>
               </TooltipContent>
             </Tooltip>
           </div>
