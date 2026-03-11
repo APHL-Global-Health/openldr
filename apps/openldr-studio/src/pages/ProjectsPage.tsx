@@ -741,7 +741,13 @@ function ProjectsPage() {
                           <DropdownMenuItem
                             disabled={selectedPlugins[s.key] ? false : true}
                             onClick={() => {
-                              // EditData("Internal", "plugins", item, true);
+                              const item = state.plugins[s.key]?.find(
+                                (plugin: any) =>
+                                  plugin.id === selectedPlugins[s.key],
+                              );
+                              if (item) {
+                                EditData("Internal", "plugins", item, true);
+                              }
                             }}
                           >
                             <Pencil width={16} height={16} />
@@ -754,7 +760,9 @@ function ProjectsPage() {
                             variant="destructive"
                             disabled={selectedPlugins[s.key] ? false : true}
                             onClick={() => {
-                              // DeleteData("Internal", "plugins",[selectedPlugins[s.key]]);
+                              DeleteData("Internal", "plugins", [
+                                selectedPlugins[s.key],
+                              ]);
                             }}
                           >
                             <Trash2Icon />
@@ -807,7 +815,10 @@ function ProjectsPage() {
                 </div>
               </div>
               <div className="flex min-h-1/2 max-h-1/2 overflow-hidden">
-                <Tabs className="flex flex-col w-full gap-0 overflow-hidden" defaultValue={SLOTS[0].key}>
+                <Tabs
+                  className="flex flex-col w-full gap-0 overflow-hidden"
+                  defaultValue={SLOTS[0].key}
+                >
                   <div className="border-border border-b w-full">
                     <TabsList className="justify-start rounded-none bg-background p-0">
                       {SLOTS.map((s) => {
@@ -846,7 +857,10 @@ function ProjectsPage() {
                         : null;
 
                     return (
-                      <TabsContent value={s.key} className="flex flex-1 min-h-0 w-full overflow-hidden">
+                      <TabsContent
+                        value={s.key}
+                        className="flex flex-1 min-h-0 w-full overflow-hidden"
+                      >
                         <StageOutput
                           key={s.key}
                           label={s.label}
