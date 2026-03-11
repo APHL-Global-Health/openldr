@@ -47,16 +47,28 @@ export class ObjectPropertiesHandler implements RefinementHandler {
         }
       }
 
+      // Collect conditionally-required keys from allOf if/then blocks
+      const conditionallyRequiredKeys = new Set<string>();
+      if (Array.isArray((schema as any).allOf)) {
+        for (const rule of (schema as any).allOf) {
+          if (rule.if && rule.then?.required) {
+            for (const key of rule.then.required) {
+              conditionallyRequiredKeys.add(key);
+            }
+          }
+        }
+      }
+
       // Handle required properties
       if (objectSchema.required && Array.isArray(objectSchema.required)) {
         const required = new Set(objectSchema.required);
         for (const key of Object.keys(shape)) {
-          // Fields with visibility conditions are always optional in the
-          // Zod schema — validation should not fail when they are hidden.
-          // Store "conditionallyRequired" in the registry so the UI can
-          // still render them as required when they ARE visible.
-          if (visibilityKeys.has(key)) {
-            if (required.has(key)) {
+          // Fields with visibility conditions or in allOf if/then are
+          // always optional in the Zod schema — validation should not
+          // fail when they are hidden. Store "conditionallyRequired" in
+          // the registry so the UI can still show them as required when visible.
+          if (visibilityKeys.has(key) || conditionallyRequiredKeys.has(key)) {
+            if (required.has(key) || conditionallyRequiredKeys.has(key)) {
               const existing = z.globalRegistry.get(shape[key] as any) ?? {};
               z.globalRegistry.add(shape[key] as any, {
                 ...existing,
@@ -82,11 +94,41 @@ export class ObjectPropertiesHandler implements RefinementHandler {
       }
 
       // Recreate the object with proper shape
+      let result: z.ZodTypeAny;
       if (objectSchema.additionalProperties === false) {
-        return z.object(shape);
+        result = z.object(shape);
       } else {
-        return z.object(shape).passthrough();
+        result = z.object(shape).passthrough();
       }
+
+      // Add runtime validation for conditionally-required fields.
+      // Evaluates allOf if/then conditions: when the `if` condition
+      // matches the data, the `then.required` fields must have a value.
+      if (Array.isArray((schema as any).allOf)) {
+        const conditionalRules = (schema as any).allOf.filter(
+          (rule: any) => rule.if && rule.then?.required,
+        );
+        if (conditionalRules.length > 0) {
+          result = (result as z.ZodObject<any>).superRefine((data, ctx) => {
+            for (const rule of conditionalRules) {
+              if (matchesIfCondition(data, rule.if)) {
+                for (const key of rule.then.required) {
+                  const val = (data as any)[key];
+                  if (val === undefined || val === null || val === "") {
+                    ctx.addIssue({
+                      code: "custom",
+                      path: [key],
+                      message: "Required",
+                    });
+                  }
+                }
+              }
+            }
+          });
+        }
+      }
+
+      return result;
     }
 
     if (zodSchema.hasOwnProperty("refine")) {

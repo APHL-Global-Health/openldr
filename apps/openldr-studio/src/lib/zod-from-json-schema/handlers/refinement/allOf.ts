@@ -7,8 +7,18 @@ export class AllOfHandler implements RefinementHandler {
   apply(zodSchema: z.ZodTypeAny, schema: JSONSchema.BaseSchema): z.ZodTypeAny {
     if (!schema.allOf || schema.allOf.length === 0) return zodSchema;
 
+    // Filter out conditional if/then/else entries — these are handled
+    // separately (e.g. conditional required via x-zodVisibility) and
+    // cannot be converted to Zod type intersections.
+    const convertible = schema.allOf.filter((s) => {
+      if (typeof s === "boolean") return true;
+      return !("if" in s || "then" in s || "else" in s);
+    });
+
+    if (convertible.length === 0) return zodSchema;
+
     // Convert all schemas in allOf
-    const allOfSchemas = schema.allOf.map((s) => convertJsonSchemaToZod(s));
+    const allOfSchemas = convertible.map((s) => convertJsonSchemaToZod(s));
 
     // Intersect all schemas together, including the base schema
     return allOfSchemas.reduce(
