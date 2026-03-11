@@ -394,6 +394,7 @@ function DataEntryPage() {
       <div className="flex min-h-13 max-h-13 w-full items-center pr-2 py-2">
         <div className="flex flex-row items-center">
           <Select
+            disabled={(entryForms || []).length === 0}
             value={selectedFeedValue}
             onValueChange={(val: any) => {
               const form = (entryForms || []).find(
