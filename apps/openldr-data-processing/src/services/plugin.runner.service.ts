@@ -227,25 +227,36 @@ export interface PluginRef {
 
 export interface RunTestOptions {
   payload: string;
+  contentType?: string;
   validation?: PluginRef | null;
   mapping?: PluginRef | null;
   outpost?: PluginRef | null;
 }
 
+// Content types that should be parsed as JSON before passing to plugins
+const JSON_CONTENT_TYPES = new Set(["json", "application/json", "application/fhir+json"]);
+
 export async function runPluginTest(
   opts: RunTestOptions,
 ): Promise<RunPluginTestResponse> {
+  const ct = (opts.contentType || "json").toLowerCase();
   let parsedPayload: Record<string, unknown>;
 
-  try {
-    parsedPayload = JSON.parse(opts.payload);
-  } catch {
-    return {
-      ok: false,
-      stages: {},
-      allPassed: false,
-      error: "Payload is not valid JSON",
-    };
+  if (JSON_CONTENT_TYPES.has(ct)) {
+    try {
+      parsedPayload = JSON.parse(opts.payload);
+    } catch {
+      return {
+        ok: false,
+        stages: {},
+        allPassed: false,
+        error: "Payload is not valid JSON",
+      };
+    }
+  } else {
+    // Non-JSON content types (XML, HL7, CSV, plain text, binary, etc.)
+    // Pass the raw string directly — plugins handle their own parsing
+    parsedPayload = opts.payload as unknown as Record<string, unknown>;
   }
 
   const stages: RunPluginTestResponse["stages"] = {};

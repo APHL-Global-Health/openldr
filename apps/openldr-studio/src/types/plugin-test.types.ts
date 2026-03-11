@@ -90,7 +90,8 @@ export type StageResult = ValidationStageResult | MappingStageResult;
 // ── API request / response shapes ────────────────────────────────────────────
 
 export interface RunPluginTestRequest {
-  payload: string; // raw JSON string from the textarea
+  payload: string; // raw payload string (JSON, XML, HL7, CSV, plain text, etc.)
+  contentType?: string; // MIME-like hint: "json" | "xml" | "hl7" | "csv" | "text" (defaults to "json")
   validationPluginId?: string | null;
   mappingPluginId?: string | null;
   outpostPluginId?: string | null;

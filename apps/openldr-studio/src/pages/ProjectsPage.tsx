@@ -66,8 +66,6 @@ import { vscodeDark, vscodeLight } from "@uiw/codemirror-theme-vscode";
 import { json } from "@codemirror/lang-json";
 import { xml } from "@codemirror/lang-xml";
 import { javascript } from "@codemirror/lang-javascript";
-import { markdown } from "@codemirror/lang-markdown";
-import { sql } from "@codemirror/lang-sql";
 import { EditorView } from "@codemirror/view";
 import { getCurrentTheme } from "@/lib/theme";
 
@@ -791,28 +789,27 @@ function ProjectsPage() {
                 <div className="flex w-full px-2 min-h-12 max-h-12 justify-between border-b border-border items-center">
                   <div>
                     <Select
-                      defaultValue="text"
+                      defaultValue="json"
                       onValueChange={(val) => {
-                        if (val === "json") {
+                        // Set CodeMirror syntax extensions
+                        if (val === "json" || val === "fhir-json") {
                           setExtensions([json(), EditorView.lineWrapping]);
-                        } else if (val === "xml") {
+                        } else if (val === "xml" || val === "fhir-xml") {
                           setExtensions([xml(), EditorView.lineWrapping]);
                         } else if (val === "javascript") {
                           setExtensions([
                             javascript(),
                             EditorView.lineWrapping,
                           ]);
-                        } else if (val === "markdown") {
-                          setExtensions([markdown(), EditorView.lineWrapping]);
-                        } else if (val === "sql") {
-                          setExtensions([sql(), EditorView.lineWrapping]);
                         } else {
                           setExtensions([EditorView.lineWrapping]);
                         }
+                        // Set payload content type for plugin test runner
+                        actions.setPayloadContentType(val);
                       }}
                     >
-                      <SelectTrigger className="flex flex-1 w-31 max-h-8 rounded border bg-transparent dark:bg-transparent">
-                        <SelectValue placeholder="Syntax" />
+                      <SelectTrigger className="flex flex-1 w-40 max-h-8 rounded border bg-transparent dark:bg-transparent">
+                        <SelectValue placeholder="Content Type" />
                       </SelectTrigger>
                       <SelectContent
                         className="rounded-xs"
@@ -821,12 +818,14 @@ function ProjectsPage() {
                         position="popper"
                       >
                         <SelectGroup>
-                          <SelectItem value="json">Json</SelectItem>
+                          <SelectItem value="json">JSON</SelectItem>
+                          <SelectItem value="fhir-json">FHIR JSON</SelectItem>
+                          <SelectItem value="fhir-xml">FHIR XML</SelectItem>
+                          <SelectItem value="hl7">HL7 v2</SelectItem>
                           <SelectItem value="xml">XML</SelectItem>
-                          <SelectItem value="javascript">Javascript</SelectItem>
-                          <SelectItem value="markdown">Markdown</SelectItem>
-                          <SelectItem value="sql">SQL</SelectItem>
+                          <SelectItem value="csv">CSV</SelectItem>
                           <SelectItem value="text">Plain Text</SelectItem>
+                          <SelectItem value="binary">Binary</SelectItem>
                         </SelectGroup>
                       </SelectContent>
                     </Select>

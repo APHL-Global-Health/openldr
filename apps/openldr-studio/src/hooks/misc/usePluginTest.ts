@@ -32,6 +32,7 @@ interface State {
 
   // Payload
   payload: string;
+  payloadContentType: string;
 
   // Test execution
   runStatus:
@@ -70,6 +71,7 @@ type Action =
       outpostPluginId: string | null;
     }
   | { type: "SET_PAYLOAD"; payload: string }
+  | { type: "SET_PAYLOAD_CONTENT_TYPE"; contentType: string }
   | { type: "RUN_START" }
   | { type: "RUN_STAGE"; stage: "validation" | "mapping" }
   | { type: "RUN_DONE"; result: RunPluginTestResponse }
@@ -94,6 +96,7 @@ const initialState: State = {
     outpost: undefined,
   },
   payload: "",
+  payloadContentType: "json",
   runStatus: "idle",
   testResult: undefined,
   loadingCtx: false,
@@ -211,6 +214,14 @@ function reducer(s: State, a: Action): State {
       return {
         ...s,
         payload: a.payload,
+        testResult: undefined,
+        runStatus: "idle",
+        savedOk: false,
+      };
+    case "SET_PAYLOAD_CONTENT_TYPE":
+      return {
+        ...s,
+        payloadContentType: a.contentType,
         testResult: undefined,
         runStatus: "idle",
         savedOk: false,
@@ -382,7 +393,7 @@ export function usePluginTest(token: any, signal?: AbortSignal) {
   );
 
   const runTest = useCallback(async () => {
-    const { payload, selectedPlugins } = state;
+    const { payload, payloadContentType, selectedPlugins } = state;
     if (!payload.trim()) return;
     if (
       !selectedPlugins.validation &&
@@ -399,6 +410,7 @@ export function usePluginTest(token: any, signal?: AbortSignal) {
         token,
         {
           payload,
+          contentType: payloadContentType,
           validationPluginId: selectedPlugins.validation,
           mappingPluginId: selectedPlugins.mapping,
           outpostPluginId: selectedPlugins.outpost,
@@ -445,6 +457,8 @@ export function usePluginTest(token: any, signal?: AbortSignal) {
         dispatch({ type: "SELECT_PLUGIN", slot, id }),
       setPayload: (payload: string) =>
         dispatch({ type: "SET_PAYLOAD", payload }),
+      setPayloadContentType: (contentType: string) =>
+        dispatch({ type: "SET_PAYLOAD_CONTENT_TYPE", contentType }),
       createProject,
       createUseCase,
       createDataFeed,
