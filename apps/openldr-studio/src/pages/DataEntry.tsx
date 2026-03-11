@@ -618,7 +618,7 @@ function DataEntryPage() {
                   <Separator />
                 </div>
 
-                <div className="flex flex-row items-center px-2">
+                {/* <div className="flex flex-row items-center px-2">
                   <div className="flex flex-1"></div>
 
                   <ToggleGroup
@@ -644,7 +644,7 @@ function DataEntryPage() {
                       {t("app:data_entry.schema")}
                     </ToggleGroupItem>
                   </ToggleGroup>
-                </div>
+                </div> */}
 
                 {pageOption === "form" && (
                   <AutoForm
@@ -665,7 +665,7 @@ function DataEntryPage() {
                   />
                 )}
 
-                {pageOption === "schema" && (
+                {/* {pageOption === "schema" && (
                   <div className="flex gap-y-2 w-full px-2 py-3">
                     <InputGroup className="flex flex-1 ">
                       <CodeMirror
@@ -692,7 +692,7 @@ function DataEntryPage() {
                       </InputGroupAddon>
                     </InputGroup>
                   </div>
-                )}
+                )} */}
               </div>
             )}
           </div>
