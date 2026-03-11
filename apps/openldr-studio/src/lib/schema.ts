@@ -207,16 +207,24 @@ export function fieldToSchemaProperty(field: FormField): JSONSchemaProperty {
 export function formToJSONSchema(form: FormDefinition): JSONSchema {
   const properties: Record<string, JSONSchemaProperty> = {};
   const required: string[] = [];
+  const conditionalRules: any[] = [];
 
   for (const field of form.fields) {
     const key = field.key || generateKey(field.label) || `field_${field.id}`;
     properties[key] = fieldToSchemaProperty(field);
-    // Skip visual types and conditionally-visible fields from required
-    if (
-      field.required &&
-      !VISUAL_TYPES.includes(field.type) &&
-      !field.visibility?.conditions.length
-    ) {
+
+    if (VISUAL_TYPES.includes(field.type)) continue;
+
+    if (field.required && field.visibility?.conditions?.length) {
+      // Emit if/then so backend validators enforce conditional required
+      const ifClause = buildVisibilityIfClause(field.visibility);
+      if (ifClause) {
+        conditionalRules.push({
+          if: ifClause,
+          then: { required: [key] },
+        });
+      }
+    } else if (field.required) {
       required.push(key);
     }
   }
@@ -228,7 +236,35 @@ export function formToJSONSchema(form: FormDefinition): JSONSchema {
     type: "object",
     properties,
     ...(required.length ? { required } : {}),
+    ...(conditionalRules.length ? { allOf: conditionalRules } : {}),
   };
+}
+
+/** Convert a VisibilityRule into a JSON Schema `if` clause. */
+function buildVisibilityIfClause(
+  visibility: import("@/types/forms").VisibilityRule,
+): any | null {
+  const conditionSchemas = visibility.conditions
+    .map((cond) => {
+      switch (cond.operator) {
+        case "equals":
+          return { properties: { [cond.field]: { const: cond.value } } };
+        case "notEquals":
+          return {
+            properties: { [cond.field]: { not: { const: cond.value } } },
+          };
+        default:
+          return null;
+      }
+    })
+    .filter(Boolean);
+
+  if (conditionSchemas.length === 0) return null;
+  if (conditionSchemas.length === 1) return conditionSchemas[0];
+
+  return visibility.logic === "and"
+    ? { allOf: conditionSchemas }
+    : { anyOf: conditionSchemas };
 }
 
 export function formatSchemaJson(form: FormDefinition): string {

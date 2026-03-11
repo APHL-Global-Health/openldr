@@ -116,10 +116,17 @@ function parseField(key: string, schema: z.$ZodType): ParsedField {
     };
   }
 
+  // Fields with visibility conditions are made optional in the Zod schema
+  // to prevent validation errors when hidden. But if they were originally
+  // required (conditionallyRequired), treat them as required in the UI
+  // so the form shows the required indicator when the field IS visible.
+  const conditionallyRequired = getConditionallyRequired(schema);
+  const isRequired = conditionallyRequired || !isOptional(schema);
+
   return {
     key,
     type,
-    required: !isOptional(schema),
+    required: isRequired,
     default: defaultValue,
     description: getDescription(schema),
     fieldConfig,
@@ -190,6 +197,21 @@ function getReadOnly<SchemaType extends z.$ZodType>(
 
   if ("innerType" in schema._zod.def) {
     return getReadOnly(schema._zod.def.innerType as SchemaType);
+  }
+
+  return false;
+}
+
+function getConditionallyRequired<SchemaType extends z.$ZodType>(
+  schema: SchemaType,
+): boolean {
+  const meta = z.globalRegistry.get(schema) as any;
+  if (meta?.conditionallyRequired === true) {
+    return true;
+  }
+
+  if ("innerType" in schema._zod.def) {
+    return getConditionallyRequired(schema._zod.def.innerType as SchemaType);
   }
 
   return false;

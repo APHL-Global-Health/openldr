@@ -31,11 +31,42 @@ export class ObjectPropertiesHandler implements RefinementHandler {
         }
       }
 
+      // Collect property keys that have visibility conditions —
+      // these should always be optional in the Zod schema because they
+      // may be hidden, but we store their "originally required" status
+      // in the global registry so the UI can still show them as required
+      // when visible.
+      const visibilityKeys = new Set<string>();
+      if (objectSchema.properties) {
+        for (const [key, propSchema] of Object.entries(
+          objectSchema.properties,
+        )) {
+          if (propSchema && (propSchema as any)["x-zodVisibility"]) {
+            visibilityKeys.add(key);
+          }
+        }
+      }
+
       // Handle required properties
       if (objectSchema.required && Array.isArray(objectSchema.required)) {
         const required = new Set(objectSchema.required);
         for (const key of Object.keys(shape)) {
-          if (!required.has(key)) {
+          // Fields with visibility conditions are always optional in the
+          // Zod schema — validation should not fail when they are hidden.
+          // Store "conditionallyRequired" in the registry so the UI can
+          // still render them as required when they ARE visible.
+          if (visibilityKeys.has(key)) {
+            if (required.has(key)) {
+              const existing = z.globalRegistry.get(shape[key] as any) ?? {};
+              z.globalRegistry.add(shape[key] as any, {
+                ...existing,
+                conditionallyRequired: true,
+              });
+            }
+            try {
+              shape[key] = shape[key].optional();
+            } catch (e) {}
+          } else if (!required.has(key)) {
             try {
               shape[key] = shape[key].optional();
             } catch (e) {}

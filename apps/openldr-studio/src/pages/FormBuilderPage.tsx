@@ -51,6 +51,7 @@ import {
   CopyIcon,
   Eye,
   Form,
+  List,
   MoreHorizontalIcon,
   Pencil,
   Plus,
@@ -99,6 +100,7 @@ import {
   InputGroupAddon,
   InputGroupButton,
   InputGroupText,
+  InputGroupInput,
 } from "@/components/ui/input-group";
 
 import CodeMirror from "@uiw/react-codemirror";
@@ -107,11 +109,24 @@ import { vscodeDark, vscodeLight } from "@uiw/codemirror-theme-vscode";
 import { json } from "@codemirror/lang-json";
 import { EditorView } from "@codemirror/view";
 import { getCurrentTheme } from "@/lib/theme";
+import { Input } from "@/components/ui/input";
 
 /** Convert a JSON Schema `properties` object + `required` array into FormField[] */
 function jsonSchemaToFields(schema: any): FormField[] {
   if (!schema?.properties) return [];
   const required: string[] = schema.required ?? [];
+
+  // Collect conditionally-required keys from allOf if/then blocks
+  const conditionallyRequired = new Set<string>();
+  if (Array.isArray(schema.allOf)) {
+    for (const rule of schema.allOf) {
+      if (rule.if && rule.then?.required) {
+        for (const key of rule.then.required) {
+          conditionallyRequired.add(key);
+        }
+      }
+    }
+  }
 
   return Object.entries(schema.properties).map(
     ([key, val]: [string, any], i) => {
@@ -199,7 +214,7 @@ function jsonSchemaToFields(schema: any): FormField[] {
         type: fieldType,
         label: val.title || key,
         key,
-        required: required.includes(key),
+        required: required.includes(key) || conditionallyRequired.has(key),
         placeholder: val.description ?? "",
         description: val.description ?? "",
         options: val.enum ? val.enum.join(", ") : undefined,
@@ -231,18 +246,64 @@ function jsonSchemaToFields(schema: any): FormField[] {
 function fieldsToJsonSchema(fields: FormField[], baseSchema: any): any {
   const properties: Record<string, any> = {};
   const required: string[] = [];
+  const conditionalRules: any[] = [];
 
   for (const field of fields) {
     const key = field.key || generateKey(field.label) || `field_${field.id}`;
     properties[key] = fieldToSchemaProperty(field);
-    if (field.required) required.push(key);
+
+    if (field.required && field.visibility?.conditions?.length) {
+      // Build a JSON Schema if/then block so the backend jsonschema
+      // validator can enforce "required" only when conditions are met.
+      const ifClause = buildIfClause(field.visibility);
+      if (ifClause) {
+        conditionalRules.push({
+          if: ifClause,
+          then: { required: [key] },
+        });
+      }
+    } else if (field.required) {
+      required.push(key);
+    }
   }
 
   return {
     ...baseSchema,
     properties,
     ...(required.length ? { required } : { required: undefined }),
+    ...(conditionalRules.length ? { allOf: conditionalRules } : { allOf: undefined }),
   };
+}
+
+/** Convert a VisibilityRule into a JSON Schema `if` clause. */
+function buildIfClause(
+  visibility: import("@/types/forms").VisibilityRule,
+): any | null {
+  const conditionSchemas = visibility.conditions
+    .map((cond) => {
+      switch (cond.operator) {
+        case "equals":
+          return { properties: { [cond.field]: { const: cond.value } } };
+        case "notEquals":
+          return {
+            properties: { [cond.field]: { not: { const: cond.value } } },
+          };
+        default:
+          // Operators like contains, gt, lt, isEmpty etc. are hard to
+          // express in JSON Schema — skip them (frontend still enforces).
+          return null;
+      }
+    })
+    .filter(Boolean);
+
+  if (conditionSchemas.length === 0) return null;
+
+  if (conditionSchemas.length === 1) return conditionSchemas[0];
+
+  // Multiple conditions
+  return visibility.logic === "and"
+    ? { allOf: conditionSchemas }
+    : { anyOf: conditionSchemas };
 }
 
 function FormBuilderPage() {
@@ -618,8 +679,8 @@ function FormBuilderPage() {
         >
           <div className="flex flex-col h-full overflow-hidden">
             {/* ── Form selector ── */}
-            <div className="shrink-0 border-b border-border">
-              <ButtonGroup className="w-full p-3 focus-visible:outline-none">
+            <div className="shrink-0 border-b border-border p-3 ">
+              <ButtonGroup className="w-full focus-visible:outline-none">
                 <Select
                   disabled={(data?.items || []).length === 0 ? true : false}
                   value={formSchemaId}
