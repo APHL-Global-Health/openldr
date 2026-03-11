@@ -145,25 +145,22 @@ export function StageOutput({
           <span className="text-muted-foreground p-4">— awaiting run —</span>
         )}
         {running && <span className="italic p-4">Processing…</span>}
-        {
-          done && data && (
-            <div className="flex-1 min-h-0 overflow-y-auto">
-              <CodeMirror
-                value={JSON.stringify(data, null, 2)}
-                className="w-full h-full"
-                height="100%"
-                theme={theme === "dark" ? vscodeDark : vscodeLight}
-                extensions={[
-                  EditorState.readOnly.of(true),
-                  EditorView.editable.of(false),
-                  json(),
-                  EditorView.lineWrapping,
-                ]}
-              />
-            </div>
-          )
-          // <JsonTree data={data} />
-        }
+        {done && data && (
+          <div className="flex-1 min-h-0 overflow-y-auto">
+            <CodeMirror
+              value={JSON.stringify(data, null, 2)}
+              className="w-full h-full"
+              height="100%"
+              theme={theme === "dark" ? vscodeDark : vscodeLight}
+              extensions={[
+                EditorState.readOnly.of(true),
+                EditorView.editable.of(false),
+                json(),
+                EditorView.lineWrapping,
+              ]}
+            />
+          </div>
+        )}
       </div>
     </div>
   );
