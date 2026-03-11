@@ -140,17 +140,18 @@ export function StageOutput({
       )}
 
       {/* JSON output */}
-      <div className="flex-1 min-h-0 overflow-y-auto p-4 text-[11px] leading-relaxed">
+      <div className="flex flex-col flex-1 min-h-0 text-[11px] leading-relaxed">
         {!done && !running && (
-          <span className="text-muted-foreground">— awaiting run —</span>
+          <span className="text-muted-foreground p-4">— awaiting run —</span>
         )}
-        {running && <span className="italic ">Processing…</span>}
+        {running && <span className="italic p-4">Processing…</span>}
         {
           done && data && (
-            <div>
+            <div className="flex-1 min-h-0 overflow-y-auto">
               <CodeMirror
                 value={JSON.stringify(data, null, 2)}
-                className="w-full"
+                className="w-full h-full"
+                height="100%"
                 theme={theme === "dark" ? vscodeDark : vscodeLight}
                 extensions={[
                   EditorState.readOnly.of(true),
