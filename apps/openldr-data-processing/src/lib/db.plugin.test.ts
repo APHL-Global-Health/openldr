@@ -110,7 +110,7 @@ export const db = {
   getPlugins: async (slot: PluginSlotType): Promise<Plugin[]> => {
     try {
       const sql = `
-        SELECT "pluginId", "pluginName", "pluginVersion", status, "pluginType", "pluginMinioObjectPath", "createdAt"
+        SELECT "pluginId", "pluginName", "pluginVersion", status, "pluginType", "pluginMinioObjectPath", "securityLevel", "isBundled", "createdAt"
         FROM plugins
         WHERE "pluginType" = $1
           AND status NOT IN ('inactive', 'deprecated')
