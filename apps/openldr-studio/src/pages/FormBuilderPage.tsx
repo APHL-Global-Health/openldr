@@ -594,6 +594,9 @@ function FormBuilderPage() {
       }
       refetch();
       setFormSchemaId(undefined);
+      setRawJsonSchema(undefined);
+      setJsonSchema(undefined);
+      setFields([]);
       setSelectedRecordItem(undefined);
       setRecordSheetOpen(false);
     }

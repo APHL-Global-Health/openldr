@@ -3,6 +3,37 @@ import type { JSONSchema } from "zod/v4/core";
 import { type RefinementHandler } from "../../core/types";
 import { convertJsonSchemaToZod } from "../../core/converter";
 
+/** Check whether `data` satisfies a JSON Schema `if` clause. */
+function matchesIfCondition(data: any, ifSchema: any): boolean {
+  if (!ifSchema || typeof data !== "object" || data === null) return false;
+
+  // Handle { properties: { field: { const: value } } }
+  if (ifSchema.properties) {
+    return Object.entries(ifSchema.properties).every(([key, constraint]: [string, any]) => {
+      const actual = data[key];
+      if (constraint?.const !== undefined) {
+        return String(actual) === String(constraint.const);
+      }
+      if (constraint?.not?.const !== undefined) {
+        return String(actual) !== String(constraint.not.const);
+      }
+      return true;
+    });
+  }
+
+  // Handle { allOf: [...] } — all must match
+  if (Array.isArray(ifSchema.allOf)) {
+    return ifSchema.allOf.every((sub: any) => matchesIfCondition(data, sub));
+  }
+
+  // Handle { anyOf: [...] } — at least one must match
+  if (Array.isArray(ifSchema.anyOf)) {
+    return ifSchema.anyOf.some((sub: any) => matchesIfCondition(data, sub));
+  }
+
+  return true;
+}
+
 export class ObjectPropertiesHandler implements RefinementHandler {
   apply(zodSchema: z.ZodTypeAny, schema: JSONSchema.BaseSchema): z.ZodTypeAny {
     const objectSchema = schema as JSONSchema.ObjectSchema;
