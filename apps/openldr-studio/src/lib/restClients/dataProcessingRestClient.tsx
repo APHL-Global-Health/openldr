@@ -78,6 +78,43 @@ export async function sendMessageEntry(
   }
 }
 
+export async function sendLiveRun(
+  payload: string,
+  dataFeedId: string,
+  mimeType: string,
+  token: string,
+  signal?: AbortSignal,
+) {
+  try {
+    const response = await fetch(
+      `${import.meta.env.VITE_PROCESSOR_BASE_URL}/api/v1/processor/process-feed`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": mimeType,
+          Authorization: `Bearer ${token}`,
+          "x-datafeed-id": dataFeedId,
+        },
+        body: payload,
+        signal,
+      },
+    );
+
+    if (!response.ok) {
+      throw new Error(
+        `HTTP error ${response.status}: ${response.statusText}${
+          IsDev ? ` - ${await response.text()}` : ""
+        }`,
+      );
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error(`REST client error: ${error}`);
+    throw error;
+  }
+}
+
 export async function processFeedEntry(
   body: any,
   dataFeedId: string,

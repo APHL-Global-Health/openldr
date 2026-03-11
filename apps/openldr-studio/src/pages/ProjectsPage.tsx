@@ -68,12 +68,17 @@ import { xml } from "@codemirror/lang-xml";
 import { javascript } from "@codemirror/lang-javascript";
 import { EditorView } from "@codemirror/view";
 import { getCurrentTheme } from "@/lib/theme";
-
-type ModalType = "project" | "usecase" | "feed" | "plugin";
-interface ModalState {
-  type: ModalType;
-  slot?: PluginSlotType;
-}
+import { Separator } from "@/components/ui/separator";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 function ProjectsPage() {
   const { t } = useAppTranslation();
@@ -83,15 +88,21 @@ function ProjectsPage() {
 
   const [schema, setSchema] = useState<string | undefined>("Internal");
   const [table, setTable] = useState<string | undefined>("projects");
+  const [syntaxType, setSyntaxType] = useState<string>("json");
+  const [runType, setRunType] = useState<string>("dry-run");
 
   const [selectedRecordItem, setSelectedRecordItem] = useState<any | undefined>(
     undefined,
   );
 
+  const [liveConfirmOpen, setLiveConfirmOpen] = useState(false);
   const [isRecordSheetOpen, setRecordSheetOpen] = useState(false);
   const [isEditMode, setEditMode] = useState(false);
 
-  const [extensions, setExtensions] = useState<Extension[] | undefined>([]);
+  const [extensions, setExtensions] = useState<Extension[] | undefined>([
+    json(),
+    EditorView.lineWrapping,
+  ]);
 
   const [theme, setTheme] = useState(getCurrentTheme);
 
@@ -115,6 +126,7 @@ function ProjectsPage() {
     testResult,
     selectedPlugins,
     selectedFeedId,
+    savedAssignment,
     payload,
     saving,
     savedOk,
@@ -140,6 +152,16 @@ function ProjectsPage() {
       selectedPlugins.outpost) &&
     parsedPayloadOk &&
     !isRunning;
+
+  const canRunLive = !!selectedFeedId && !!payload.trim() && !isRunning;
+
+  // True when the UI selection matches what is currently saved in the DB.
+  const selectionMatchesSaved =
+    savedAssignment !== null &&
+    (savedAssignment.validationPluginId ?? undefined) ===
+      selectedPlugins.validation &&
+    (savedAssignment.mappingPluginId ?? undefined) === selectedPlugins.mapping &&
+    (savedAssignment.outpostPluginId ?? undefined) === selectedPlugins.outpost;
 
   const canSave = testResult?.allPassed && selectedFeedId && !savedOk;
 
@@ -787,10 +809,31 @@ function ProjectsPage() {
             <main className="flex w-full min-h-[calc(100vh-26px-56px)] max-h-[calc(100vh-26px-56px)] flex-col overflow-hidden">
               <div className="flex min-h-1/2 max-h-1/2 flex-col border-b border-border">
                 <div className="flex w-full px-2 min-h-12 max-h-12 justify-between border-b border-border items-center">
-                  <div>
+                  <div className="flex flex-row gap-2 items-center">
+                    <Select value={runType} onValueChange={setRunType}>
+                      <SelectTrigger className="flex flex-1 w-20 max-h-8 rounded border bg-transparent dark:bg-transparent">
+                        <SelectValue placeholder="Run Type" />
+                      </SelectTrigger>
+                      <SelectContent
+                        className="rounded-xs"
+                        side="bottom"
+                        avoidCollisions={false}
+                        position="popper"
+                      >
+                        <SelectGroup>
+                          <SelectItem value="dry-run">Dry-Run</SelectItem>
+                          <SelectItem value="live">Live</SelectItem>
+                        </SelectGroup>
+                      </SelectContent>
+                    </Select>
+
+                    <div className="flex bg-border w-px min-h-6 max-h-6" />
+
                     <Select
-                      defaultValue="json"
+                      value={syntaxType}
                       onValueChange={(val) => {
+                        setSyntaxType(val);
+
                         // Set CodeMirror syntax extensions
                         if (val === "json" || val === "fhir-json") {
                           setExtensions([json(), EditorView.lineWrapping]);
@@ -839,8 +882,14 @@ function ProjectsPage() {
                     </Button>
                     <Button
                       variant="ghost"
-                      onClick={actions.runTest}
-                      disabled={!canRun}
+                      onClick={() => {
+                        if (runType === "live") {
+                          setLiveConfirmOpen(true);
+                        } else {
+                          actions.runTest();
+                        }
+                      }}
+                      disabled={runType === "live" ? !canRunLive : !canRun}
                     >
                       <Play width={16} height={16} />
                     </Button>
@@ -932,6 +981,75 @@ function ProjectsPage() {
                 </Tabs>
               </div>
             </main>
+
+            {/* ── Live Run Confirmation ──────────────────────────────────────────── */}
+            <AlertDialog open={liveConfirmOpen} onOpenChange={setLiveConfirmOpen}>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>
+                    {selectionMatchesSaved
+                      ? "Send to live system?"
+                      : "Plugin assignment not saved"}
+                  </AlertDialogTitle>
+                  <AlertDialogDescription>
+                    {selectionMatchesSaved ? (
+                      "This will push the payload through the Kafka pipeline using the saved assignment. This action cannot be undone."
+                    ) : savedAssignment !== null ? (
+                      <>
+                        Your current plugin selection differs from the saved
+                        assignment. The live pipeline will use the{" "}
+                        <strong>saved</strong> assignment, not the plugins
+                        currently selected. Save your selection first, or
+                        proceed with what is already saved.
+                      </>
+                    ) : (
+                      "No plugin assignment has been saved for this feed yet. Save your current selection to continue with a live run."
+                    )}
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  {selectionMatchesSaved ? (
+                    <AlertDialogAction
+                      onClick={() => {
+                        setLiveConfirmOpen(false);
+                        actions.runLive();
+                      }}
+                    >
+                      Run Live
+                    </AlertDialogAction>
+                  ) : savedAssignment !== null ? (
+                    <>
+                      <AlertDialogAction
+                        onClick={() => {
+                          setLiveConfirmOpen(false);
+                          actions.runLive();
+                        }}
+                      >
+                        Run with Saved
+                      </AlertDialogAction>
+                      <AlertDialogAction
+                        onClick={() => {
+                          setLiveConfirmOpen(false);
+                          actions.saveAndRunLive();
+                        }}
+                      >
+                        Save &amp; Run Live
+                      </AlertDialogAction>
+                    </>
+                  ) : (
+                    <AlertDialogAction
+                      onClick={() => {
+                        setLiveConfirmOpen(false);
+                        actions.saveAndRunLive();
+                      }}
+                    >
+                      Save &amp; Run Live
+                    </AlertDialogAction>
+                  )}
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
 
             {/* ── Modal ─────────────────────────────────────────────────────────── */}
             <SchemaRecordSheet

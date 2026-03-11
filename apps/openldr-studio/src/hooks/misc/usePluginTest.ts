@@ -1,5 +1,24 @@
 import { useCallback, useEffect, useReducer, useRef } from "react";
 import { pluginTestApi } from "@/lib/restClients/pluginTestClient";
+import { sendLiveRun } from "@/lib/restClients/dataProcessingRestClient";
+
+const CONTENT_TYPE_MAP: Record<string, string> = {
+  json: "application/json",
+  "fhir-json": "application/fhir+json",
+  "fhir-xml": "application/fhir+xml",
+  hl7: "application/hl7-v2",
+  xml: "application/xml",
+  csv: "text/csv",
+  text: "text/plain",
+  binary: "application/octet-stream",
+};
+
+export interface SavedAssignment {
+  validationPluginId: string | null;
+  mappingPluginId: string | null;
+  outpostPluginId: string | null;
+}
+
 import type {
   Project,
   UseCase,
@@ -44,6 +63,9 @@ interface State {
     | "error";
   testResult: RunPluginTestResponse | undefined;
 
+  // Saved assignment (what is currently persisted in DB for this feed)
+  savedAssignment: SavedAssignment | null;
+
   // UI
   loadingCtx: boolean; // context dropdowns loading
   saving: boolean;
@@ -77,7 +99,7 @@ type Action =
   | { type: "RUN_DONE"; result: RunPluginTestResponse }
   | { type: "RUN_ERROR"; error: string }
   | { type: "SAVE_START" }
-  | { type: "SAVE_DONE" }
+  | { type: "SAVE_DONE"; assignment: SavedAssignment }
   | { type: "SAVE_ERROR"; error: string }
   | { type: "SET_LOADING_CTX"; loading: boolean }
   | { type: "CLEAR_ERROR" };
@@ -99,6 +121,7 @@ const initialState: State = {
   payloadContentType: "json",
   runStatus: "idle",
   testResult: undefined,
+  savedAssignment: null,
   loadingCtx: false,
   saving: false,
   savedOk: false,
@@ -157,6 +180,7 @@ function reducer(s: State, a: Action): State {
           mapping: undefined,
           outpost: undefined,
         },
+        savedAssignment: null,
         testResult: undefined,
         runStatus: "idle",
         savedOk: false,
@@ -172,6 +196,7 @@ function reducer(s: State, a: Action): State {
           mapping: undefined,
           outpost: undefined,
         },
+        savedAssignment: null,
         testResult: undefined,
         runStatus: "idle",
         savedOk: false,
@@ -185,6 +210,7 @@ function reducer(s: State, a: Action): State {
           mapping: undefined,
           outpost: undefined,
         },
+        savedAssignment: null,
         testResult: undefined,
         runStatus: "idle",
         savedOk: false,
@@ -204,6 +230,11 @@ function reducer(s: State, a: Action): State {
           validation: a.validationPluginId ?? undefined,
           mapping: a.mappingPluginId ?? undefined,
           outpost: a.outpostPluginId ?? undefined,
+        },
+        savedAssignment: {
+          validationPluginId: a.validationPluginId,
+          mappingPluginId: a.mappingPluginId,
+          outpostPluginId: a.outpostPluginId,
         },
         testResult: undefined,
         runStatus: "idle",
@@ -248,7 +279,7 @@ function reducer(s: State, a: Action): State {
     case "SAVE_START":
       return { ...s, saving: true, error: undefined };
     case "SAVE_DONE":
-      return { ...s, saving: false, savedOk: true };
+      return { ...s, saving: false, savedOk: true, savedAssignment: a.assignment };
     case "SAVE_ERROR":
       return { ...s, saving: false, error: a.error };
 
@@ -427,6 +458,11 @@ export function usePluginTest(token: any, signal?: AbortSignal) {
     const { selectedFeedId, selectedPlugins } = state;
     if (!selectedFeedId) return;
     dispatch({ type: "SAVE_START" });
+    const assignment: SavedAssignment = {
+      validationPluginId: selectedPlugins.validation ?? null,
+      mappingPluginId: selectedPlugins.mapping ?? null,
+      outpostPluginId: selectedPlugins.outpost ?? null,
+    };
     try {
       await pluginTestApi.saveAssignment(
         token,
@@ -438,11 +474,52 @@ export function usePluginTest(token: any, signal?: AbortSignal) {
         },
         signal,
       );
-      dispatch({ type: "SAVE_DONE" });
+      dispatch({ type: "SAVE_DONE", assignment });
     } catch (e) {
       dispatch({ type: "SAVE_ERROR", error: (e as Error).message });
     }
   }, [state]);
+
+  // Sends the payload through the live Kafka pipeline using the saved assignment.
+  const runLive = useCallback(async () => {
+    const { payload, payloadContentType, selectedFeedId } = state;
+    if (!selectedFeedId || !payload.trim()) return;
+    const mimeType =
+      CONTENT_TYPE_MAP[payloadContentType] ?? "application/octet-stream";
+    await sendLiveRun(payload, selectedFeedId, mimeType, token, signal);
+  }, [state, token]);
+
+  // Saves the current plugin selection then sends to the live pipeline.
+  const saveAndRunLive = useCallback(async () => {
+    const { selectedFeedId, selectedPlugins, payload, payloadContentType } =
+      state;
+    if (!selectedFeedId || !payload.trim()) return;
+    dispatch({ type: "SAVE_START" });
+    const assignment: SavedAssignment = {
+      validationPluginId: selectedPlugins.validation ?? null,
+      mappingPluginId: selectedPlugins.mapping ?? null,
+      outpostPluginId: selectedPlugins.outpost ?? null,
+    };
+    try {
+      await pluginTestApi.saveAssignment(
+        token,
+        {
+          feedId: selectedFeedId,
+          validationPluginId: selectedPlugins.validation!,
+          mappingPluginId: selectedPlugins.mapping!,
+          outpostPluginId: selectedPlugins.outpost!,
+        },
+        signal,
+      );
+      dispatch({ type: "SAVE_DONE", assignment });
+      const mimeType =
+        CONTENT_TYPE_MAP[payloadContentType] ?? "application/octet-stream";
+      await sendLiveRun(payload, selectedFeedId, mimeType, token, signal);
+    } catch (e) {
+      dispatch({ type: "SAVE_ERROR", error: (e as Error).message });
+      throw e;
+    }
+  }, [state, token]);
 
   return {
     state,
@@ -465,6 +542,8 @@ export function usePluginTest(token: any, signal?: AbortSignal) {
       createPlugin,
       runTest,
       saveAssignment,
+      runLive,
+      saveAndRunLive,
       refreshProjects,
       refreshUseCases,
       refreshDataFeeds,

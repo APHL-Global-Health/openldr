@@ -7,20 +7,7 @@ export async function getDataFeedById(dataFeedId: string) {
     const sql = `
         SELECT
             df.*,
-            json_build_object(
-                'facilityId', f."facilityId",
-                'facilityCode', f."facilityCode",
-                'facilityName', f."facilityName",
-                'facilityType', f."facilityType",
-                'description', f."description",
-                'countryCode', f."countryCode",
-                'provinceCode', f."provinceCode",
-                'regionCode', f."regionCode",
-                'districtCode', f."districtCode",
-                'subDistrictCode', f."subDistrictCode",
-                'latitude', f."latitude",
-                'longitude', f."longitude"
-            ) AS facility,
+            uc."projectId",
             json_build_object(
                 'pluginId', sp."pluginId",
                 'pluginType', sp."pluginType",
@@ -64,12 +51,11 @@ export async function getDataFeedById(dataFeedId: string) {
                 'isEnabled', uc."isEnabled"
             ) AS "useCase"
         FROM "dataFeeds" df
-        LEFT JOIN "facilities" f ON df."facilityId" = f."facilityId"
-        LEFT JOIN "plugins" sp ON df."schemaPluginId" = sp."pluginId" AND sp."pluginType" = 'schema'
-        LEFT JOIN "plugins" mp ON df."mapperPluginId" = mp."pluginId" AND mp."pluginType" = 'mapper'
-        LEFT JOIN "plugins" rp ON df."recipientPluginId" = rp."pluginId" AND rp."pluginType" = 'recipient'
-        LEFT JOIN "projects" p ON df."projectId" = p."projectId"
+        LEFT JOIN "plugins" sp ON df."schemaPluginId" = sp."pluginId" AND sp."pluginType" = 'validation'
+        LEFT JOIN "plugins" mp ON df."mapperPluginId" = mp."pluginId" AND mp."pluginType" = 'mapping'
+        LEFT JOIN "plugins" rp ON df."recipientPluginId" = rp."pluginId" AND rp."pluginType" = 'outpost'
         LEFT JOIN "useCases" uc ON df."useCaseId" = uc."useCaseId"
+		LEFT JOIN "projects" p ON uc."projectId" = p."projectId"   
         WHERE df."dataFeedId" = $1;
     `;
     const res = await pool.query(sql, [dataFeedId]);

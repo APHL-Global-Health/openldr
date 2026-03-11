@@ -234,7 +234,11 @@ export interface RunTestOptions {
 }
 
 // Content types that should be parsed as JSON before passing to plugins
-const JSON_CONTENT_TYPES = new Set(["json", "application/json", "application/fhir+json"]);
+const JSON_CONTENT_TYPES = new Set([
+  "json",
+  "application/json",
+  "application/fhir+json",
+]);
 
 export async function runPluginTest(
   opts: RunTestOptions,
@@ -291,6 +295,18 @@ export async function runPluginTest(
         logs: [],
         durationMs: 0,
       };
+
+      stages.mapping = {
+        output: {},
+        logs: ["Validation failed, mapping not ran"],
+        durationMs: 0,
+      };
+      stages.outpost = {
+        output: {},
+        logs: ["Validation failed, outpost not ran"],
+        durationMs: 0,
+      };
+
       allPassed = false;
       // Don't proceed to mapping if validation threw
       return { ok: true, stages, allPassed };
@@ -298,7 +314,7 @@ export async function runPluginTest(
   }
 
   // ── Mapping ──
-  if (opts.mapping) {
+  if (allPassed && opts.mapping) {
     try {
       const mResult = await runMapping(
         opts.mapping.type,
@@ -314,13 +330,20 @@ export async function runPluginTest(
         logs: [(err as Error).message],
         durationMs: 0,
       };
+
+      stages.outpost = {
+        output: {},
+        logs: ["mapping failed, outpost not ran"],
+        durationMs: 0,
+      };
+
       allPassed = false;
       return { ok: true, stages, allPassed };
     }
   }
 
   // ── Outpost ──
-  if (opts.outpost) {
+  if (allPassed && opts.outpost) {
     try {
       const oResult = await runOutpost(
         opts.outpost.type,
