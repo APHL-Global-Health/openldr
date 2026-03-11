@@ -61,9 +61,13 @@ import { LoadingSpinner } from "@/components/loading-spinner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 import CodeMirror from "@uiw/react-codemirror";
-import { EditorState } from "@codemirror/state";
+import { type Extension } from "@codemirror/state";
 import { vscodeDark, vscodeLight } from "@uiw/codemirror-theme-vscode";
 import { json } from "@codemirror/lang-json";
+import { xml } from "@codemirror/lang-xml";
+import { javascript } from "@codemirror/lang-javascript";
+import { markdown } from "@codemirror/lang-markdown";
+import { sql } from "@codemirror/lang-sql";
 import { EditorView } from "@codemirror/view";
 import { getCurrentTheme } from "@/lib/theme";
 
@@ -88,6 +92,8 @@ function ProjectsPage() {
 
   const [isRecordSheetOpen, setRecordSheetOpen] = useState(false);
   const [isEditMode, setEditMode] = useState(false);
+
+  const [extensions, setExtensions] = useState<Extension[] | undefined>([]);
 
   const [theme, setTheme] = useState(getCurrentTheme);
 
@@ -783,7 +789,48 @@ function ProjectsPage() {
             <main className="flex w-full min-h-[calc(100vh-26px-56px)] max-h-[calc(100vh-26px-56px)] flex-col overflow-hidden">
               <div className="flex min-h-1/2 max-h-1/2 flex-col border-b border-border">
                 <div className="flex w-full px-2 min-h-12 max-h-12 justify-between border-b border-border items-center">
-                  <div></div>
+                  <div>
+                    <Select
+                      defaultValue="json"
+                      onValueChange={(val) => {
+                        if (val === "json") {
+                          setExtensions([json(), EditorView.lineWrapping]);
+                        } else if (val === "xml") {
+                          setExtensions([xml(), EditorView.lineWrapping]);
+                        } else if (val === "javascript") {
+                          setExtensions([
+                            javascript(),
+                            EditorView.lineWrapping,
+                          ]);
+                        } else if (val === "markdown") {
+                          setExtensions([markdown(), EditorView.lineWrapping]);
+                        } else if (val === "sql") {
+                          setExtensions([sql(), EditorView.lineWrapping]);
+                        } else {
+                          setExtensions([EditorView.lineWrapping]);
+                        }
+                      }}
+                    >
+                      <SelectTrigger className="flex flex-1 rounded-sm text-sm focus-visible:outline-none">
+                        <SelectValue placeholder="Syntax" />
+                      </SelectTrigger>
+                      <SelectContent
+                        className="rounded-xs"
+                        side="bottom"
+                        avoidCollisions={false}
+                        position="popper"
+                      >
+                        <SelectGroup>
+                          <SelectItem value="json">Json</SelectItem>
+                          <SelectItem value="xml">XML</SelectItem>
+                          <SelectItem value="javascript">Javascript</SelectItem>
+                          <SelectItem value="markdown">Markdown</SelectItem>
+                          <SelectItem value="sql">SQL</SelectItem>
+                          <SelectItem value="text">Plain Text</SelectItem>
+                        </SelectGroup>
+                      </SelectContent>
+                    </Select>
+                  </div>
                   <div>
                     <Button
                       variant="ghost"
@@ -813,7 +860,7 @@ function ProjectsPage() {
                     onChange={(value) => actions.setPayload(value)}
                     className="w-full"
                     theme={theme === "dark" ? vscodeDark : vscodeLight}
-                    extensions={[json(), EditorView.lineWrapping]}
+                    extensions={extensions}
                   />
                 </div>
               </div>
