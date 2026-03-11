@@ -54,7 +54,7 @@ export function StageOutput({
 
   return (
     <div
-      className={`flex flex-col overflow-hidden w-full h-full rounded-sm border bg-card transition-colors duration-300 ${
+      className={`flex flex-col overflow-hidden w-full h-full bg-card transition-colors duration-300 ${
         done ? headerClass : "border-slate-800"
       }`}
     >
