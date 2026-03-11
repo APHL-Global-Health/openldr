@@ -1,0 +1,4 @@
+<Encounter xmlns="http://hl7.org/fhir">
+  <status value="finished"/>
+  <class value="inpatient"/>
+</Encounter>

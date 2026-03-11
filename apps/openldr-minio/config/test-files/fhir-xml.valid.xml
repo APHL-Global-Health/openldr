@@ -1,0 +1,82 @@
+<Bundle xmlns="http://hl7.org/fhir">
+  <type value="message"/>
+  <entry>
+    <resource>
+      <DiagnosticReport>
+        <id value="report-001"/>
+        <status value="final"/>
+        <code>
+          <coding>
+            <system value="http://loinc.org"/>
+            <code value="58410-2"/>
+            <display value="Complete Blood Count"/>
+          </coding>
+        </code>
+        <subject>
+          <reference value="Patient/pat-001"/>
+          <display value="John Doe"/>
+        </subject>
+        <performer>
+          <display value="Central Laboratory"/>
+        </performer>
+        <effectiveDateTime value="2024-01-15T08:00:00Z"/>
+        <result>
+          <reference value="Observation/obs-001"/>
+        </result>
+        <result>
+          <reference value="Observation/obs-002"/>
+        </result>
+      </DiagnosticReport>
+    </resource>
+  </entry>
+  <entry>
+    <resource>
+      <Patient>
+        <id value="pat-001"/>
+        <name>
+          <family value="Doe"/>
+          <given value="John"/>
+        </name>
+        <gender value="male"/>
+      </Patient>
+    </resource>
+  </entry>
+  <entry>
+    <resource>
+      <Observation>
+        <id value="obs-001"/>
+        <status value="final"/>
+        <code>
+          <coding>
+            <system value="http://loinc.org"/>
+            <code value="6690-2"/>
+            <display value="WBC"/>
+          </coding>
+        </code>
+        <valueQuantity>
+          <value value="7.5"/>
+          <unit value="10*3/uL"/>
+        </valueQuantity>
+      </Observation>
+    </resource>
+  </entry>
+  <entry>
+    <resource>
+      <Observation>
+        <id value="obs-002"/>
+        <status value="final"/>
+        <code>
+          <coding>
+            <system value="http://loinc.org"/>
+            <code value="789-8"/>
+            <display value="RBC"/>
+          </coding>
+        </code>
+        <valueQuantity>
+          <value value="4.8"/>
+          <unit value="10*6/uL"/>
+        </valueQuantity>
+      </Observation>
+    </resource>
+  </entry>
+</Bundle>

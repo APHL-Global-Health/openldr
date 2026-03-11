@@ -1,0 +1,133 @@
+{
+  "resourceType": "Bundle",
+  "type": "message",
+  "entry": [
+    {
+      "resource": {
+        "resourceType": "DiagnosticReport",
+        "id": "report-001",
+        "status": "final",
+        "code": {
+          "coding": [
+            {
+              "system": "http://loinc.org",
+              "code": "58410-2",
+              "display": "Complete Blood Count"
+            }
+          ]
+        },
+        "subject": {
+          "reference": "Patient/pat-001",
+          "display": "John Doe"
+        },
+        "performer": [
+          {
+            "display": "Central Laboratory",
+            "identifier": {
+              "value": "FAC001"
+            }
+          }
+        ],
+        "specimen": [
+          {
+            "reference": "Specimen/spec-001",
+            "display": "Blood"
+          }
+        ],
+        "effectiveDateTime": "2024-01-15T08:00:00Z",
+        "result": [
+          {
+            "reference": "Observation/obs-001",
+            "resource": {
+              "resourceType": "Observation",
+              "id": "obs-001",
+              "status": "final",
+              "code": {
+                "coding": [
+                  {
+                    "system": "http://loinc.org",
+                    "code": "6690-2",
+                    "display": "WBC"
+                  }
+                ]
+              },
+              "valueQuantity": {
+                "value": 7.5,
+                "unit": "10*3/uL",
+                "system": "http://unitsofmeasure.org"
+              }
+            }
+          },
+          {
+            "reference": "Observation/obs-002",
+            "resource": {
+              "resourceType": "Observation",
+              "id": "obs-002",
+              "status": "final",
+              "code": {
+                "coding": [
+                  {
+                    "system": "http://loinc.org",
+                    "code": "789-8",
+                    "display": "RBC"
+                  }
+                ]
+              },
+              "valueQuantity": {
+                "value": 4.8,
+                "unit": "10*6/uL",
+                "system": "http://unitsofmeasure.org"
+              }
+            }
+          },
+          {
+            "reference": "Observation/obs-003",
+            "resource": {
+              "resourceType": "Observation",
+              "id": "obs-003",
+              "status": "final",
+              "code": {
+                "coding": [
+                  {
+                    "system": "http://loinc.org",
+                    "code": "718-7",
+                    "display": "Hemoglobin"
+                  }
+                ]
+              },
+              "valueQuantity": {
+                "value": 14.2,
+                "unit": "g/dL",
+                "system": "http://unitsofmeasure.org"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Patient",
+        "id": "pat-001",
+        "name": [
+          {
+            "family": "Doe",
+            "given": ["John", "Michael"]
+          }
+        ],
+        "gender": "male",
+        "birthDate": "1990-05-15",
+        "identifier": [
+          {
+            "value": "FOLDER-2024-001"
+          }
+        ],
+        "address": [
+          {
+            "text": "123 Main Street, Maputo"
+          }
+        ]
+      }
+    }
+  ]
+}

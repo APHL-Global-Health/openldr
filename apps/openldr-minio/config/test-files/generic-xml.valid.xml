@@ -1,0 +1,14 @@
+<LabReport>
+  <Facility Code="FAC001" Name="Central Laboratory"/>
+  <LabNumber>LAB-2024-001</LabNumber>
+  <Patient FirstName="John" LastName="Doe" Sex="M" FolderNo="FOLDER-001"/>
+  <Specimen Code="BLD" Name="Blood"/>
+  <CollectedDateTime>2024-01-15T08:00:00</CollectedDateTime>
+  <Results>
+    <Result Code="WBC" Name="White Blood Cells" Value="7.5" Unit="10*3/uL" ReferenceRange="4.5-11.0"/>
+    <Result Code="RBC" Name="Red Blood Cells" Value="4.8" Unit="10*6/uL" ReferenceRange="4.0-5.5"/>
+    <Result Code="HGB" Name="Hemoglobin" Value="14.2" Unit="g/dL" ReferenceRange="12.0-16.0"/>
+    <Result Code="HCT" Name="Hematocrit" Value="42.1" Unit="%" ReferenceRange="36.0-46.0"/>
+    <Result Code="PLT" Name="Platelets" Value="250" Unit="10*3/uL" ReferenceRange="150-400"/>
+  </Results>
+</LabReport>

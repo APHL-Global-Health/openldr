@@ -1,0 +1,6 @@
+facility_code,facility_name,lab_number,patient_firstname,patient_surname,sex,specimen,test_code,test_name,result_value,result_unit,reference_range,taken_datetime
+FAC001,Central Laboratory,LAB-2024-001,John,Doe,M,Blood,WBC,White Blood Cells,7.5,10*3/uL,4.5-11.0,2024-01-15T08:00:00
+FAC001,Central Laboratory,LAB-2024-001,John,Doe,M,Blood,RBC,Red Blood Cells,4.8,10*6/uL,4.0-5.5,2024-01-15T08:00:00
+FAC001,Central Laboratory,LAB-2024-001,John,Doe,M,Blood,HGB,Hemoglobin,14.2,g/dL,12.0-16.0,2024-01-15T08:00:00
+FAC001,Central Laboratory,LAB-2024-002,Jane,Smith,F,Urine,LEUK,Leukocytes,Negative,,,2024-01-15T09:00:00
+FAC001,Central Laboratory,LAB-2024-002,Jane,Smith,F,Urine,NIT,Nitrites,Negative,,,2024-01-15T09:00:00

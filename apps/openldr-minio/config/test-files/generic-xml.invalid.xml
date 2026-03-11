@@ -1,0 +1,4 @@
+<Configuration>
+  <Setting key="timeout" value="30"/>
+  <Setting key="retries" value="3"/>
+</Configuration>
