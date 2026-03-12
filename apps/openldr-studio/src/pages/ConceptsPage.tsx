@@ -485,7 +485,7 @@ function ConceptsPage() {
         accessorKey: "display_name",
         header: "Display Name",
         cell: ({ row }) => (
-          <span className="truncate max-w-[300px] block">
+          <span className="truncate max-w-75 block">
             {row.original.display_name}
           </span>
         ),
@@ -494,30 +494,21 @@ function ConceptsPage() {
         accessorKey: "concept_class",
         header: "Class",
         cell: ({ row }) =>
-          row.original.concept_class ? (
-            <Badge variant="outline" className="text-xs">
-              {row.original.concept_class}
-            </Badge>
-          ) : null,
+          row.original.concept_class ? row.original.concept_class : null,
       },
       {
         accessorKey: "datatype",
         header: "Datatype",
         cell: ({ row }) => (
-          <span className="text-xs text-muted-foreground">
-            {row.original.datatype || "-"}
-          </span>
+          <span className="text-xs">{row.original.datatype || "-"}</span>
         ),
       },
       {
         accessorKey: "is_active",
         header: "Status",
         cell: ({ row }) => (
-          <Badge
-            variant={row.original.is_active ? "default" : "secondary"}
-            className="text-xs"
-          >
-            {row.original.is_active ? "Active" : "Inactive"}
+          <Badge variant={"outline"} className="text-xs">
+            {row.original.is_active ? "active" : "inactive"}
           </Badge>
         ),
       },
@@ -665,8 +656,8 @@ function ConceptsPage() {
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
-                //   disabled={_columns.length === 0}
-                //   onClick={addData}
+                disabled={!selectedSystemId}
+                onClick={handleAddConcept}
                 variant="ghost"
                 size="icon"
               >
