@@ -49,6 +49,7 @@ import type {
   SortingOption,
 } from "@/types/database";
 import type { data } from "react-router-dom";
+import { Checkbox } from "../ui/checkbox";
 
 interface ConceptsTableProps {
   concepts: Concept[];
@@ -118,6 +119,93 @@ export function ConceptsTable({
 
   const columns = useMemo<ColumnDef<Concept>[]>(
     () => [
+      {
+        id: "select",
+        className:
+          "flex flex-row min-w-[64px] max-w-[64px] cursor-default items-center",
+        customComponent: (
+          <Button
+            size="sm"
+            type="button"
+            className="relative
+                ml-2
+                justify-center
+                cursor-pointer
+                inline-flex
+                items-center
+                space-x-2
+                text-center
+                font-regular
+                ease-out
+                duration-200
+                rounded-md
+                outline-none
+                transition-all
+                outline-0
+                focus-visible:outline-4
+                focus-visible:outline-offset-1
+                border
+                text-foreground
+                shadow-none
+                focus-visible:outline-border-strong
+                data-[state=open]:bg-transparent
+                data-[state=open]:outline-border-strong
+                border-transparent
+                text-xs
+                py-1
+                px-1
+                pt-1
+                bg-transparent
+                hover:bg-transparent
+                pointer-events-auto
+                expandable-button"
+          >
+            <div className="h-3.5 w-3.5 text-foreground-lighter">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="lucide lucide-maximize2"
+                data-darkreader-inline-stroke=""
+              >
+                <polyline points="15 3 21 3 21 9"></polyline>
+                <polyline points="9 21 3 21 3 15"></polyline>
+                <line x1="21" x2="14" y1="3" y2="10"></line>
+                <line x1="3" x2="10" y1="21" y2="14"></line>
+              </svg>
+            </div>{" "}
+          </Button>
+        ),
+        header: ({ table }) => (
+          <Checkbox
+            checked={
+              table.getIsAllPageRowsSelected() ||
+              (table.getIsSomePageRowsSelected() && "indeterminate")
+            }
+            onCheckedChange={(value) =>
+              table.toggleAllPageRowsSelected(!!value)
+            }
+            aria-label="Select all"
+            className="translate-y-0.5"
+          />
+        ),
+        cell: ({ row }) => (
+          <Checkbox
+            checked={row.getIsSelected()}
+            onCheckedChange={(value) => row.toggleSelected(!!value)}
+            aria-label="Select row"
+            className="translate-y-0.5 cursor-default"
+          />
+        ),
+        enableSorting: false,
+        enableHiding: false,
+      },
       {
         accessorKey: "concept_code",
         header: "Code",

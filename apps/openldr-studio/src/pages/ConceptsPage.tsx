@@ -52,13 +52,66 @@ import {
 import { Button } from "@/components/ui/button";
 import {
   Form,
+  ListPlus,
   MoreHorizontalIcon,
   Pencil,
   Plus,
+  Trash2,
   Trash2Icon,
 } from "lucide-react";
 import type { data } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import type { table } from "console";
+
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  isValidElement,
+  cloneElement,
+} from "react";
+import {
+  useReactTable,
+  getCoreRowModel,
+  flexRender,
+  type ColumnDef,
+  type ColumnFiltersState,
+  type PaginationState,
+  type SortingState,
+  type VisibilityState,
+  getFacetedRowModel,
+  getFacetedUniqueValues,
+  getFilteredRowModel,
+  getPaginationRowModel,
+  getSortedRowModel,
+} from "@tanstack/react-table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/table";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { DataTablePagination } from "@/components/datatable/data-table-pagination";
+import type {
+  FilterOption,
+  ProjectionOption,
+  SortingOption,
+} from "@/types/database";
+import { Checkbox } from "@/components/ui/checkbox";
+
+type CustomColumnDef<TData, TValue> = ColumnDef<TData, TValue> & {
+  className?: string;
+  customComponent?: React.ReactElement;
+};
 
 function ConceptsPage() {
   const client = useKeycloakClient();
@@ -91,6 +144,36 @@ function ConceptsPage() {
   >(undefined);
 
   const [isSaving, setIsSaving] = useState(false);
+
+  const [filters, setFilters] = useState<FilterOption[]>([]);
+  const [sorts, setSorts] = useState<SortingOption[]>([]);
+  const [sortValue, setSortValue] = useState<string>();
+  const [projections, setProjections] = useState<ProjectionOption[]>([]);
+  const [rowSelection, setRowSelection] = useState({});
+  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
+  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+  const [sorting, setSorting] = useState<SortingState>([]);
+  const [pagination, setPagination] = useState<PaginationState>({
+    pageIndex: 0,
+    pageSize: 100,
+  });
+
+  //   const [searchInput, setSearchInput] = useState(search);
+
+  const refTableContainer = useRef<HTMLTableElement>(null);
+
+  //   useEffect(() => {
+  //     setSearchInput(search);
+  //   }, [search]);
+
+  //   useEffect(() => {
+  //     const timer = setTimeout(() => {
+  //       if (searchInput !== search) {
+  //         onSearchChange(searchInput);
+  //       }
+  //     }, 300);
+  //     return () => clearTimeout(timer);
+  //   }, [searchInput]);
 
   // ── Queries ─────────────────────────────────────────────────────────
   const systemsQuery = useQuery({
@@ -285,6 +368,187 @@ function ConceptsPage() {
     [token],
   );
 
+  const columns = useMemo<ColumnDef<Concept>[]>(
+    () => [
+      {
+        id: "select",
+        className:
+          "flex flex-row min-w-[64px] max-w-[64px] cursor-default items-center",
+        customComponent: (
+          <Button
+            size="sm"
+            type="button"
+            className="relative
+                ml-2
+                justify-center
+                cursor-pointer
+                inline-flex
+                items-center
+                space-x-2
+                text-center
+                font-regular
+                ease-out
+                duration-200
+                rounded-md
+                outline-none
+                transition-all
+                outline-0
+                focus-visible:outline-4
+                focus-visible:outline-offset-1
+                border
+                text-foreground
+                shadow-none
+                focus-visible:outline-border-strong
+                data-[state=open]:bg-transparent
+                data-[state=open]:outline-border-strong
+                border-transparent
+                text-xs
+                py-1
+                px-1
+                pt-1
+                bg-transparent
+                hover:bg-transparent
+                pointer-events-auto
+                expandable-button"
+          >
+            <div className="h-3.5 w-3.5 text-foreground-lighter">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="lucide lucide-maximize2"
+                data-darkreader-inline-stroke=""
+              >
+                <polyline points="15 3 21 3 21 9"></polyline>
+                <polyline points="9 21 3 21 3 15"></polyline>
+                <line x1="21" x2="14" y1="3" y2="10"></line>
+                <line x1="3" x2="10" y1="21" y2="14"></line>
+              </svg>
+            </div>{" "}
+          </Button>
+        ),
+        header: ({ table }) => (
+          <Checkbox
+            checked={
+              table.getIsAllPageRowsSelected() ||
+              (table.getIsSomePageRowsSelected() && "indeterminate")
+            }
+            onCheckedChange={(value) =>
+              table.toggleAllPageRowsSelected(!!value)
+            }
+            aria-label="Select all"
+            className="translate-y-0.5"
+          />
+        ),
+        cell: ({ row }) => (
+          <Checkbox
+            checked={row.getIsSelected()}
+            onCheckedChange={(value) => row.toggleSelected(!!value)}
+            aria-label="Select row"
+            className="translate-y-0.5 cursor-default"
+          />
+        ),
+        enableSorting: false,
+        enableHiding: false,
+      },
+      {
+        accessorKey: "concept_code",
+        header: "Code",
+        cell: ({ row }) => (
+          <span className="font-mono text-xs">{row.original.concept_code}</span>
+        ),
+      },
+      {
+        accessorKey: "display_name",
+        header: "Display Name",
+        cell: ({ row }) => (
+          <span className="truncate max-w-[300px] block">
+            {row.original.display_name}
+          </span>
+        ),
+      },
+      {
+        accessorKey: "concept_class",
+        header: "Class",
+        cell: ({ row }) =>
+          row.original.concept_class ? (
+            <Badge variant="outline" className="text-xs">
+              {row.original.concept_class}
+            </Badge>
+          ) : null,
+      },
+      {
+        accessorKey: "datatype",
+        header: "Datatype",
+        cell: ({ row }) => (
+          <span className="text-xs text-muted-foreground">
+            {row.original.datatype || "-"}
+          </span>
+        ),
+      },
+      {
+        accessorKey: "is_active",
+        header: "Status",
+        cell: ({ row }) => (
+          <Badge
+            variant={row.original.is_active ? "default" : "secondary"}
+            className="text-xs"
+          >
+            {row.original.is_active ? "Active" : "Inactive"}
+          </Badge>
+        ),
+      },
+    ],
+    [],
+  );
+
+  const totalPages = Math.ceil(
+    (conceptsQuery.data?.total ?? 0) / pagination.pageSize,
+  );
+
+  const _table = useReactTable({
+    data: conceptsQuery.data?.data ?? [],
+    columns,
+    state: {
+      sorting,
+      columnVisibility,
+      rowSelection,
+      columnFilters,
+      pagination,
+    },
+    enableRowSelection: true,
+    onRowSelectionChange: setRowSelection,
+    onSortingChange: setSorting,
+    onColumnFiltersChange: setColumnFilters,
+    onColumnVisibilityChange: setColumnVisibility,
+    onPaginationChange: setPagination,
+    getCoreRowModel: getCoreRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    getFacetedRowModel: getFacetedRowModel(),
+    getFacetedUniqueValues: getFacetedUniqueValues(),
+    manualPagination: true,
+    autoResetPageIndex: false,
+    pageCount: totalPages,
+  });
+
+  const enhancedComponent = (
+    component: React.ReactElement | undefined,
+    type: string | React.JSXElementConstructor<any>,
+    props?: (Partial<any> & React.Attributes) | undefined,
+  ): React.ReactElement | undefined => {
+    return component && isValidElement(component) && component.type === type
+      ? cloneElement(component, props)
+      : component;
+  };
+
   // ── Render ──────────────────────────────────────────────────────────
 
   const navComponents = () => (
@@ -378,7 +642,64 @@ function ConceptsPage() {
       {/*  */}
       <div className="flex flex-1" />
 
-      <div className="flex flex-row items-center px-2">here</div>
+      <div className="flex h-full items-center">
+        <Separator orientation="vertical" className="mx-2 min-h-6" />
+        <div className="flex">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                //   disabled={_columns.length === 0}
+                //   onClick={addData}
+                variant="ghost"
+                size="icon"
+              >
+                <ListPlus className="h-4 w-4" />
+                <span className="sr-only">Add Record</span>
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Add Record</TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                disabled={
+                  _table.getFilteredSelectedRowModel().rows.length === 0
+                }
+                variant="ghost"
+                size="icon"
+                onClick={() => {
+                  //   const primaryKeys = (data?.columns || [])
+                  //     .filter((col: any) => col.primaryKey)
+                  //     .map((col: any) => col.id);
+                  //   const rows = _table
+                  //     .getFilteredSelectedRowModel()
+                  //     .rows.map((row: any) => {
+                  //       return row.original;
+                  //     });
+                  //   const ids = primaryKeys
+                  //     .map((key: any) => {
+                  //       return rows.map((row: any) => {
+                  //         return row[key];
+                  //       });
+                  //     })
+                  //     .flat();
+                  //   onDelete(ids);
+                }}
+              >
+                <Trash2 className="h-4 w-4" />
+                <span className="sr-only">{`Delete Selected Record${
+                  _table.getFilteredSelectedRowModel().rows.length === 1
+                    ? ""
+                    : "s"
+                }`}</span>
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>{`Delete Selected Record${
+              _table.getFilteredSelectedRowModel().rows.length === 1 ? "" : "s"
+            }`}</TooltipContent>
+          </Tooltip>
+        </div>
+      </div>
       <Separator orientation="vertical" className="mx-2 min-h-6" />
     </div>
   );
@@ -392,28 +713,109 @@ function ConceptsPage() {
       >
         {/* Main Area: Concepts Table */}
         {selectedSystemId ? (
-          <ConceptsTable
-            concepts={conceptsQuery.data?.data ?? []}
-            total={conceptsQuery.data?.total ?? 0}
-            page={conceptsQuery.data?.page ?? 1}
-            limit={conceptsQuery.data?.limit ?? 100}
-            search={conceptSearch}
-            conceptClass={conceptClassFilter}
-            conceptClasses={classesQuery.data ?? []}
-            isLoading={conceptsQuery.isLoading}
-            onSearchChange={(s) => {
-              setConceptSearch(s);
-              setConceptPage(1);
-            }}
-            onClassChange={(cls) => {
-              setConceptClassFilter(cls);
-              setConceptPage(1);
-            }}
-            onPageChange={setConceptPage}
-            onSelect={handleSelectConcept}
-            onAdd={handleAddConcept}
-          />
+          <div className="flex w-full h-full flex-col min-h-[calc(100vh-26px-56px)] max-h-[calc(100vh-26px-56px)]">
+            <div className="flex flex-1 border-b overflow-auto ">
+              <Table
+                className={cn(
+                  (conceptsQuery.data?.data ?? []).length === 0 ? "h-full" : "",
+                )}
+                wrapperRef={refTableContainer}
+                wrapperClassName="dataTable"
+              >
+                <TableHeader>
+                  {_table.getHeaderGroups().map((headerGroup) => (
+                    <TableRow
+                      key={headerGroup.id}
+                      className="hover:bg-black/5 data-[state=selected]:bg-black/5"
+                    >
+                      {headerGroup.headers.map((header) => {
+                        const columnDefinition = header.column
+                          .columnDef as CustomColumnDef<unknown, unknown>;
+                        const className = columnDefinition.className;
+                        const customComponent =
+                          columnDefinition.customComponent;
+
+                        return (
+                          <TableHead
+                            key={header.id}
+                            colSpan={header.colSpan}
+                            className={cn(
+                              className,
+                              customComponent ? "pl-2.25" : "",
+                            )}
+                          >
+                            {header.isPlaceholder
+                              ? null
+                              : flexRender(
+                                  header.column.columnDef.header,
+                                  header.getContext(),
+                                )}
+                          </TableHead>
+                        );
+                      })}
+                    </TableRow>
+                  ))}
+                </TableHeader>
+                <TableBody>
+                  {_table.getRowModel().rows.map((row) => (
+                    <TableRow
+                      key={row.id}
+                      data-state={row.getIsSelected() && "selected"}
+                    >
+                      {row.getVisibleCells().map((cell) => {
+                        const columnDefinition = cell.column
+                          .columnDef as CustomColumnDef<unknown, unknown>;
+                        const className = columnDefinition.className;
+
+                        const customComponent = enhancedComponent(
+                          columnDefinition.customComponent,
+                          Button,
+                          {
+                            onClick: () => {
+                              handleSelectConcept(row.original);
+                            },
+                          },
+                        );
+
+                        return (
+                          <TableCell key={cell.id} className={className}>
+                            {flexRender(
+                              cell.column.columnDef.cell,
+                              cell.getContext(),
+                            )}
+                            {customComponent}
+                          </TableCell>
+                        );
+                      })}
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+            <DataTablePagination table={_table} />
+          </div>
         ) : (
+          //   <ConceptsTable
+          //     concepts={conceptsQuery.data?.data ?? []}
+          //     total={conceptsQuery.data?.total ?? 0}
+          //     page={conceptsQuery.data?.page ?? 1}
+          //     limit={conceptsQuery.data?.limit ?? 100}
+          //     search={conceptSearch}
+          //     conceptClass={conceptClassFilter}
+          //     conceptClasses={classesQuery.data ?? []}
+          //     isLoading={conceptsQuery.isLoading}
+          //     onSearchChange={(s) => {
+          //       setConceptSearch(s);
+          //       setConceptPage(1);
+          //     }}
+          //     onClassChange={(cls) => {
+          //       setConceptClassFilter(cls);
+          //       setConceptPage(1);
+          //     }}
+          //     onPageChange={setConceptPage}
+          //     onSelect={handleSelectConcept}
+          //     onAdd={handleAddConcept}
+          //   />
           <div className="flex w-full items-center justify-center min-h-[calc(100vh-26px-56px)] max-h-[calc(100vh-26px-56px)] relative">
             <div className="flex flex-1 h-full w-full relative">
               <svg
