@@ -71,7 +71,7 @@ export function CodingSystemDialog({
     }
   }, [open, system]);
 
-  const isEdit = system !== null;
+  const isEdit = system !== undefined;
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
