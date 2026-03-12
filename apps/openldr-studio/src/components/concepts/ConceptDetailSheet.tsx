@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Sheet,
   SheetContent,
@@ -66,7 +66,7 @@ export function ConceptDetailSheet({
   isSaving,
 }: ConceptDetailSheetProps) {
   const [activeTab, setActiveTab] = useState("details");
-  const [form, setForm] = useState<Partial<Concept>>({});
+  const [form, setForm] = useState<Partial<Concept>>(concept ? concept : {});
 
   const resetForm = (c: Concept | undefined) => {
     if (c) {
@@ -101,10 +101,13 @@ export function ConceptDetailSheet({
     onOpenChange(isOpen);
   };
 
-  // Also reset when concept prop changes while open
-  useState(() => {
-    resetForm(concept);
-  });
+  // Reset form when concept prop changes or sheet opens
+  useEffect(() => {
+    if (open) {
+      resetForm(concept);
+      setActiveTab("details");
+    }
+  }, [open, concept]);
 
   const handleSave = () => {
     onSave({

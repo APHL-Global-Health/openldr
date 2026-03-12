@@ -618,7 +618,7 @@ function ConceptsPage() {
                   disabled={!selectedSystemId}
                   onClick={() => {
                     const item = (systemsQuery.data ?? []).find(
-                      (f: any) => f.system_code === selectedSystemId,
+                      (f: any) => f.id === selectedSystemId,
                     );
                     if (item) handleEditSystem(item);
                   }}
@@ -634,7 +634,7 @@ function ConceptsPage() {
                   disabled={!selectedSystemId}
                   onClick={() => {
                     const item = (systemsQuery.data ?? []).find(
-                      (f: any) => f.system_code === selectedSystemId,
+                      (f: any) => f.id === selectedSystemId,
                     );
                     if (item) handleDeleteSystem(item);
                   }}
