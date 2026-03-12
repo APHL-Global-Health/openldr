@@ -34,6 +34,13 @@ import type {
   ConceptMapping,
 } from "@/lib/restClients/conceptRestClient";
 
+import CodeMirror from "@uiw/react-codemirror";
+import { EditorState } from "@codemirror/state";
+import { vscodeDark, vscodeLight } from "@uiw/codemirror-theme-vscode";
+import { json } from "@codemirror/lang-json";
+import { EditorView } from "@codemirror/view";
+import { getCurrentTheme } from "@/lib/theme";
+
 interface ConceptDetailSheetProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -67,6 +74,23 @@ export function ConceptDetailSheet({
 }: ConceptDetailSheetProps) {
   const [activeTab, setActiveTab] = useState("details");
   const [form, setForm] = useState<Partial<Concept>>(concept ? concept : {});
+
+  const [theme, setTheme] = useState(getCurrentTheme);
+
+  useEffect(() => {
+    const onThemeChange = () => {
+      setTheme(getCurrentTheme());
+    };
+    window.addEventListener("themechange", onThemeChange);
+
+    const mq = window.matchMedia("(prefers-color-scheme: dark)");
+    mq.addEventListener("change", onThemeChange);
+
+    return () => {
+      window.removeEventListener("themechange", onThemeChange);
+      mq.removeEventListener("change", onThemeChange);
+    };
+  }, []);
 
   const resetForm = (c: Concept | undefined) => {
     if (c) {
@@ -128,9 +152,9 @@ export function ConceptDetailSheet({
     <Sheet open={open} onOpenChange={handleOpenChange}>
       <SheetContent
         side="right"
-        className="sm:max-w-lg w-full p-0 flex flex-col"
+        className="sm:max-w-lg w-full p-0 m-0 gap-0 flex flex-col"
       >
-        <SheetHeader className="px-4 pt-4 pb-2">
+        <SheetHeader className="px-4 pt-4 m-0 pb-2 border-b">
           <SheetTitle>{isNew ? "New Concept" : "Edit Concept"}</SheetTitle>
           <SheetDescription>
             {isNew
@@ -146,7 +170,7 @@ export function ConceptDetailSheet({
           onValueChange={setActiveTab}
           className="flex-1 flex flex-col overflow-hidden"
         >
-          <TabsList className="w-full" variant="line">
+          <TabsList className="w-full border-b border-border" variant="line">
             <TabsTrigger value="details">Details</TabsTrigger>
             <TabsTrigger value="mappings" disabled={isNew}>
               Mappings
@@ -198,6 +222,7 @@ export function ConceptDetailSheet({
                     Class
                   </Label>
                   <Input
+                    className="w-full"
                     id="concept_class"
                     value={form.concept_class ?? ""}
                     onChange={(e) =>
@@ -258,28 +283,28 @@ export function ConceptDetailSheet({
                   </Select>
                 </div>
 
-                <div className="flex items-start space-x-2">
+                <div className="flex flex-1 items-start space-x-2">
                   <Label htmlFor="properties" className="min-w-30 pt-2">
-                    Properties (JSON)
+                    Properties
                   </Label>
-                  <textarea
+                  <CodeMirror
                     id="properties"
-                    className="flex min-h-20 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 font-mono"
                     value={
                       form.properties
                         ? JSON.stringify(form.properties, null, 2)
                         : ""
                     }
-                    onChange={(e) => {
+                    className="flex w-full h-full rounded-md border border-border bg-background px-3 py-2 text-sm "
+                    onChange={(value) => {
                       try {
-                        const parsed = e.target.value
-                          ? JSON.parse(e.target.value)
-                          : null;
+                        const parsed = value ? JSON.parse(value) : null;
                         setForm({ ...form, properties: parsed });
                       } catch {
                         // Allow invalid JSON while typing
                       }
                     }}
+                    theme={theme === "dark" ? vscodeDark : vscodeLight}
+                    extensions={[json(), EditorView.lineWrapping]}
                     placeholder='{"key": "value"}'
                   />
                 </div>

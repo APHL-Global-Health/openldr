@@ -124,15 +124,15 @@ export function MappingFormDialog({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="sm:max-w-lg">
-        <SheetHeader>
+      <SheetContent className="sm:max-w-lg p-0 m-0 gap-0">
+        <SheetHeader className="px-4 pt-4 m-0 pb-2 border-b">
           <SheetTitle>{isEdit ? "Edit Mapping" : "New Mapping"}</SheetTitle>
           <SheetDescription>
             Map from: {fromConceptCode} - {fromConceptName}
           </SheetDescription>
         </SheetHeader>
 
-        <div className="space-y-4 py-2 px-2 flex-1 flex flex-col overflow-hidden">
+        <div className="space-y-4 py-2 mt-4 px-2 flex-1 flex flex-col overflow-hidden">
           <div className="flex items-center space-x-2">
             <Label className="min-w-30">Map Type *</Label>
             <Select

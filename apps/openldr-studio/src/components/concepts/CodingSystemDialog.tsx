@@ -75,8 +75,8 @@ export function CodingSystemDialog({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="sm:max-w-md">
-        <SheetHeader>
+      <SheetContent className="sm:max-w-md p-0 m-0 gap-0">
+        <SheetHeader className="px-4 pt-4 m-0 pb-2 border-b">
           <SheetTitle>
             {isEdit ? "Edit Coding System" : "New Coding System"}
           </SheetTitle>
@@ -87,7 +87,7 @@ export function CodingSystemDialog({
           </SheetDescription>
         </SheetHeader>
 
-        <div className="space-y-4 p-2 flex-1 flex flex-col overflow-hidden">
+        <div className="space-y-4 p-2 mt-4 flex-1 flex flex-col overflow-hidden">
           <div className="flex items-center space-x-2">
             <Label htmlFor="sys_code" className="min-w-30">
               System Code *
