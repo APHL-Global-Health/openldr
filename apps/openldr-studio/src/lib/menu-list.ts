@@ -18,6 +18,7 @@ import {
   Box,
   Terminal,
   Form,
+  Merge,
 } from "lucide-react";
 
 type Submenu = {
@@ -91,6 +92,11 @@ export function getMenuList(
           href: `${baseUrl}forms`,
           label: "navigation.forms",
           icon: Form,
+        },
+        {
+          href: `${baseUrl}concepts`,
+          label: "navigation.concepts",
+          icon: Merge,
         },
         {
           href: `${baseUrl}data-entry`,

@@ -29,6 +29,7 @@ import extensionRouter from "./controllers/extension.controller";
 import dashboardRouter from "./controllers/dashboard.controller";
 import queryEngineRouter from "./controllers/query.engine.controller";
 import reportRouter from "./controllers/report.controller";
+import conceptRouter from "./controllers/concept.controller";
 
 const IsDev = process.env.NODE_ENV === "development";
 
@@ -89,6 +90,7 @@ app.use("/api/v1/extensions", extensionRouter);
 app.use("/api/v1/dashboard", dashboardRouter);
 app.use("/api/v1/query/engine", queryEngineRouter);
 app.use("/api/v1/reports", reportRouter);
+app.use("/api/v1/concepts", conceptRouter);
 
 // Health check
 app.get("/health", async (_req: Request, res: Response) => {
@@ -134,6 +136,7 @@ app.get("/", (_req: Request, res: Response) => {
       terminology: "/api/v1/terminology",
       dashboard: "/api/v1/dashboard",
       queryEngine: "/api/v1/query/engine",
+      concepts: "/api/v1/concepts",
     },
   });
 });
