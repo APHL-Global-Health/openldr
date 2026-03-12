@@ -178,7 +178,7 @@ export function CodingSystemDialog({
             <Label htmlFor="sys_desc" className="min-w-30 pt-3">
               Description
             </Label>
-            <textarea
+            <Input
               id="sys_desc"
               className="flex min-h-15 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
               value={form.description ?? ""}
