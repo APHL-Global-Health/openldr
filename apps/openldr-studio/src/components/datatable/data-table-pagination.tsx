@@ -35,7 +35,9 @@ export function DataTablePagination<TData>({
       </div>
       <div className="flex items-center space-x-6 lg:space-x-8">
         <div className="flex items-center space-x-2">
-          <p className="text-sm font-medium cursor-default">{t("table.rows_per_page")}</p>
+          <p className="text-sm font-medium cursor-default">
+            {t("table.rows_per_page")}
+          </p>
           <Select
             value={`${table.getState().pagination.pageSize}`}
             onValueChange={(value) => {
@@ -45,7 +47,7 @@ export function DataTablePagination<TData>({
             <SelectTrigger className="h-8 w-20 rounded-none">
               <SelectValue placeholder={table.getState().pagination.pageSize} />
             </SelectTrigger>
-            <SelectContent side="top">
+            <SelectContent side="top" avoidCollisions={false} position="popper">
               {[100, 500, 1000].map((pageSize) => (
                 <SelectItem key={pageSize} value={`${pageSize}`}>
                   {pageSize}

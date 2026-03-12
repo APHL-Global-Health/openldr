@@ -187,21 +187,25 @@ function ConceptsPage() {
     queryKey: [
       "concepts",
       selectedSystemId,
-      conceptSearch,
-      conceptClassFilter,
-      conceptPage,
+      //   conceptSearch,
+      //   conceptClassFilter,
+      //   pagination.pageIndex,
+      //   pagination.pageSize,
     ],
     queryFn: () =>
       getConcepts(token, selectedSystemId!, {
         search: conceptSearch || undefined,
         concept_class:
           conceptClassFilter !== "all" ? conceptClassFilter : undefined,
-        page: conceptPage,
-        limit: 50,
+        page: pagination.pageIndex,
+        limit: pagination.pageSize,
       }),
     enabled: !!selectedSystemId,
+    refetchInterval: false,
     refetchOnMount: true,
     refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    refetchIntervalInBackground: false,
   });
 
   const classesQuery = useQuery({
@@ -217,6 +221,19 @@ function ConceptsPage() {
     enabled: !!selectedConcept?.id && conceptSheetOpen,
     refetchOnWindowFocus: false,
   });
+
+  useEffect(() => {
+    if (pagination) {
+      conceptsQuery.refetch();
+      if (refTableContainer.current) {
+        refTableContainer.current.scrollTo({
+          top: 0,
+          left: 0,
+          // behavior: "smooth"
+        });
+      }
+    }
+  }, [pagination]);
 
   // ── Handlers ────────────────────────────────────────────────────────
 
@@ -657,7 +674,7 @@ function ConceptsPage() {
                 <span className="sr-only">Add Record</span>
               </Button>
             </TooltipTrigger>
-            <TooltipContent>Add Record</TooltipContent>
+            <TooltipContent>Add Concept</TooltipContent>
           </Tooltip>
           <Tooltip>
             <TooltipTrigger asChild>
