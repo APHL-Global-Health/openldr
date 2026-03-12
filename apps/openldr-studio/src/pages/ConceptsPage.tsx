@@ -387,34 +387,32 @@ function ConceptsPage() {
     <ContentLayout nav={navComponents()}>
       <div
         className={cn(
-          "flex min-h-[calc(100vh-26px-56px)] max-h-[calc(100vh-26px-56px)] w-full h-full",
+          "flex flex-col min-h-[calc(100vh-26px-56px)] max-h-[calc(100vh-26px-56px)] w-full h-full",
         )}
       >
         {/* Main Area: Concepts Table */}
         {selectedSystemId ? (
-          <div className="flex-1 h-full overflow-hidden">
-            <ConceptsTable
-              concepts={conceptsQuery.data?.data ?? []}
-              total={conceptsQuery.data?.total ?? 0}
-              page={conceptsQuery.data?.page ?? 1}
-              limit={conceptsQuery.data?.limit ?? 50}
-              search={conceptSearch}
-              conceptClass={conceptClassFilter}
-              conceptClasses={classesQuery.data ?? []}
-              isLoading={conceptsQuery.isLoading}
-              onSearchChange={(s) => {
-                setConceptSearch(s);
-                setConceptPage(1);
-              }}
-              onClassChange={(cls) => {
-                setConceptClassFilter(cls);
-                setConceptPage(1);
-              }}
-              onPageChange={setConceptPage}
-              onSelect={handleSelectConcept}
-              onAdd={handleAddConcept}
-            />
-          </div>
+          <ConceptsTable
+            concepts={conceptsQuery.data?.data ?? []}
+            total={conceptsQuery.data?.total ?? 0}
+            page={conceptsQuery.data?.page ?? 1}
+            limit={conceptsQuery.data?.limit ?? 100}
+            search={conceptSearch}
+            conceptClass={conceptClassFilter}
+            conceptClasses={classesQuery.data ?? []}
+            isLoading={conceptsQuery.isLoading}
+            onSearchChange={(s) => {
+              setConceptSearch(s);
+              setConceptPage(1);
+            }}
+            onClassChange={(cls) => {
+              setConceptClassFilter(cls);
+              setConceptPage(1);
+            }}
+            onPageChange={setConceptPage}
+            onSelect={handleSelectConcept}
+            onAdd={handleAddConcept}
+          />
         ) : (
           <div className="flex w-full items-center justify-center min-h-[calc(100vh-26px-56px)] max-h-[calc(100vh-26px-56px)] relative">
             <div className="flex flex-1 h-full w-full relative">

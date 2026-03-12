@@ -543,7 +543,9 @@ function ArchivePage() {
       const failed = results.filter((r: any) => r.status === "rejected");
       if (successful.length > 0) {
         toast.success(
-          `(${successful.length}) ${!selectedRecordItem ? "created" : "updated"} successfully`,
+          `(${successful.length}) ${
+            !selectedRecordItem ? "created" : "updated"
+          } successfully`,
           {
             className: "bg-card text-card-foreground border-border",
           },
@@ -551,7 +553,9 @@ function ArchivePage() {
       }
       if (failed.length > 0) {
         toast.error(
-          `Failed to ${!selectedRecordItem ? "create" : "update"}. Please try again.`,
+          `Failed to ${
+            !selectedRecordItem ? "create" : "update"
+          }. Please try again.`,
           {
             className: "bg-card text-card-foreground border-border",
           },
@@ -897,7 +901,9 @@ function ArchivePage() {
                   }}
                 >
                   <SelectTrigger className="min-w-49 rounded-xs max-w-49 h-8 flex flex-1 border border-default m-1 text-[12px]">
-                    <SelectValue placeholder={t("app:archive.pick_sort_column")} />
+                    <SelectValue
+                      placeholder={t("app:archive.pick_sort_column")}
+                    />
                   </SelectTrigger>
                   <SelectContent
                     align="start"
@@ -1016,7 +1022,9 @@ function ArchivePage() {
                   }}
                 >
                   <SelectTrigger className="min-w-49 max-w-49 rounded-xs h-8 flex flex-1 border border-default m-1 text-[12px]">
-                    <SelectValue placeholder={t("app:archive.pick_project_column")} />
+                    <SelectValue
+                      placeholder={t("app:archive.pick_project_column")}
+                    />
                   </SelectTrigger>
                   <SelectContent
                     align="start"
@@ -1140,10 +1148,18 @@ function ArchivePage() {
                   }}
                 >
                   <Trash2 className="h-4 w-4" />
-                  <span className="sr-only">{`Delete Selected Record${_table.getFilteredSelectedRowModel().rows.length === 1 ? "" : "s"}`}</span>
+                  <span className="sr-only">{`Delete Selected Record${
+                    _table.getFilteredSelectedRowModel().rows.length === 1
+                      ? ""
+                      : "s"
+                  }`}</span>
                 </Button>
               </TooltipTrigger>
-              <TooltipContent>{`Delete Selected Record${_table.getFilteredSelectedRowModel().rows.length === 1 ? "" : "s"}`}</TooltipContent>
+              <TooltipContent>{`Delete Selected Record${
+                _table.getFilteredSelectedRowModel().rows.length === 1
+                  ? ""
+                  : "s"
+              }`}</TooltipContent>
             </Tooltip>
           </div>
         </div>
@@ -1201,7 +1217,10 @@ function ArchivePage() {
                   </CardHeader>
                   <CardContent className="text-sm border py-4">
                     {schema && _table.getRowModel().rows?.length === 0
-                      ? t("app:archive.table_no_data", { table: table?.toUpperCase(), schema: schema?.toUpperCase() })
+                      ? t("app:archive.table_no_data", {
+                          table: table?.toUpperCase(),
+                          schema: schema?.toUpperCase(),
+                        })
                       : t("app:archive.select_table_prompt")}
                   </CardContent>
                 </Card>
