@@ -18,12 +18,15 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Save, Search } from "lucide-react";
-import type { ConceptMapping, Concept } from "@/lib/restClients/conceptRestClient";
+import type {
+  ConceptMapping,
+  Concept,
+} from "@/lib/restClients/conceptRestClient";
 
 interface MappingFormDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  mapping: ConceptMapping | null; // null = create mode
+  mapping: ConceptMapping | undefined; // null = create mode
   fromConceptId: string;
   fromConceptCode: string;
   fromConceptName: string;
@@ -165,7 +168,10 @@ export function MappingFormDialog({
                   <Input
                     value={form.to_system_code ?? ""}
                     onChange={(e) =>
-                      setForm({ ...form, to_system_code: e.target.value || null })
+                      setForm({
+                        ...form,
+                        to_system_code: e.target.value || null,
+                      })
                     }
                     placeholder="e.g., LOINC"
                   />
@@ -175,7 +181,10 @@ export function MappingFormDialog({
                   <Input
                     value={form.to_concept_code ?? ""}
                     onChange={(e) =>
-                      setForm({ ...form, to_concept_code: e.target.value || null })
+                      setForm({
+                        ...form,
+                        to_concept_code: e.target.value || null,
+                      })
                     }
                     placeholder="e.g., 12345-6"
                   />
@@ -185,7 +194,10 @@ export function MappingFormDialog({
                   <Input
                     value={form.to_concept_name ?? ""}
                     onChange={(e) =>
-                      setForm({ ...form, to_concept_name: e.target.value || null })
+                      setForm({
+                        ...form,
+                        to_concept_name: e.target.value || null,
+                      })
                     }
                     placeholder="e.g., Glucose"
                   />
@@ -212,7 +224,9 @@ export function MappingFormDialog({
 
                 {form.to_concept_code && (
                   <div className="text-sm p-2 rounded border bg-muted/50">
-                    <span className="font-mono">{form.to_system_code}:{form.to_concept_code}</span>
+                    <span className="font-mono">
+                      {form.to_system_code}:{form.to_concept_code}
+                    </span>
                     {" - "}
                     <span>{form.to_concept_name}</span>
                   </div>
@@ -229,7 +243,9 @@ export function MappingFormDialog({
                         <span className="font-mono text-xs text-muted-foreground">
                           {concept.system_code}
                         </span>
-                        <span className="font-mono text-xs">{concept.concept_code}</span>
+                        <span className="font-mono text-xs">
+                          {concept.concept_code}
+                        </span>
                         <span className="truncate">{concept.display_name}</span>
                       </div>
                     ))}
@@ -262,7 +278,9 @@ export function MappingFormDialog({
             <Input
               id="mapping_owner"
               value={form.owner ?? ""}
-              onChange={(e) => setForm({ ...form, owner: e.target.value || null })}
+              onChange={(e) =>
+                setForm({ ...form, owner: e.target.value || null })
+              }
               placeholder="Who created this mapping"
             />
           </div>

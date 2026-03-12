@@ -31,6 +31,34 @@ import {
   type Concept,
   type ConceptMapping,
 } from "@/lib/restClients/conceptRestClient";
+import { Separator } from "@/components/ui/separator";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { ButtonGroup } from "@/components/ui/button-group";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
+import {
+  Form,
+  MoreHorizontalIcon,
+  Pencil,
+  Plus,
+  Trash2Icon,
+} from "lucide-react";
+import type { data } from "react-router-dom";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 function ConceptsPage() {
   const client = useKeycloakClient();
@@ -38,8 +66,12 @@ function ConceptsPage() {
   const token = client.kc.token;
 
   // ── State ───────────────────────────────────────────────────────────
-  const [selectedSystemId, setSelectedSystemId] = useState<string | null>(null);
-  const [selectedConcept, setSelectedConcept] = useState<Concept | null>(null);
+  const [selectedSystemId, setSelectedSystemId] = useState<string | undefined>(
+    undefined,
+  );
+  const [selectedConcept, setSelectedConcept] = useState<Concept | undefined>(
+    undefined,
+  );
   const [conceptSheetOpen, setConceptSheetOpen] = useState(false);
   const [isNewConcept, setIsNewConcept] = useState(false);
   const [conceptSearch, setConceptSearch] = useState("");
@@ -48,11 +80,15 @@ function ConceptsPage() {
 
   // Coding system dialog
   const [systemDialogOpen, setSystemDialogOpen] = useState(false);
-  const [editingSystem, setEditingSystem] = useState<CodingSystem | null>(null);
+  const [editingSystem, setEditingSystem] = useState<CodingSystem | undefined>(
+    undefined,
+  );
 
   // Mapping dialog
   const [mappingDialogOpen, setMappingDialogOpen] = useState(false);
-  const [editingMapping, setEditingMapping] = useState<ConceptMapping | null>(null);
+  const [editingMapping, setEditingMapping] = useState<
+    ConceptMapping | undefined
+  >(undefined);
 
   const [isSaving, setIsSaving] = useState(false);
 
@@ -65,11 +101,18 @@ function ConceptsPage() {
   });
 
   const conceptsQuery = useQuery({
-    queryKey: ["concepts", selectedSystemId, conceptSearch, conceptClassFilter, conceptPage],
+    queryKey: [
+      "concepts",
+      selectedSystemId,
+      conceptSearch,
+      conceptClassFilter,
+      conceptPage,
+    ],
     queryFn: () =>
       getConcepts(token, selectedSystemId!, {
         search: conceptSearch || undefined,
-        concept_class: conceptClassFilter !== "all" ? conceptClassFilter : undefined,
+        concept_class:
+          conceptClassFilter !== "all" ? conceptClassFilter : undefined,
         page: conceptPage,
         limit: 50,
       }),
@@ -103,7 +146,7 @@ function ConceptsPage() {
 
   // Coding System CRUD
   const handleAddSystem = () => {
-    setEditingSystem(null);
+    setEditingSystem(undefined);
     setSystemDialogOpen(true);
   };
 
@@ -118,7 +161,7 @@ function ConceptsPage() {
       toast.success(`Deactivated coding system: ${system.system_code}`);
       queryClient.invalidateQueries({ queryKey: ["coding-systems"] });
       if (selectedSystemId === system.id) {
-        setSelectedSystemId(null);
+        setSelectedSystemId(undefined);
       }
     } catch (err: any) {
       toast.error(err.message || "Failed to deactivate coding system");
@@ -146,7 +189,7 @@ function ConceptsPage() {
 
   // Concept CRUD
   const handleAddConcept = () => {
-    setSelectedConcept(null);
+    setSelectedConcept(undefined);
     setIsNewConcept(true);
     setConceptSheetOpen(true);
   };
@@ -197,7 +240,7 @@ function ConceptsPage() {
 
   // Mapping CRUD
   const handleAddMapping = () => {
-    setEditingMapping(null);
+    setEditingMapping(undefined);
     setMappingDialogOpen(true);
   };
 
@@ -244,9 +287,101 @@ function ConceptsPage() {
 
   // ── Render ──────────────────────────────────────────────────────────
 
-  const navComponents = () => {
-    return <h1 className="font-bold">Concepts</h1>;
-  };
+  const navComponents = () => (
+    <div className="flex min-h-13 max-h-13 w-full items-center pr-2 py-2">
+      <div className="flex">
+        <ButtonGroup className="  focus-visible:outline-none">
+          <Select
+            key={selectedSystemId ?? "__empty__"}
+            disabled={(systemsQuery.data ?? []).length === 0 ? true : false}
+            value={selectedSystemId}
+            onValueChange={handleSelectSystem}
+          >
+            <SelectTrigger className="flex  min-w-56 max-w-56 rounded-sm text-sm focus-visible:outline-none">
+              <SelectValue placeholder="Coding Systems" />
+            </SelectTrigger>
+            <SelectContent
+              className="rounded-xs"
+              side="bottom"
+              avoidCollisions={false}
+              position="popper"
+            >
+              <SelectGroup>
+                {(systemsQuery.data ?? []).map((system: any) => (
+                  <SelectItem
+                    key={system.id}
+                    value={system.id}
+                    description={system.system_name}
+                  >
+                    {system.system_code}
+                  </SelectItem>
+                ))}
+              </SelectGroup>
+            </SelectContent>
+          </Select>
+          <div className="flex justify-center items-center min-h-9 max-h-9 w-[0.5px]">
+            <div className="flex bg-border min-h-7 max-h-7 w-[0.5px]" />
+          </div>
+          <DropdownMenu>
+            <DropdownMenuTrigger
+              asChild
+              className="disabled:cursor-not-allowed"
+            >
+              <Button
+                className="rounded-sm disabled:cursor-not-allowed"
+                variant="outline"
+                size="icon"
+                aria-label="More Options"
+              >
+                <MoreHorizontalIcon />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-full">
+              <DropdownMenuGroup>
+                <DropdownMenuItem onClick={handleAddSystem}>
+                  <Plus width={16} height={16} />
+                  New
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  disabled={!selectedSystemId}
+                  onClick={() => {
+                    const item = (systemsQuery.data ?? []).find(
+                      (f: any) => f.schemaId === selectedSystemId,
+                    );
+                    if (item) handleEditSystem(item);
+                  }}
+                >
+                  <Pencil width={16} height={16} />
+                  Edit
+                </DropdownMenuItem>
+              </DropdownMenuGroup>
+              <DropdownMenuSeparator />
+              <DropdownMenuGroup>
+                <DropdownMenuItem
+                  variant="destructive"
+                  disabled={!selectedSystemId}
+                  onClick={() => {
+                    const item = (systemsQuery.data ?? []).find(
+                      (f: any) => f.schemaId === selectedSystemId,
+                    );
+                    if (item) handleDeleteSystem(item);
+                  }}
+                >
+                  <Trash2Icon />
+                  Delete
+                </DropdownMenuItem>
+              </DropdownMenuGroup>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </ButtonGroup>
+      </div>
+      {/*  */}
+      <div className="flex flex-1" />
+
+      <div className="flex flex-row items-center px-2">here</div>
+      <Separator orientation="vertical" className="mx-2 min-h-6" />
+    </div>
+  );
 
   return (
     <ContentLayout nav={navComponents()}>
@@ -255,22 +390,9 @@ function ConceptsPage() {
           "flex min-h-[calc(100vh-26px-56px)] max-h-[calc(100vh-26px-56px)] w-full h-full",
         )}
       >
-        {/* Left Sidebar: Coding Systems */}
-        <div className="w-55 min-w-55 h-full">
-          <CodingSystemList
-            systems={systemsQuery.data ?? []}
-            selectedSystemId={selectedSystemId}
-            onSelect={handleSelectSystem}
-            onAdd={handleAddSystem}
-            onEdit={handleEditSystem}
-            onDelete={handleDeleteSystem}
-            isLoading={systemsQuery.isLoading}
-          />
-        </div>
-
         {/* Main Area: Concepts Table */}
-        <div className="flex-1 h-full overflow-hidden">
-          {selectedSystemId ? (
+        {selectedSystemId ? (
+          <div className="flex-1 h-full overflow-hidden">
             <ConceptsTable
               concepts={conceptsQuery.data?.data ?? []}
               total={conceptsQuery.data?.total ?? 0}
@@ -292,12 +414,45 @@ function ConceptsPage() {
               onSelect={handleSelectConcept}
               onAdd={handleAddConcept}
             />
-          ) : (
-            <div className="flex items-center justify-center h-full text-muted-foreground">
-              Select a coding system to view its concepts
+          </div>
+        ) : (
+          <div className="flex w-full items-center justify-center min-h-[calc(100vh-26px-56px)] max-h-[calc(100vh-26px-56px)] relative">
+            <div className="flex flex-1 h-full w-full relative">
+              <svg
+                className="absolute inset-0 size-full z-0 stroke-foreground/10 m-0 p-0"
+                fill="none"
+              >
+                <defs>
+                  <pattern
+                    id="pattern-5c1e4f0e-62d5-498b-8ff0-cf77bb448c8e"
+                    x="0"
+                    y="0"
+                    width="10"
+                    height="10"
+                    patternUnits="userSpaceOnUse"
+                  >
+                    <path d="M-3 13 15-5M-5 5l18-18M-1 21 17 3"></path>
+                  </pattern>
+                </defs>
+                <rect
+                  stroke="none"
+                  fill="url(#pattern-5c1e4f0e-62d5-498b-8ff0-cf77bb448c8e)"
+                  width="100%"
+                  height="100%"
+                ></rect>
+              </svg>
             </div>
-          )}
-        </div>
+
+            <Card className="w-75 cursor-default p-0 m-0 gap-0 rounded-sm bg-background absolute">
+              <CardHeader className="pb-0 py-2">
+                <CardTitle>{"Concepts"}</CardTitle>
+              </CardHeader>
+              <CardContent className="text-sm border py-4">
+                Select a coding system to view its concepts
+              </CardContent>
+            </Card>
+          </div>
+        )}
       </div>
 
       {/* Concept Detail Sheet */}
@@ -305,7 +460,7 @@ function ConceptsPage() {
         open={conceptSheetOpen}
         onOpenChange={setConceptSheetOpen}
         concept={selectedConcept}
-        mappings={mappingsQuery.data ?? null}
+        mappings={mappingsQuery.data ?? undefined}
         conceptClasses={classesQuery.data ?? []}
         isNew={isNewConcept}
         systemId={selectedSystemId ?? ""}

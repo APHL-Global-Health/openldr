@@ -37,8 +37,8 @@ import type {
 interface ConceptDetailSheetProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  concept: Concept | null;
-  mappings: { from: ConceptMapping[]; to: ConceptMapping[] } | null;
+  concept: Concept | undefined;
+  mappings: { from: ConceptMapping[]; to: ConceptMapping[] } | undefined;
   conceptClasses: string[];
   isNew?: boolean;
   systemId: string;
@@ -68,7 +68,7 @@ export function ConceptDetailSheet({
   const [activeTab, setActiveTab] = useState("details");
   const [form, setForm] = useState<Partial<Concept>>({});
 
-  const resetForm = (c: Concept | null) => {
+  const resetForm = (c: Concept | undefined) => {
     if (c) {
       setForm({
         concept_code: c.concept_code,
@@ -114,29 +114,44 @@ export function ConceptDetailSheet({
   };
 
   const allMappings = [
-    ...(mappings?.from ?? []).map((m) => ({ ...m, direction: "from" as const })),
+    ...(mappings?.from ?? []).map((m) => ({
+      ...m,
+      direction: "from" as const,
+    })),
     ...(mappings?.to ?? []).map((m) => ({ ...m, direction: "to" as const })),
   ];
 
   return (
     <Sheet open={open} onOpenChange={handleOpenChange}>
-      <SheetContent side="right" className="sm:max-w-lg w-full p-0 flex flex-col">
+      <SheetContent
+        side="right"
+        className="sm:max-w-lg w-full p-0 flex flex-col"
+      >
         <SheetHeader className="px-4 pt-4 pb-2">
           <SheetTitle>{isNew ? "New Concept" : "Edit Concept"}</SheetTitle>
           <SheetDescription>
             {isNew
               ? "Create a new concept in this coding system"
-              : `${concept?.concept_code ?? ""} - ${concept?.display_name ?? ""}`}
+              : `${concept?.concept_code ?? ""} - ${
+                  concept?.display_name ?? ""
+                }`}
           </SheetDescription>
         </SheetHeader>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col overflow-hidden">
+        <Tabs
+          value={activeTab}
+          onValueChange={setActiveTab}
+          className="flex-1 flex flex-col overflow-hidden"
+        >
           <TabsList className="mx-4">
             <TabsTrigger value="details">Details</TabsTrigger>
             <TabsTrigger value="mappings" disabled={isNew}>
               Mappings
               {allMappings.length > 0 && (
-                <Badge variant="secondary" className="ml-1.5 text-xs px-1.5 py-0 h-4">
+                <Badge
+                  variant="secondary"
+                  className="ml-1.5 text-xs px-1.5 py-0 h-4"
+                >
                   {allMappings.length}
                 </Badge>
               )}
@@ -151,7 +166,9 @@ export function ConceptDetailSheet({
                   <Input
                     id="concept_code"
                     value={form.concept_code ?? ""}
-                    onChange={(e) => setForm({ ...form, concept_code: e.target.value })}
+                    onChange={(e) =>
+                      setForm({ ...form, concept_code: e.target.value })
+                    }
                     placeholder="e.g., 12345-6"
                     disabled={!isNew}
                   />
@@ -162,7 +179,9 @@ export function ConceptDetailSheet({
                   <Input
                     id="display_name"
                     value={form.display_name ?? ""}
-                    onChange={(e) => setForm({ ...form, display_name: e.target.value })}
+                    onChange={(e) =>
+                      setForm({ ...form, display_name: e.target.value })
+                    }
                     placeholder="e.g., Glucose [Mass/volume] in Blood"
                   />
                 </div>
@@ -174,7 +193,10 @@ export function ConceptDetailSheet({
                       id="concept_class"
                       value={form.concept_class ?? ""}
                       onChange={(e) =>
-                        setForm({ ...form, concept_class: e.target.value || null })
+                        setForm({
+                          ...form,
+                          concept_class: e.target.value || null,
+                        })
                       }
                       placeholder="e.g., test, organism"
                       list="concept-classes"
@@ -211,7 +233,9 @@ export function ConceptDetailSheet({
                   <Switch
                     id="is_active"
                     checked={form.is_active ?? true}
-                    onCheckedChange={(checked) => setForm({ ...form, is_active: checked })}
+                    onCheckedChange={(checked) =>
+                      setForm({ ...form, is_active: checked })
+                    }
                   />
                   <Label htmlFor="is_active">Active</Label>
                 </div>
@@ -228,7 +252,9 @@ export function ConceptDetailSheet({
                     }
                     onChange={(e) => {
                       try {
-                        const parsed = e.target.value ? JSON.parse(e.target.value) : null;
+                        const parsed = e.target.value
+                          ? JSON.parse(e.target.value)
+                          : null;
                         setForm({ ...form, properties: parsed });
                       } catch {
                         // Allow invalid JSON while typing
@@ -245,7 +271,8 @@ export function ConceptDetailSheet({
             <div className="flex flex-col h-full">
               <div className="flex items-center justify-between px-4 py-2 border-b">
                 <span className="text-sm text-muted-foreground">
-                  {allMappings.length} mapping{allMappings.length !== 1 ? "s" : ""}
+                  {allMappings.length} mapping
+                  {allMappings.length !== 1 ? "s" : ""}
                 </span>
                 <Button size="sm" variant="outline" onClick={onAddMapping}>
                   <Plus className="h-3.5 w-3.5 mr-1" />
@@ -278,17 +305,23 @@ export function ConceptDetailSheet({
                           </TableCell>
                           <TableCell className="text-xs">
                             {m.direction === "from"
-                              ? m.to_system_code_resolved || m.to_system_code || "-"
+                              ? m.to_system_code_resolved ||
+                                m.to_system_code ||
+                                "-"
                               : m.from_system_code || "-"}
                           </TableCell>
                           <TableCell className="font-mono text-xs">
                             {m.direction === "from"
-                              ? m.to_concept_code_resolved || m.to_concept_code || "-"
+                              ? m.to_concept_code_resolved ||
+                                m.to_concept_code ||
+                                "-"
                               : m.from_concept_code || "-"}
                           </TableCell>
                           <TableCell className="text-xs truncate max-w-[120px]">
                             {m.direction === "from"
-                              ? m.to_concept_display_name || m.to_concept_name || "-"
+                              ? m.to_concept_display_name ||
+                                m.to_concept_name ||
+                                "-"
                               : m.from_concept_display_name || "-"}
                           </TableCell>
                           <TableCell>
@@ -335,7 +368,11 @@ export function ConceptDetailSheet({
             )}
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={() => onOpenChange(false)}>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onOpenChange(false)}
+            >
               Cancel
             </Button>
             <Button

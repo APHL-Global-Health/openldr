@@ -110,6 +110,7 @@ import { json } from "@codemirror/lang-json";
 import { EditorView } from "@codemirror/view";
 import { getCurrentTheme } from "@/lib/theme";
 import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 /** Convert a JSON Schema `properties` object + `required` array into FormField[] */
 function jsonSchemaToFields(schema: any): FormField[] {
@@ -621,7 +622,7 @@ function FormBuilderPage() {
   const navComponents = () => (
     <div className="flex min-h-13 max-h-13 w-full items-center pr-2 py-2">
       <h1 className="font-bold">{t("forms.title")}</h1>
-      <Separator orientation="vertical" className="mx-2 min-h-6" />
+      {/* <Separator orientation="vertical" className="mx-2 min-h-6" /> */}
       <div className="flex flex-1" />
 
       <div className="flex flex-row items-center px-2">
@@ -897,8 +898,41 @@ function FormBuilderPage() {
                 />
               </div>
             ) : (
-              <div className="flex flex-col items-center justify-center h-full gap-3 text-muted-foreground">
-                <p className="text-sm">Select a form to preview</p>
+              <div className="flex  items-center justify-center min-h-[calc(100vh-26px-56px)] max-h-[calc(100vh-26px-56px)] relative">
+                <div className="flex flex-1 h-full w-full relative">
+                  <svg
+                    className="absolute inset-0 size-full z-0 stroke-foreground/10 m-0 p-0"
+                    fill="none"
+                  >
+                    <defs>
+                      <pattern
+                        id="pattern-5c1e4f0e-62d5-498b-8ff0-cf77bb448c8e"
+                        x="0"
+                        y="0"
+                        width="10"
+                        height="10"
+                        patternUnits="userSpaceOnUse"
+                      >
+                        <path d="M-3 13 15-5M-5 5l18-18M-1 21 17 3"></path>
+                      </pattern>
+                    </defs>
+                    <rect
+                      stroke="none"
+                      fill="url(#pattern-5c1e4f0e-62d5-498b-8ff0-cf77bb448c8e)"
+                      width="100%"
+                      height="100%"
+                    ></rect>
+                  </svg>
+                </div>
+
+                <Card className="w-75 cursor-default p-0 m-0 gap-0 rounded-sm bg-background absolute">
+                  <CardHeader className="pb-0 py-2">
+                    <CardTitle>{"Forms"}</CardTitle>
+                  </CardHeader>
+                  <CardContent className="text-sm border py-4">
+                    Select a form to preview
+                  </CardContent>
+                </Card>
               </div>
             )
           ) : jsonSchema ? (

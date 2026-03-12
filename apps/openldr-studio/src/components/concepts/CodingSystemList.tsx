@@ -14,7 +14,7 @@ import type { CodingSystem } from "@/lib/restClients/conceptRestClient";
 
 interface CodingSystemListProps {
   systems: CodingSystem[];
-  selectedSystemId: string | null;
+  selectedSystemId: string | undefined;
   onSelect: (id: string) => void;
   onAdd: () => void;
   onEdit: (system: CodingSystem) => void;
@@ -43,7 +43,9 @@ export function CodingSystemList({
         {isLoading ? (
           <div className="p-3 text-sm text-muted-foreground">Loading...</div>
         ) : systems.length === 0 ? (
-          <div className="p-3 text-sm text-muted-foreground">No coding systems found</div>
+          <div className="p-3 text-sm text-muted-foreground">
+            No coding systems found
+          </div>
         ) : (
           <div className="p-1">
             {systems.map((system) => (
@@ -80,9 +82,7 @@ function CodingSystemItem({
     <div
       className={cn(
         "flex items-center justify-between rounded-md px-2 py-1.5 cursor-pointer group text-sm",
-        isSelected
-          ? "bg-accent text-accent-foreground"
-          : "hover:bg-accent/50",
+        isSelected ? "bg-accent text-accent-foreground" : "hover:bg-accent/50",
       )}
       onClick={onSelect}
     >
@@ -110,13 +110,21 @@ function CodingSystemItem({
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onEdit(); }}>
+            <DropdownMenuItem
+              onClick={(e) => {
+                e.stopPropagation();
+                onEdit();
+              }}
+            >
               <Pencil className="h-3.5 w-3.5 mr-2" />
               Edit
             </DropdownMenuItem>
             <DropdownMenuItem
               className="text-destructive"
-              onClick={(e) => { e.stopPropagation(); onDelete(); }}
+              onClick={(e) => {
+                e.stopPropagation();
+                onDelete();
+              }}
             >
               <Trash2 className="h-3.5 w-3.5 mr-2" />
               Deactivate

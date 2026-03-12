@@ -23,7 +23,7 @@ import type { CodingSystem } from "@/lib/restClients/conceptRestClient";
 interface CodingSystemDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  system: CodingSystem | null; // null = create mode
+  system: CodingSystem | undefined; // null = create mode
   onSave: (data: Partial<CodingSystem>) => void;
   isSaving?: boolean;
 }
@@ -69,7 +69,9 @@ export function CodingSystemDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>{isEdit ? "Edit Coding System" : "New Coding System"}</DialogTitle>
+          <DialogTitle>
+            {isEdit ? "Edit Coding System" : "New Coding System"}
+          </DialogTitle>
           <DialogDescription>
             {isEdit
               ? "Update the coding system properties"
@@ -83,7 +85,9 @@ export function CodingSystemDialog({
             <Input
               id="sys_code"
               value={form.system_code ?? ""}
-              onChange={(e) => setForm({ ...form, system_code: e.target.value })}
+              onChange={(e) =>
+                setForm({ ...form, system_code: e.target.value })
+              }
               placeholder="e.g., LOINC"
               disabled={isEdit}
             />
@@ -94,7 +98,9 @@ export function CodingSystemDialog({
             <Input
               id="sys_name"
               value={form.system_name ?? ""}
-              onChange={(e) => setForm({ ...form, system_name: e.target.value })}
+              onChange={(e) =>
+                setForm({ ...form, system_name: e.target.value })
+              }
               placeholder="e.g., Logical Observation Identifiers Names and Codes"
             />
           </div>
@@ -122,7 +128,9 @@ export function CodingSystemDialog({
               <Input
                 id="sys_version"
                 value={form.system_version ?? ""}
-                onChange={(e) => setForm({ ...form, system_version: e.target.value })}
+                onChange={(e) =>
+                  setForm({ ...form, system_version: e.target.value })
+                }
                 placeholder="e.g., 2.78"
               />
             </div>
@@ -144,7 +152,9 @@ export function CodingSystemDialog({
               id="sys_desc"
               className="flex min-h-[60px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
               value={form.description ?? ""}
-              onChange={(e) => setForm({ ...form, description: e.target.value })}
+              onChange={(e) =>
+                setForm({ ...form, description: e.target.value })
+              }
               placeholder="Description of this coding system"
             />
           </div>
