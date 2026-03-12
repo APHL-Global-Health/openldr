@@ -389,44 +389,43 @@ function ConceptsPage() {
     () => [
       {
         id: "select",
-        className:
-          "flex flex-row min-w-[64px] max-w-[64px] cursor-default items-center",
+        className: "flex flex-row cursor-default items-center",
         customComponent: (
           <Button
             size="sm"
             type="button"
             className="relative
-                ml-2
-                justify-center
-                cursor-pointer
-                inline-flex
-                items-center
-                space-x-2
-                text-center
-                font-regular
-                ease-out
-                duration-200
-                rounded-md
-                outline-none
-                transition-all
-                outline-0
-                focus-visible:outline-4
-                focus-visible:outline-offset-1
-                border
-                text-foreground
-                shadow-none
-                focus-visible:outline-border-strong
-                data-[state=open]:bg-transparent
-                data-[state=open]:outline-border-strong
-                border-transparent
-                text-xs
-                py-1
-                px-1
-                pt-1
-                bg-transparent
-                hover:bg-transparent
-                pointer-events-auto
-                expandable-button"
+                  ml-2
+                  justify-center
+                  cursor-pointer
+                  inline-flex
+                  items-center
+                  space-x-2
+                  text-center
+                  font-regular
+                  ease-out
+                  duration-200
+                  rounded-md
+                  outline-none
+                  transition-all
+                  outline-0
+                  focus-visible:outline-4
+                  focus-visible:outline-offset-1
+                  border
+                  text-foreground
+                  shadow-none
+                  focus-visible:outline-border-strong
+                  data-[state=open]:bg-transparent
+                  data-[state=open]:outline-border-strong
+                  border-transparent
+                  text-xs
+                  py-1
+                  px-1
+                  pt-1
+                  bg-transparent
+                  hover:bg-transparent
+                  pointer-events-auto
+                  expandable-button"
           >
             <div className="h-3.5 w-3.5 text-foreground-lighter">
               <svg
@@ -786,12 +785,16 @@ function ConceptsPage() {
                         );
 
                         return (
-                          <TableCell key={cell.id} className={className}>
+                          <TableCell key={cell.id} className={cn(className, customComponent ? "relative group/cell" : "")}>
                             {flexRender(
                               cell.column.columnDef.cell,
                               cell.getContext(),
                             )}
-                            {customComponent}
+                            {customComponent && (
+                              <span className="absolute right-0 top-1/2 -translate-y-1/2 opacity-0 group-hover/cell:opacity-100 transition-opacity">
+                                {customComponent}
+                              </span>
+                            )}
                           </TableCell>
                         );
                       })}
