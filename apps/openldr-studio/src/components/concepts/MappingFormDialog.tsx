@@ -23,6 +23,15 @@ import type {
   Concept,
 } from "@/lib/restClients/conceptRestClient";
 
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetDescription,
+} from "@/components/ui/sheet";
+import { Separator } from "../ui/separator";
+
 interface MappingFormDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -52,7 +61,7 @@ export function MappingFormDialog({
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<Concept[]>([]);
   const [isSearching, setIsSearching] = useState(false);
-  const [useManualEntry, setUseManualEntry] = useState(false);
+  const [useManualEntry, setUseManualEntry] = useState(true);
 
   useEffect(() => {
     if (open) {
@@ -114,23 +123,23 @@ export function MappingFormDialog({
   const isEdit = mapping !== null;
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg">
-        <DialogHeader>
-          <DialogTitle>{isEdit ? "Edit Mapping" : "New Mapping"}</DialogTitle>
-          <DialogDescription>
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent className="sm:max-w-lg">
+        <SheetHeader>
+          <SheetTitle>{isEdit ? "Edit Mapping" : "New Mapping"}</SheetTitle>
+          <SheetDescription>
             Map from: {fromConceptCode} - {fromConceptName}
-          </DialogDescription>
-        </DialogHeader>
+          </SheetDescription>
+        </SheetHeader>
 
-        <div className="space-y-4 py-2">
-          <div className="space-y-2">
-            <Label>Map Type *</Label>
+        <div className="space-y-4 py-2 px-2 flex-1 flex flex-col overflow-hidden">
+          <div className="flex items-center space-x-2">
+            <Label className="min-w-30">Map Type *</Label>
             <Select
               value={form.map_type ?? "SAME-AS"}
               onValueChange={(val) => setForm({ ...form, map_type: val })}
             >
-              <SelectTrigger>
+              <SelectTrigger className="w-full">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -143,8 +152,38 @@ export function MappingFormDialog({
             </Select>
           </div>
 
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-2">
+            <Label htmlFor="relationship" className="min-w-30">
+              Relationship
+            </Label>
+            <Input
+              id="relationship"
+              value={form.relationship ?? ""}
+              onChange={(e) =>
+                setForm({ ...form, relationship: e.target.value || null })
+              }
+              placeholder="Optional finer-grained relationship label"
+            />
+          </div>
+
+          <div className="flex items-center space-x-2">
+            <Label htmlFor="mapping_owner" className="min-w-30">
+              Owner
+            </Label>
+            <Input
+              id="mapping_owner"
+              value={form.owner ?? ""}
+              onChange={(e) =>
+                setForm({ ...form, owner: e.target.value || null })
+              }
+              placeholder="Who created this mapping"
+            />
+          </div>
+
+          <Separator />
+
+          <div className="flex flex-col space-x-2">
+            <div className="flex pb-4 items-center justify-between">
               <Label>Target Concept</Label>
               <Button
                 variant="link"
@@ -163,8 +202,8 @@ export function MappingFormDialog({
 
             {useManualEntry ? (
               <div className="space-y-3">
-                <div className="space-y-1">
-                  <Label className="text-xs">System Code</Label>
+                <div className="flex items-center space-x-2">
+                  <Label className="text-xs min-w-30">System Code</Label>
                   <Input
                     value={form.to_system_code ?? ""}
                     onChange={(e) =>
@@ -176,8 +215,8 @@ export function MappingFormDialog({
                     placeholder="e.g., LOINC"
                   />
                 </div>
-                <div className="space-y-1">
-                  <Label className="text-xs">Concept Code</Label>
+                <div className="flex items-center space-x-2">
+                  <Label className="text-xs min-w-30">Concept Code</Label>
                   <Input
                     value={form.to_concept_code ?? ""}
                     onChange={(e) =>
@@ -189,8 +228,8 @@ export function MappingFormDialog({
                     placeholder="e.g., 12345-6"
                   />
                 </div>
-                <div className="space-y-1">
-                  <Label className="text-xs">Concept Name</Label>
+                <div className="flex items-center space-x-2">
+                  <Label className="text-xs min-w-30">Concept Name</Label>
                   <Input
                     value={form.to_concept_name ?? ""}
                     onChange={(e) =>
@@ -260,33 +299,9 @@ export function MappingFormDialog({
               </div>
             )}
           </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="relationship">Relationship</Label>
-            <Input
-              id="relationship"
-              value={form.relationship ?? ""}
-              onChange={(e) =>
-                setForm({ ...form, relationship: e.target.value || null })
-              }
-              placeholder="Optional finer-grained relationship label"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="mapping_owner">Owner</Label>
-            <Input
-              id="mapping_owner"
-              value={form.owner ?? ""}
-              onChange={(e) =>
-                setForm({ ...form, owner: e.target.value || null })
-              }
-              placeholder="Who created this mapping"
-            />
-          </div>
         </div>
 
-        <DialogFooter>
+        <div className="w-full flex gap-2 p-2 justify-end">
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
@@ -301,8 +316,8 @@ export function MappingFormDialog({
             <Save className="h-3.5 w-3.5 mr-1" />
             {isSaving ? "Saving..." : "Save"}
           </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        </div>
+      </SheetContent>
+    </Sheet>
   );
 }

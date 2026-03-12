@@ -20,6 +20,14 @@ import {
 import { Save } from "lucide-react";
 import type { CodingSystem } from "@/lib/restClients/conceptRestClient";
 
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetDescription,
+} from "@/components/ui/sheet";
+
 interface CodingSystemDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -66,22 +74,24 @@ export function CodingSystemDialog({
   const isEdit = system !== null;
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent className="sm:max-w-md">
+        <SheetHeader>
+          <SheetTitle>
             {isEdit ? "Edit Coding System" : "New Coding System"}
-          </DialogTitle>
-          <DialogDescription>
+          </SheetTitle>
+          <SheetDescription>
             {isEdit
               ? "Update the coding system properties"
               : "Create a new coding system / vocabulary"}
-          </DialogDescription>
-        </DialogHeader>
+          </SheetDescription>
+        </SheetHeader>
 
-        <div className="space-y-4 py-2">
-          <div className="space-y-2">
-            <Label htmlFor="sys_code">System Code *</Label>
+        <div className="space-y-4 p-2 flex-1 flex flex-col overflow-hidden">
+          <div className="flex items-center space-x-2">
+            <Label htmlFor="sys_code" className="min-w-30">
+              System Code *
+            </Label>
             <Input
               id="sys_code"
               value={form.system_code ?? ""}
@@ -93,8 +103,10 @@ export function CodingSystemDialog({
             />
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="sys_name">System Name *</Label>
+          <div className="flex items-center space-x-2">
+            <Label htmlFor="sys_name" className="min-w-30">
+              System Name *
+            </Label>
             <Input
               id="sys_name"
               value={form.system_name ?? ""}
@@ -105,39 +117,43 @@ export function CodingSystemDialog({
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="sys_type">Type</Label>
-              <Select
-                value={form.system_type ?? "local"}
-                onValueChange={(val) => setForm({ ...form, system_type: val })}
-              >
-                <SelectTrigger id="sys_type">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="external">External</SelectItem>
-                  <SelectItem value="internal">Internal</SelectItem>
-                  <SelectItem value="local">Local</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="sys_version">Version</Label>
-              <Input
-                id="sys_version"
-                value={form.system_version ?? ""}
-                onChange={(e) =>
-                  setForm({ ...form, system_version: e.target.value })
-                }
-                placeholder="e.g., 2.78"
-              />
-            </div>
+          <div className="flex items-center space-x-2">
+            <Label htmlFor="sys_type" className="min-w-30">
+              Type
+            </Label>
+            <Select
+              value={form.system_type ?? "local"}
+              onValueChange={(val) => setForm({ ...form, system_type: val })}
+            >
+              <SelectTrigger id="sys_type" className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="external">External</SelectItem>
+                <SelectItem value="internal">Internal</SelectItem>
+                <SelectItem value="local">Local</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="sys_uri">URI</Label>
+          <div className="flex items-center space-x-2">
+            <Label htmlFor="sys_version" className="min-w-30">
+              Version
+            </Label>
+            <Input
+              id="sys_version"
+              value={form.system_version ?? ""}
+              onChange={(e) =>
+                setForm({ ...form, system_version: e.target.value })
+              }
+              placeholder="e.g., 2.78"
+            />
+          </div>
+
+          <div className="flex items-center space-x-2">
+            <Label htmlFor="sys_uri" className="min-w-30">
+              URI
+            </Label>
             <Input
               id="sys_uri"
               value={form.system_uri ?? ""}
@@ -146,21 +162,10 @@ export function CodingSystemDialog({
             />
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="sys_desc">Description</Label>
-            <textarea
-              id="sys_desc"
-              className="flex min-h-[60px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-              value={form.description ?? ""}
-              onChange={(e) =>
-                setForm({ ...form, description: e.target.value })
-              }
-              placeholder="Description of this coding system"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="sys_owner">Owner</Label>
+          <div className="flex items-center space-x-2">
+            <Label htmlFor="sys_owner" className="min-w-30">
+              Owner
+            </Label>
             <Input
               id="sys_owner"
               value={form.owner ?? ""}
@@ -168,9 +173,24 @@ export function CodingSystemDialog({
               placeholder="e.g., Regenstrief Institute"
             />
           </div>
+
+          <div className="flex items-start space-x-2">
+            <Label htmlFor="sys_desc" className="min-w-30 pt-3">
+              Description
+            </Label>
+            <textarea
+              id="sys_desc"
+              className="flex min-h-15 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              value={form.description ?? ""}
+              onChange={(e) =>
+                setForm({ ...form, description: e.target.value })
+              }
+              placeholder="Description of this coding system"
+            />
+          </div>
         </div>
 
-        <DialogFooter>
+        <div className="w-full flex gap-2 p-2 justify-end">
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
@@ -181,8 +201,8 @@ export function CodingSystemDialog({
             <Save className="h-3.5 w-3.5 mr-1" />
             {isSaving ? "Saving..." : "Save"}
           </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        </div>
+      </SheetContent>
+    </Sheet>
   );
 }

@@ -28,7 +28,7 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Plus, Trash2, Pencil, Save, X } from "lucide-react";
+import { Plus, Trash2, Pencil, Save, X, Underline } from "lucide-react";
 import type {
   Concept,
   ConceptMapping,
@@ -143,7 +143,7 @@ export function ConceptDetailSheet({
           onValueChange={setActiveTab}
           className="flex-1 flex flex-col overflow-hidden"
         >
-          <TabsList className="mx-4">
+          <TabsList className="w-full" variant="line">
             <TabsTrigger value="details">Details</TabsTrigger>
             <TabsTrigger value="mappings" disabled={isNew}>
               Mappings
@@ -161,8 +161,10 @@ export function ConceptDetailSheet({
           <TabsContent value="details" className="flex-1 overflow-auto mt-0">
             <ScrollArea className="h-full">
               <div className="space-y-4 p-4">
-                <div className="space-y-2">
-                  <Label htmlFor="concept_code">Concept Code *</Label>
+                <div className="flex items-center space-x-2">
+                  <Label htmlFor="concept_code" className="min-w-30">
+                    Concept Code *
+                  </Label>
                   <Input
                     id="concept_code"
                     value={form.concept_code ?? ""}
@@ -174,8 +176,10 @@ export function ConceptDetailSheet({
                   />
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="display_name">Display Name *</Label>
+                <div className="flex items-center space-x-2">
+                  <Label htmlFor="display_name" className="min-w-30">
+                    Display Name *
+                  </Label>
                   <Input
                     id="display_name"
                     value={form.display_name ?? ""}
@@ -186,65 +190,78 @@ export function ConceptDetailSheet({
                   />
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="concept_class">Class</Label>
-                    <Input
-                      id="concept_class"
-                      value={form.concept_class ?? ""}
-                      onChange={(e) =>
-                        setForm({
-                          ...form,
-                          concept_class: e.target.value || null,
-                        })
-                      }
-                      placeholder="e.g., test, organism"
-                      list="concept-classes"
-                    />
-                    <datalist id="concept-classes">
-                      {conceptClasses.map((cls) => (
-                        <option key={cls} value={cls} />
-                      ))}
-                    </datalist>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="datatype">Datatype</Label>
-                    <Select
-                      value={form.datatype ?? ""}
-                      onValueChange={(val) =>
-                        setForm({ ...form, datatype: val || null })
-                      }
-                    >
-                      <SelectTrigger id="datatype">
-                        <SelectValue placeholder="Select..." />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="numeric">numeric</SelectItem>
-                        <SelectItem value="coded">coded</SelectItem>
-                        <SelectItem value="text">text</SelectItem>
-                        <SelectItem value="datetime">datetime</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
+                <div className="flex items-center space-x-2">
+                  <Label htmlFor="concept_class" className="min-w-30">
+                    Class
+                  </Label>
+                  <Input
+                    id="concept_class"
+                    value={form.concept_class ?? ""}
+                    onChange={(e) =>
+                      setForm({
+                        ...form,
+                        concept_class: e.target.value || null,
+                      })
+                    }
+                    placeholder="e.g., test, organism"
+                    list="concept-classes"
+                  />
+                  <datalist id="concept-classes">
+                    {conceptClasses.map((cls) => (
+                      <option key={cls} value={cls} />
+                    ))}
+                  </datalist>
                 </div>
 
                 <div className="flex items-center space-x-2">
-                  <Switch
-                    id="is_active"
-                    checked={form.is_active ?? true}
-                    onCheckedChange={(checked) =>
-                      setForm({ ...form, is_active: checked })
+                  <Label htmlFor="datatype" className="min-w-30">
+                    Datatype
+                  </Label>
+                  <Select
+                    value={form.datatype ?? ""}
+                    onValueChange={(val) =>
+                      setForm({ ...form, datatype: val || null })
                     }
-                  />
-                  <Label htmlFor="is_active">Active</Label>
+                  >
+                    <SelectTrigger id="datatype" className="w-full">
+                      <SelectValue placeholder="Select..." />
+                    </SelectTrigger>
+                    <SelectContent className="w-full">
+                      <SelectItem value="numeric">numeric</SelectItem>
+                      <SelectItem value="coded">coded</SelectItem>
+                      <SelectItem value="text">text</SelectItem>
+                      <SelectItem value="datetime">datetime</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="properties">Properties (JSON)</Label>
+                <div className="flex items-center space-x-2">
+                  <Label htmlFor="is_active" className="min-w-30">
+                    Active
+                  </Label>
+                  <Select
+                    value={form.is_active ? "true" : "false"}
+                    onValueChange={(val) =>
+                      setForm({ ...form, is_active: val === "true" })
+                    }
+                  >
+                    <SelectTrigger id="is_active" className="w-full">
+                      <SelectValue placeholder="Select..." />
+                    </SelectTrigger>
+                    <SelectContent className="w-full">
+                      <SelectItem value="true">True</SelectItem>
+                      <SelectItem value="false">False</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="flex items-start space-x-2">
+                  <Label htmlFor="properties" className="min-w-30 pt-2">
+                    Properties (JSON)
+                  </Label>
                   <textarea
                     id="properties"
-                    className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 font-mono"
+                    className="flex min-h-20 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 font-mono"
                     value={
                       form.properties
                         ? JSON.stringify(form.properties, null, 2)
