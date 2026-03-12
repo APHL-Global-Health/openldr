@@ -405,12 +405,12 @@ export function ConceptDetailSheet({
 
         <div className="flex items-center justify-between p-4 border-t">
           <div>
-            {/* {!isNew && (
+            {!isNew && (
               <Button variant="destructive" size="sm" onClick={onDelete}>
                 <Trash2 className="h-3.5 w-3.5 mr-1" />
                 Deactivate
               </Button>
-            )} */}
+            )}
           </div>
           <div className="flex items-center gap-2">
             <Button

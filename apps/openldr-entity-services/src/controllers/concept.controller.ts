@@ -106,7 +106,8 @@ router.put("/systems/:id", async (req, res) => {
 
 router.delete("/systems/:id", async (req, res) => {
   try {
-    const data = await deleteCodingSystem(req.params.id);
+    const hard = req.query.hard === "true";
+    const data = await deleteCodingSystem(req.params.id, hard);
     if (!data) return res.status(404).json({ success: false, error: "Coding system not found" });
     res.json({ success: true, data });
   } catch (error: any) {
@@ -212,7 +213,8 @@ router.put("/concepts/:id", async (req, res) => {
 
 router.delete("/concepts/:id", async (req, res) => {
   try {
-    const data = await deleteConcept(req.params.id);
+    const hard = req.query.hard === "true";
+    const data = await deleteConcept(req.params.id, hard);
     if (!data) return res.status(404).json({ success: false, error: "Concept not found" });
     res.json({ success: true, data });
   } catch (error: any) {

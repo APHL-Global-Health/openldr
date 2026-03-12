@@ -162,11 +162,11 @@ export async function updateCodingSystem(
   return resp.data;
 }
 
-export async function deleteCodingSystem(token: string | undefined, id: string) {
+export async function deleteCodingSystem(token: string | undefined, id: string, hard = false) {
   const resp = await request<ApiResponse<CodingSystem>>(
     token,
     "DELETE",
-    `/api/v1/concepts/systems/${id}`,
+    `/api/v1/concepts/systems/${id}${hard ? "?hard=true" : ""}`,
   );
   return resp.data;
 }
@@ -254,11 +254,11 @@ export async function updateConcept(
   return resp.data;
 }
 
-export async function deleteConcept(token: string | undefined, id: string) {
+export async function deleteConcept(token: string | undefined, id: string, hard = false) {
   const resp = await request<ApiResponse<Concept>>(
     token,
     "DELETE",
-    `/api/v1/concepts/concepts/${id}`,
+    `/api/v1/concepts/concepts/${id}${hard ? "?hard=true" : ""}`,
   );
   return resp.data;
 }

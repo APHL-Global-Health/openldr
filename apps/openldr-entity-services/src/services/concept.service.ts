@@ -140,7 +140,12 @@ async function updateCodingSystem(id: string, data: Partial<CreateCodingSystemDa
   );
 }
 
-async function deleteCodingSystem(id: string) {
+async function deleteCodingSystem(id: string, hardDelete = false) {
+  if (hardDelete) {
+    await queryExternal(`DELETE FROM concept_mappings WHERE from_concept_id IN (SELECT id FROM concepts WHERE system_id = $1)`, [id]);
+    await queryExternal(`DELETE FROM concepts WHERE system_id = $1`, [id]);
+    return queryOneExternal(`DELETE FROM coding_systems WHERE id = $1 RETURNING *`, [id]);
+  }
   return queryOneExternal(
     `UPDATE coding_systems SET is_active = false, updated_at = NOW() WHERE id = $1 RETURNING *`,
     [id],
@@ -310,7 +315,11 @@ async function updateConcept(id: string, data: Partial<CreateConceptData> & { re
   );
 }
 
-async function deleteConcept(id: string) {
+async function deleteConcept(id: string, hardDelete = false) {
+  if (hardDelete) {
+    await queryExternal(`DELETE FROM concept_mappings WHERE from_concept_id = $1 OR to_concept_id = $1`, [id]);
+    return queryOneExternal(`DELETE FROM concepts WHERE id = $1 RETURNING *`, [id]);
+  }
   return queryOneExternal(
     `UPDATE concepts SET is_active = false, retired = true, updated_at = NOW() WHERE id = $1 RETURNING *`,
     [id],

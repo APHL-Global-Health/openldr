@@ -200,7 +200,7 @@ function ConceptsPage() {
         page: pagination.pageIndex,
         limit: pagination.pageSize,
       }),
-    enabled: !!selectedSystemId,
+    enabled: selectedSystemId !== undefined,
     refetchInterval: false,
     refetchOnMount: true,
     refetchOnWindowFocus: false,
@@ -223,7 +223,7 @@ function ConceptsPage() {
   });
 
   useEffect(() => {
-    if (pagination) {
+    if (pagination && selectedSystemId) {
       conceptsQuery.refetch();
       if (refTableContainer.current) {
         refTableContainer.current.scrollTo({
@@ -257,7 +257,7 @@ function ConceptsPage() {
 
   const handleDeleteSystem = async (system: CodingSystem) => {
     try {
-      await deleteCodingSystemApi(token, system.id);
+      await deleteCodingSystemApi(token, system.id, true);
       toast.success(`Deactivated coding system: ${system.system_code}`);
       queryClient.invalidateQueries({ queryKey: ["coding-systems"] });
       if (selectedSystemId === system.id) {
@@ -328,7 +328,7 @@ function ConceptsPage() {
   const handleDeleteConcept = async () => {
     if (!selectedConcept) return;
     try {
-      await deleteConceptApi(token, selectedConcept.id);
+      await deleteConceptApi(token, selectedConcept.id, true);
       toast.success(`Deactivated concept: ${selectedConcept.concept_code}`);
       queryClient.invalidateQueries({ queryKey: ["concepts"] });
       queryClient.invalidateQueries({ queryKey: ["coding-systems"] });
@@ -785,7 +785,13 @@ function ConceptsPage() {
                         );
 
                         return (
-                          <TableCell key={cell.id} className={cn(className, customComponent ? "relative group/cell" : "")}>
+                          <TableCell
+                            key={cell.id}
+                            className={cn(
+                              className,
+                              customComponent ? "relative group/cell" : "",
+                            )}
+                          >
                             {flexRender(
                               cell.column.columnDef.cell,
                               cell.getContext(),
