@@ -825,7 +825,7 @@ function ConceptsPage() {
           //     onAdd={handleAddConcept}
           //   />
           <div className="flex w-full items-center justify-center min-h-[calc(100vh-26px-56px)] max-h-[calc(100vh-26px-56px)] relative">
-            <div className="flex flex-1 h-full w-full relative">
+            <div className="flex w-full min-h-[calc(100vh-26px-56px)] max-h-[calc(100vh-26px-56px)] relative">
               <svg
                 className="absolute inset-0 size-full z-0 stroke-foreground/10 m-0 p-0"
                 fill="none"
