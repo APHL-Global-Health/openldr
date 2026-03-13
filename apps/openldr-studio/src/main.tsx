@@ -12,13 +12,15 @@ import "@/styles/index.css";
 const LandingPage = React.lazy(() => import("@/pages/LandingPage"));
 const NotFoundPage = React.lazy(() => import("@/pages/NotFoundPage"));
 const DashboardPage = React.lazy(() => import("@/pages/DashboardPage"));
+//TODO add later
 // const ArchivePage = React.lazy(() => import("@/pages/ArchivePage"));
 const ExtensionsPage = React.lazy(() => import("@/pages/ExtensionsPage"));
 const DataEntryPage = React.lazy(() => import("@/pages/DataEntry"));
 const ExtensionPage = React.lazy(() => import("@/pages/ExtensionPage"));
 const SettingsPage = React.lazy(() => import("@/pages/settings/page"));
 const ReportsPage = React.lazy(() => import("@/pages/ReportsPage"));
-const ChatPage = React.lazy(() => import("@/pages/ChatPage"));
+//TODO add later
+// const ChatPage = React.lazy(() => import("@/pages/ChatPage"));
 const LogsPage = React.lazy(() => import("@/pages/LogsPage"));
 const FormBuilderPage = React.lazy(() => import("@/pages/FormBuilderPage"));
 const ProjectsPage = React.lazy(() => import("@/pages/ProjectsPage"));
