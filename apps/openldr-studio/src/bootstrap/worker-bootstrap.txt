@@ -6,7 +6,16 @@ async function _apiPost(path,body){const r=await fetch(_API+path,{method:'POST',
 self.addEventListener('message',e=>{const m=e.data;if(!m)return;if(m._reqId&&_pending.has(m._reqId)){const{res,rej}=_pending.get(m._reqId);_pending.delete(m._reqId);m._error?rej(new Error(m._error)):res(m._result);return}if(m._appEvent){(_evL.get(m._appEvent)||[]).forEach(f=>{try{f(m._payload)}catch(e){}});return}if(m._invokeCommand&&_cmdH.has(m._invokeCommand)){try{_cmdH.get(m._invokeCommand)(...(m._args||[]))}catch(e){}return}if(m._type==='activate'){try{activate(openldr)}catch(err){_fire('extension.error',[err.message])}}});
 const openldr={
   extensionId:_EID,
-  data:{query:(schema,table,params={})=>_apiPost('/api/v1/query/engine',{schema,table,params})},
+  data:{
+    query:(schema,table,params={})=>_apiPost('/api/v1/query/engine',{schema,table,params}),
+    exec:(script,params={})=>_apiPost('/api/v1/query/engine/exec',{script,params})
+  },
+  credentials:{
+    save:(type,data)=>_apiPost('/api/v1/query/engine/credentials/save',{type,data}),
+    check:(type)=>_apiPost('/api/v1/query/engine/credentials/check',{type}),
+    load:(type)=>_apiPost('/api/v1/query/engine/credentials/load',{type}),
+    delete:(type)=>_apiPost('/api/v1/query/engine/credentials/delete',{type})
+  },
   events:{
     on:(ev,h)=>{if(!_evL.has(ev))_evL.set(ev,[]);_evL.get(ev).push(h);_fire('events.subscribe',[ev]);return{dispose:()=>{const l=_evL.get(ev)||[];_evL.set(ev,l.filter(f=>f!==h))}}},
     emit:(ev,p)=>_fire('events.emit',[ev,p])

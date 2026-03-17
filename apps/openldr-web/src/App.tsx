@@ -598,6 +598,15 @@ const EXTENSIONS = [
     accent: "#2cd4c0",
   },
   {
+    icon: "🧪",
+    name: "Disa Migration Tool Browser",
+    id: "openldr-lab-results",
+    kind: "iframe",
+    desc: "Filter and paginate lab results by flag, panel, date range. One-click CSV export.",
+    perms: ["data.labResults", "data.labRequests", "ui.commands"],
+    accent: "#2cd4c0",
+  },
+  {
     icon: "🔬",
     name: "Lab Surveillance Monitor",
     id: "openldr-lab-monitor",

@@ -115,6 +115,7 @@ export interface ExtensionManifest {
 
 export type ExtensionPermission =
   | "data.query"
+  | "data.exec"
   | "data.specimens"
   | "data.resistanceStats"
   | "storage.read"
@@ -124,6 +125,15 @@ export type ExtensionPermission =
   | "ui.commands"
   | "events.emit"
   | "events.subscribe";
+
+export interface ScriptDefinition {
+  file: string;
+  database: "external" | "internal";
+  requiresAdmin?: boolean;
+  params?: string[];
+}
+
+export type ScriptsMap = Record<string, ScriptDefinition>;
 
 export interface RegistryResponse {
   extensions: ExtensionManifest[];
@@ -153,6 +163,7 @@ export interface ExtensionRow {
   integrity: string;
   permissions: string[];
   storage_key?: string;
+  scripts?: ScriptsMap;
   published_at: string;
 }
 

@@ -13,7 +13,11 @@ import {
 import multer from "multer";
 import { z } from "zod";
 import { createHash } from "crypto";
-import { putExtensionPayload, getExtensionPayload } from "../lib/storage";
+import {
+  putExtensionPayload,
+  getExtensionPayload,
+  putExtensionScript,
+} from "../lib/storage";
 import { query, queryOne } from "../lib/db";
 import * as exts from "@openldr/extensions";
 import type { ExtensionRow, UserExtensionInstall } from "@/types";
@@ -78,6 +82,17 @@ const ManifestSchema = z.object({
         .default([]),
     })
     .default({ commands: [], views: [] }),
+  scripts: z
+    .record(
+      z.string().regex(/^[a-z0-9_]+$/),
+      z.object({
+        file: z.string().min(1).max(256),
+        database: z.enum(["external", "internal"]),
+        requiresAdmin: z.boolean().default(false),
+        params: z.array(z.string()).default([]),
+      }),
+    )
+    .default({}),
 });
 
 // Memory storage — we handle the stream directly to MinIO
@@ -376,6 +391,23 @@ router.post(
     const contentType =
       manifest.kind === "iframe" ? "text/html" : "application/javascript";
 
+    // ── Extract + store scripts ─────────────────────────────────────────
+    const scripts = manifest.scripts;
+    const scriptIds = Object.keys(scripts);
+
+    for (const scriptId of scriptIds) {
+      const def = scripts[scriptId];
+      const scriptEntry = entries[def.file];
+      if (!scriptEntry) {
+        res.status(400).json({
+          error: `Script file '${def.file}' (${scriptId}) missing from ZIP`,
+          code: "INVALID_ZIP",
+          status: 400,
+        });
+        return;
+      }
+    }
+
     // ── Integrity ─────────────────────────────────────────────────────────
     const hash = createHash("sha256")
       .update(payloadStr, "utf8")
@@ -401,12 +433,32 @@ router.post(
       return;
     }
 
+    // ── Upload scripts to MinIO ──────────────────────────────────────────
+    for (const scriptId of scriptIds) {
+      const def = scripts[scriptId];
+      const sql = entries[def.file].getData().toString("utf8");
+      try {
+        await putExtensionScript(manifest.id, manifest.version, scriptId, sql);
+      } catch (err) {
+        console.error(
+          `[Publish] MinIO script upload failed for ${scriptId}:`,
+          err,
+        );
+        res.status(502).json({
+          error: `Failed to store script '${scriptId}'`,
+          code: "STORAGE_ERROR",
+          status: 502,
+        });
+        return;
+      }
+    }
+
     // ── Upsert into PostgreSQL ────────────────────────────────────────────
     await query(
       `INSERT INTO extensions
          (id, name, version, description, kind, slot, activation_events,
-          contributes, author, icon, integrity, permissions, storage_key, published_at, updated_at)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,NOW(),NOW())
+          contributes, author, icon, integrity, permissions, storage_key, scripts, published_at, updated_at)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,NOW(),NOW())
        ON CONFLICT (id) DO UPDATE SET
          name              = EXCLUDED.name,
          version           = EXCLUDED.version,
@@ -420,6 +472,7 @@ router.post(
          integrity         = EXCLUDED.integrity,
          permissions       = EXCLUDED.permissions,
          storage_key       = EXCLUDED.storage_key,
+         scripts           = EXCLUDED.scripts,
          updated_at        = NOW()`,
       [
         manifest.id,
@@ -435,6 +488,7 @@ router.post(
         integrity,
         JSON.stringify(manifest.permissions),
         storageKey,
+        JSON.stringify(scripts),
       ],
     );
 

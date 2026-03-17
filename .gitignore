@@ -56,4 +56,4 @@ yarn-error.log*
 package-lock.json
 
 
-extensions/openldr-ext-disa-migration
+#extensions/openldr-ext-disa-migration

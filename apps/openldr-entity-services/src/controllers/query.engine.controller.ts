@@ -12,9 +12,13 @@
 
 import { Router, type Request, type Response } from "express";
 import { z } from "zod";
-import { queryOne } from "../lib/db";
+import { queryOne, query, externalPool, pool } from "../lib/db";
 import { requireAuth } from "../middleware/security";
 import { runQuery } from "../lib/query-engine";
+import { getExtensionScript } from "../lib/storage";
+import { encryptCredentials, decryptCredentials } from "../lib/credentials";
+import type { ScriptsMap } from "@/types";
+import rateLimit from "express-rate-limit";
 
 export const router = Router();
 
@@ -217,6 +221,423 @@ router.post(
       `[Data:proxy] ${userId}/${extensionId} → ${schema}.${table} ${response.status}`,
     );
     res.json(body);
+  },
+);
+
+// ── Exec rate limiter ────────────────────────────────────────────────────────
+
+const execRateLimit = rateLimit({
+  windowMs: 60_000,
+  max: 120,
+  message: {
+    error: "Too many exec requests — try again later",
+    code: "RATE_LIMITED",
+    status: 429,
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+// ── Exec schema ─────────────────────────────────────────────────────────────
+
+const ExecBodySchema = z.object({
+  script: z
+    .string()
+    .min(1)
+    .max(128)
+    .regex(/^[a-z0-9_]+$/),
+  params: z
+    .record(
+      z.string(),
+      z.union([z.string(), z.number(), z.boolean(), z.null()]),
+    )
+    .optional(),
+});
+
+// ── POST /api/v1/query/engine/exec ──────────────────────────────────────────
+
+router.post(
+  "/exec",
+  execRateLimit,
+  requireAuth,
+  async (req: Request, res: Response): Promise<void> => {
+    const userId = (req as any).user!.id;
+    const isAdmin = !!(req as any).user?.isAdmin;
+    const extensionId = req.headers["x-extension-id"] as string | undefined;
+
+    if (!extensionId) {
+      res.status(400).json({
+        error: "X-Extension-Id header required",
+        code: "MISSING_EXTENSION_ID",
+        status: 400,
+      });
+      return;
+    }
+
+    const parsed = ExecBodySchema.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({
+        error: "Invalid request body",
+        details: parsed.error.flatten(),
+        code: "VALIDATION_ERROR",
+        status: 400,
+      });
+      return;
+    }
+
+    const { script: scriptId, params } = parsed.data;
+
+    // Check user has extension installed with data.exec permission
+    const install = await queryOne<{ approved_permissions: string[] }>(
+      `SELECT approved_permissions FROM "userExtensions" WHERE user_id = $1 AND extension_id = $2`,
+      [userId, extensionId],
+    );
+
+    if (!install) {
+      res.status(403).json({
+        error: "Extension not installed by this user",
+        code: "NOT_INSTALLED",
+        status: 403,
+      });
+      return;
+    }
+
+    if (!install.approved_permissions.includes("data.exec")) {
+      res.status(403).json({
+        error: "Permission denied: requires 'data.exec'",
+        code: "PERMISSION_DENIED",
+        status: 403,
+      });
+      return;
+    }
+
+    // Look up extension and its scripts metadata
+    const ext = await queryOne<{
+      id: string;
+      version: string;
+      scripts: ScriptsMap;
+    }>("SELECT id, version, scripts FROM extensions WHERE id = $1", [
+      extensionId,
+    ]);
+
+    if (!ext) {
+      res.status(404).json({
+        error: `Extension '${extensionId}' not found`,
+        code: "NOT_FOUND",
+        status: 404,
+      });
+      return;
+    }
+
+    const scriptDef = ext.scripts[scriptId];
+    if (!scriptDef) {
+      res.status(404).json({
+        error: `Script '${scriptId}' not found in extension '${extensionId}'`,
+        code: "SCRIPT_NOT_FOUND",
+        availableScripts: Object.keys(ext.scripts),
+        status: 404,
+      });
+      return;
+    }
+
+    // Admin check for restricted scripts
+    if (scriptDef.requiresAdmin && !isAdmin) {
+      res.status(403).json({
+        error: `Script '${scriptId}' requires admin role`,
+        code: "ADMIN_REQUIRED",
+        status: 403,
+      });
+      return;
+    }
+
+    // Validate params against declared param whitelist
+    if (params) {
+      const allowedParams = scriptDef.params || [];
+      const extraKeys = Object.keys(params).filter(
+        (k) => !allowedParams.includes(k),
+      );
+      if (extraKeys.length > 0) {
+        res.status(400).json({
+          error: `Undeclared parameters: ${extraKeys.join(", ")}. Allowed: ${allowedParams.join(", ") || "none"}`,
+          code: "INVALID_PARAMS",
+          status: 400,
+        });
+        return;
+      }
+    }
+
+    // Load SQL from MinIO
+    let sql: string;
+    try {
+      sql = await getExtensionScript(ext.id, ext.version, scriptId);
+    } catch (err) {
+      console.error(
+        `[Exec] Failed to load script ${scriptId} from MinIO:`,
+        err,
+      );
+      res.status(502).json({
+        error: "Failed to load script from storage",
+        code: "STORAGE_ERROR",
+        status: 502,
+      });
+      return;
+    }
+
+    // Substitute declared params ({{paramName}} placeholders)
+    if (params && scriptDef.params?.length) {
+      for (const paramName of scriptDef.params) {
+        const value = params[paramName];
+        if (value !== undefined && value !== null) {
+          const strVal = String(value);
+          // Sanitize: prevent SQL injection in template params
+          if (/['";\\]|--|\bDROP\b|\bDELETE\b|\bTRUNCATE\b/i.test(strVal)) {
+            res.status(400).json({
+              error: `Parameter '${paramName}' contains disallowed characters`,
+              code: "INVALID_PARAM_VALUE",
+              status: 400,
+            });
+            return;
+          }
+          const placeholder = `{{${paramName}}}`;
+          sql = sql.split(placeholder).join(strVal);
+        }
+      }
+    }
+
+    // Execute against the appropriate pool
+    const targetPool =
+      scriptDef.database === "external" ? externalPool : pool;
+    const startMs = Date.now();
+
+    try {
+      const result = await targetPool.query(sql);
+      const durationMs = Date.now() - startMs;
+
+      // result may be an array of query results if the script has multiple statements
+      const rows = Array.isArray(result)
+        ? result[result.length - 1]?.rows ?? []
+        : result.rows ?? [];
+      const rowCount = Array.isArray(result)
+        ? result[result.length - 1]?.rowCount ?? 0
+        : result.rowCount ?? 0;
+
+      console.log(
+        `[Exec] ${userId}/${extensionId}/${scriptId} → ${scriptDef.database} ${durationMs}ms rows=${rowCount}`,
+      );
+
+      res.json({ ok: true, rows, rowCount, durationMs });
+    } catch (err) {
+      const durationMs = Date.now() - startMs;
+      const msg = (err as Error).message;
+      console.error(
+        `[Exec] ${userId}/${extensionId}/${scriptId} FAILED (${durationMs}ms):`,
+        msg,
+      );
+      res
+        .status(500)
+        .json({ error: msg, code: "EXEC_ERROR", status: 500 });
+    }
+  },
+);
+
+// ── Credentials routes ──────────────────────────────────────────────────────
+
+const CredentialSaveSchema = z.object({
+  type: z
+    .string()
+    .min(1)
+    .max(64)
+    .regex(/^[a-z0-9_]+$/),
+  data: z.record(z.string(), z.string()),
+});
+
+const CredentialTypeSchema = z.object({
+  type: z
+    .string()
+    .min(1)
+    .max(64)
+    .regex(/^[a-z0-9_]+$/),
+});
+
+router.post(
+  "/credentials/save",
+  requireAuth,
+  async (req: Request, res: Response): Promise<void> => {
+    const userId = (req as any).user!.id;
+    const extensionId = req.headers["x-extension-id"] as string | undefined;
+
+    if (!extensionId) {
+      res.status(400).json({
+        error: "X-Extension-Id header required",
+        code: "MISSING_EXTENSION_ID",
+        status: 400,
+      });
+      return;
+    }
+
+    const parsed = CredentialSaveSchema.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({
+        error: "Invalid request body",
+        details: parsed.error.flatten(),
+        code: "VALIDATION_ERROR",
+        status: 400,
+      });
+      return;
+    }
+
+    const { type, data } = parsed.data;
+
+    try {
+      const encrypted = encryptCredentials(data);
+
+      await query(
+        `INSERT INTO extension_credentials (extension_id, user_id, credential_type, encrypted_data, updated_at)
+         VALUES ($1, $2, $3, $4, NOW())
+         ON CONFLICT (extension_id, user_id, credential_type)
+         DO UPDATE SET encrypted_data = EXCLUDED.encrypted_data, updated_at = NOW()`,
+        [extensionId, userId, type, encrypted],
+      );
+
+      console.log(
+        `[Credentials] ${userId}/${extensionId} saved type=${type}`,
+      );
+      res.json({ ok: true });
+    } catch (err) {
+      console.error("[Credentials] Save failed:", err);
+      res.status(500).json({
+        error: "Failed to save credentials",
+        code: "CREDENTIAL_ERROR",
+        status: 500,
+      });
+    }
+  },
+);
+
+router.post(
+  "/credentials/check",
+  requireAuth,
+  async (req: Request, res: Response): Promise<void> => {
+    const userId = (req as any).user!.id;
+    const extensionId = req.headers["x-extension-id"] as string | undefined;
+
+    if (!extensionId) {
+      res.status(400).json({
+        error: "X-Extension-Id header required",
+        code: "MISSING_EXTENSION_ID",
+        status: 400,
+      });
+      return;
+    }
+
+    const parsed = CredentialTypeSchema.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({
+        error: "Invalid request body",
+        code: "VALIDATION_ERROR",
+        status: 400,
+      });
+      return;
+    }
+
+    const row = await queryOne<{ created_at: string; updated_at: string }>(
+      `SELECT created_at, updated_at FROM extension_credentials
+       WHERE extension_id = $1 AND user_id = $2 AND credential_type = $3`,
+      [extensionId, userId, parsed.data.type],
+    );
+
+    res.json({
+      exists: !!row,
+      createdAt: row?.created_at ?? null,
+      updatedAt: row?.updated_at ?? null,
+    });
+  },
+);
+
+router.post(
+  "/credentials/load",
+  requireAuth,
+  async (req: Request, res: Response): Promise<void> => {
+    const userId = (req as any).user!.id;
+    const extensionId = req.headers["x-extension-id"] as string | undefined;
+
+    if (!extensionId) {
+      res.status(400).json({
+        error: "X-Extension-Id header required",
+        code: "MISSING_EXTENSION_ID",
+        status: 400,
+      });
+      return;
+    }
+
+    const parsed = CredentialTypeSchema.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({
+        error: "Invalid request body",
+        code: "VALIDATION_ERROR",
+        status: 400,
+      });
+      return;
+    }
+
+    const row = await queryOne<{ encrypted_data: string }>(
+      `SELECT encrypted_data FROM extension_credentials
+       WHERE extension_id = $1 AND user_id = $2 AND credential_type = $3`,
+      [extensionId, userId, parsed.data.type],
+    );
+
+    if (!row) {
+      res.json({ exists: false, data: null });
+      return;
+    }
+
+    try {
+      const data = decryptCredentials(row.encrypted_data);
+      res.json({ exists: true, data });
+    } catch (err) {
+      console.error("[Credentials] Decrypt failed:", err);
+      res.status(500).json({
+        error: "Failed to decrypt credentials",
+        code: "CREDENTIAL_ERROR",
+        status: 500,
+      });
+    }
+  },
+);
+
+router.post(
+  "/credentials/delete",
+  requireAuth,
+  async (req: Request, res: Response): Promise<void> => {
+    const userId = (req as any).user!.id;
+    const extensionId = req.headers["x-extension-id"] as string | undefined;
+
+    if (!extensionId) {
+      res.status(400).json({
+        error: "X-Extension-Id header required",
+        code: "MISSING_EXTENSION_ID",
+        status: 400,
+      });
+      return;
+    }
+
+    const parsed = CredentialTypeSchema.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({
+        error: "Invalid request body",
+        code: "VALIDATION_ERROR",
+        status: 400,
+      });
+      return;
+    }
+
+    await query(
+      `DELETE FROM extension_credentials
+       WHERE extension_id = $1 AND user_id = $2 AND credential_type = $3`,
+      [extensionId, userId, parsed.data.type],
+    );
+
+    res.json({ ok: true });
   },
 );
 

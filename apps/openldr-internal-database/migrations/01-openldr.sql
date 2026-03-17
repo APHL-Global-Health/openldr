@@ -335,6 +335,7 @@ CREATE TABLE extensions (
   integrity         TEXT        NOT NULL,
   permissions       JSONB       NOT NULL DEFAULT '[]',
   storage_key       TEXT        NOT NULL,
+  scripts           JSONB       NOT NULL DEFAULT '{}',
   published_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at        TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
@@ -351,6 +352,21 @@ CREATE TABLE "userExtensions" (
 
 CREATE INDEX IF NOT EXISTS idx_user_extensions_user_id ON "userExtensions"(user_id);
 CREATE INDEX IF NOT EXISTS idx_extensions_kind ON extensions(kind);
+
+-- Extension credentials (encrypted server-side)
+CREATE TABLE IF NOT EXISTS extension_credentials (
+  id               UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+  extension_id     TEXT        NOT NULL REFERENCES extensions(id) ON DELETE CASCADE,
+  user_id          TEXT        NOT NULL,
+  credential_type  TEXT        NOT NULL,
+  encrypted_data   TEXT        NOT NULL,
+  created_at       TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at       TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE(extension_id, user_id, credential_type)
+);
+
+CREATE INDEX IF NOT EXISTS idx_ext_credentials_lookup
+  ON extension_credentials(extension_id, user_id);
 
 
 -- ----------------------------------------------------------
