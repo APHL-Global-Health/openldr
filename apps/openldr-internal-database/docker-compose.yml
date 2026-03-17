@@ -4,7 +4,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.postgres
-    image: openldr-postgres:latest
+    # image: openldr-postgres:latest
     container_name: openldr-postgres
     restart: unless-stopped
     environment:

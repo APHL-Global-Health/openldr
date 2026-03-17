@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "copy:env": "tsx ../../environments/merge-env.ts ../../environments/.env.base ../../environments/.env.openldr-keycloak ../../environments/.env.openldr-postgres ../../environments/.env.openldr-pgadmin ../../environments/.env.openldr-minio .env",
-    "docker:build": "npm run copy:env && tsx ./docker-compose.ts pull",
+    "docker:build": "npm run copy:env && tsx ./docker-compose.ts pull && tsx ./docker-compose.ts build",
     "docker:start": "npm run copy:env && tsx ./docker-compose.ts up -d --force-recreate",
     "docker:stop": "npm run copy:env && tsx ./docker-compose.ts stop",
     "docker:reset": "npm run copy:env && tsx ./docker-compose.ts -f docker-compose.yml down --rmi all -v --remove-orphans && rimraf ./.env"
