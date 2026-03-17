@@ -1,7 +1,10 @@
 services:
   # PostgreSQL Database
   openldr-postgres:
-    image: postgres:16
+    build:
+      context: .
+      dockerfile: Dockerfile.postgres
+    image: openldr-postgres:latest
     container_name: openldr-postgres
     restart: unless-stopped
     environment:
