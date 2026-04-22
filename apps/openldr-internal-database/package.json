@@ -1,0 +1,29 @@
+{
+  "name": "@openldr/internal-database",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "copy:env": "tsx ../../environments/merge-env.ts ../../environments/.env.base ../../environments/.env.openldr-keycloak ../../environments/.env.openldr-postgres ../../environments/.env.openldr-pgadmin ../../environments/.env.openldr-minio .env",
+    "docker:build": "npm run copy:env && tsx ./docker-compose.ts pull && tsx ./docker-compose.ts build",
+    "docker:start": "npm run copy:env && tsx ./docker-compose.ts up -d --force-recreate",
+    "docker:stop": "npm run copy:env && tsx ./docker-compose.ts stop",
+    "docker:reset": "npm run copy:env && tsx ./docker-compose.ts -f docker-compose.yml down --rmi all -v --remove-orphans && rimraf ./.env"
+  },
+  "dependencies": {
+    "dockerode": "^4.0.9",
+    "ts-node": "^10.9.2",
+    "tsx": "^4.21.0"
+  },
+  "devDependencies": {
+    "@openldr/setup": "*",
+    "@repo/openldr-core": "*",
+    "@repo/eslint-config": "*",
+    "@repo/typescript-config": "*",
+    "@types/dockerode": "^4.0.1",
+    "@types/node": "^24.2.0",
+    "eslint": "^9.39.2",
+    "typescript": "^5.8.3",
+    "typescript-eslint": "^8.56.0"
+  }
+}

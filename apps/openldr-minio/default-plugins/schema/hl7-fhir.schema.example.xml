@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Bundle xmlns="http://hl7.org/fhir">
+  <id value="lab-bundle-2024-00456"/>
+  <type value="collection"/>
+
+  <entry>
+    <resource>
+      <Patient>
+        <id value="PAT-2024-00123"/>
+        <identifier>
+          <system value="urn:mrn"/>
+          <value value="FLD-9981"/>
+        </identifier>
+        <name>
+          <family value="Doe"/>
+          <given value="Jane"/>
+        </name>
+        <gender value="female"/>
+        <birthDate value="1990-05-14"/>
+      </Patient>
+    </resource>
+  </entry>
+
+  <entry>
+    <resource>
+      <Specimen>
+        <id value="spec-1"/>
+        <type>
+          <coding>
+            <system value="http://terminology.hl7.org/CodeSystem/v2-0487"/>
+            <code value="BLD"/>
+            <display value="Blood"/>
+          </coding>
+        </type>
+      </Specimen>
+    </resource>
+  </entry>
+
+  <entry>
+    <resource>
+      <Observation>
+        <id value="obs-1"/>
+        <status value="final"/>
+        <code>
+          <coding>
+            <system value="http://loinc.org"/>
+            <code value="ORGS"/>
+            <display value="Organism Identified"/>
+          </coding>
+        </code>
+        <effectiveDateTime value="2024-07-21T09:00:00Z"/>
+        <valueCodeableConcept>
+          <coding>
+            <system value="http://loinc.org"/>
+            <code value="ECO"/>
+            <display value="Escherichia coli"/>
+          </coding>
+        </valueCodeableConcept>
+      </Observation>
+    </resource>
+  </entry>
+
+  <entry>
+    <resource>
+      <Observation>
+        <id value="obs-2"/>
+        <status value="final"/>
+        <code>
+          <coding>
+            <system value="http://loinc.org"/>
+            <code value="WBC"/>
+            <display value="White Blood Cell Count"/>
+          </coding>
+        </code>
+        <effectiveDateTime value="2024-07-20T16:00:00Z"/>
+        <valueQuantity>
+          <value value="15.2"/>
+          <unit value="x10^9/L"/>
+          <system value="http://unitsofmeasure.org"/>
+          <code value="10*9/L"/>
+        </valueQuantity>
+      </Observation>
+    </resource>
+  </entry>
+
+  <entry>
+    <resource>
+      <DiagnosticReport>
+        <id value="DEFAULT_REQ-2024-00456"/>
+        <status value="final"/>
+        <code>
+          <coding>
+            <system value="http://loinc.org"/>
+            <code value="CULT"/>
+            <display value="Blood Culture"/>
+          </coding>
+        </code>
+        <subject>
+          <reference value="Patient/PAT-2024-00123"/>
+        </subject>
+        <effectiveDateTime value="2024-07-20T08:30:00Z"/>
+        <performer>
+          <display value="Central Hospital Lab"/>
+        </performer>
+        <specimen>
+          <reference value="Specimen/spec-1"/>
+          <display value="Blood"/>
+        </specimen>
+        <result>
+          <reference value="Observation/obs-1"/>
+        </result>
+        <result>
+          <reference value="Observation/obs-2"/>
+        </result>
+      </DiagnosticReport>
+    </resource>
+  </entry>
+</Bundle>

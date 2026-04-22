@@ -1,0 +1,91 @@
+services:
+  # PostgreSQL Database
+  openldr-postgres:
+    build:
+      context: .
+      dockerfile: Dockerfile.postgres
+    # image: openldr-postgres:latest
+    container_name: openldr-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    # ports:
+    #   - "${POSTGRES_PORT}:5432"
+    volumes:
+      - ./migrations/01-openldr.sql:/docker-entrypoint-initdb.d/01-openldr.sql
+      - ./migrations/02-openldr_external.sql:/docker-entrypoint-initdb.d/02-openldr_external.sql
+      - ./migrations/03-keycloak.sql:/docker-entrypoint-initdb.d/03-keycloak.sql
+      - ./migrations/04-conduktor_console.sql:/docker-entrypoint-initdb.d/04-conduktor_console.sql
+      - ./migrations/97-openldr_external_whonet_reference.sql:/docker-entrypoint-initdb.d/97-openldr_external_whonet_reference.sql
+      - ./migrations/98-openldr_external_amr_for_r_ref.sql:/docker-entrypoint-initdb.d/98-openldr_external_amr_for_r_ref.sql
+      - postgres_data:/var/lib/postgresql/data
+      # - ./migrations/99-mock-data.sql:/docker-entrypoint-initdb.d/99-mock-data.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - openldr-network
+
+  # pgAdmin - Database Management UI (Optional)
+  openldr-pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: openldr-pgadmin
+    restart: unless-stopped
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=${PGADMIN_DEFAULT_EMAIL}
+      - PGADMIN_DEFAULT_PASSWORD=${PGADMIN_DEFAULT_PASSWORD}
+      - PGADMIN_CONFIG_SERVER_MODE=${PGADMIN_CONFIG_SERVER_MODE}
+      - PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED=${PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED}
+      - PGADMIN_SERVER_JSON_FILE=/pgadmin4/servers.json
+      - SCRIPT_NAME=/postgres-console
+    user: root
+    entrypoint: /bin/sh -c
+    command: >
+      "
+      mkdir -p /var/lib/pgadmin &&
+      echo 'openldr-postgres:5432:*:postgres:${POSTGRES_PASSWORD}' > /var/lib/pgadmin/pgpass &&
+      chmod 600 /var/lib/pgadmin/pgpass &&
+      chown 5050:5050 /var/lib/pgadmin/pgpass &&
+      chown 5050:5050 /pgadmin4/servers.json &&
+      exec /entrypoint.sh
+      "
+    configs:
+      - source: servers.json
+        target: /pgadmin4/servers.json
+    # ports:
+    #   - "5050:80"
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    depends_on:
+      openldr-postgres:
+        condition: service_healthy
+    networks:
+      - openldr-network
+
+volumes:
+  postgres_data:
+    driver: local
+  pgadmin_data:
+    driver: local
+
+networks:
+  openldr-network:
+    driver: bridge
+
+configs:
+  servers.json:
+    content: |
+      {"Servers": {"1": {
+        "Group": "Servers",
+        "Name": "Server",
+        "Host": "openldr-postgres",
+        "Port": 5432,
+        "MaintenanceDB": "postgres",
+        "Username": "postgres",
+        "PassFile": "/var/lib/pgadmin/pgpass",
+        "SSLMode": "prefer"
+      }}}

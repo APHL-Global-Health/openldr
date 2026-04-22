@@ -1,0 +1,22 @@
+{
+  "name": "@openldr/init",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "start": "tsx init.ts"
+  },
+  "dependencies": {
+    "dotenv": "^16.6.1",
+    "tsx": "^4.21.0"
+  },
+  "devDependencies": {
+    "@openldr/kafka": "*",
+    "@openldr/keycloak": "*",
+    "@openldr/minio": "*",
+    "@repo/openldr-core": "*",
+    "@repo/typescript-config": "*",
+    "@types/node": "^24.2.0",
+    "typescript": "^5.8.3"
+  }
+}

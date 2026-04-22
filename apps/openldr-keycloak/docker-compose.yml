@@ -1,0 +1,54 @@
+services:
+  openldr-keycloak:
+    image: quay.io/keycloak/keycloak:26.0
+    container_name: openldr-keycloak
+    hostname: openldr-keycloak
+    restart: unless-stopped
+    environment:
+      KC_DB: postgres
+      KC_DB_URL_HOST: openldr-postgres
+      KC_DB_URL_DATABASE: keycloak
+      KC_DB_USERNAME: postgres
+      KC_DB_PASSWORD: postgres
+      KC_BOOTSTRAP_ADMIN_USERNAME: ${KEYCLOAK_ADMIN_USER}
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
+      KC_HOSTNAME_STRICT: false
+      KC_HOSTNAME_STRICT_HTTPS: true
+      KC_HTTP_ENABLED: true
+      KC_HTTPS_ENABLED: true
+      KC_HTTP_RELATIVE_PATH: /keycloak/
+      KC_PROXY: edge
+      KC_HEALTH_ENABLED: false
+      KC_METRICS_ENABLED: true
+      KEYCLOAK_SSL_REQUIRED: none
+      # KC_HOSTNAME_URL: 68.183.99.220/keycloak/
+      KC_ENABLE_STATISTICS: true
+      KC_LOG_LEVEL: info
+      QUARKUS_TRANSACTION_MANAGER_ENABLE_RECOVERY: true
+      KC_HTTPS_CERTIFICATE_FILE: /opt/keycloak/conf/server.crt
+      KC_HTTPS_CERTIFICATE_KEY_FILE: /opt/keycloak/conf/server.key
+    # command: start-dev
+    command: start
+    # ports:
+    #   - "8080:8080"
+    volumes:
+      - ../../packages/openldr-core/certs/domain.crt:/opt/keycloak/conf/server.crt
+      - ../../packages/openldr-core/certs/domain.key:/opt/keycloak/conf/server.key
+      - ./realm-config:/opt/keycloak/data/import
+      # - ./themes/openldr/:/opt/keycloak/themes/openldr/
+    networks:
+      - openldr-network
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "exec 3<>/dev/tcp/127.0.0.1/8080;echo -e 'GET /health/ready HTTP/1.1\r\nhost: http://localhost\r\nConnection: close\r\n\r\n' >&3;if [ $? -eq 0 ]; then echo 'Healthcheck Successful';exit 0;else echo 'Healthcheck Failed';exit 1;fi;",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 30
+      start_period: 60s
+
+networks:
+  openldr-network:
+    driver: bridge

@@ -1,0 +1,274 @@
+# OpenLDR MCP Server
+
+An MCP (Model Context Protocol) server for the OpenLDR laboratory data management system. This service exposes real-time pipeline monitoring, message tracking, and system health capabilities over the Streamable HTTP transport, enabling AI assistants and MCP-compatible clients to inspect and troubleshoot the OpenLDR data pipeline.
+
+## Overview
+
+The OpenLDR MCP Server sits at the intersection of AI tooling and laboratory data infrastructure. It connects to the core OpenLDR services -- PostgreSQL databases, Apache Kafka, and MinIO object storage -- and surfaces them as structured MCP tools. This allows AI agents (such as those in `openldr-ai`) and developer tools like the MCP Inspector to query message processing status, trace data through the pipeline, and diagnose errors without direct database or broker access.
+
+The server implements the [Model Context Protocol](https://modelcontextprotocol.io/) specification using the Streamable HTTP transport with session management and SSE-based streaming.
+
+## Tech Stack
+
+- **Runtime:** Node.js 24 (Alpine)
+- **Language:** TypeScript (ESM)
+- **MCP SDK:** `@modelcontextprotocol/sdk` (Streamable HTTP transport)
+- **HTTP Framework:** Express
+- **Databases:** PostgreSQL via `pg` (two pools: `openldr` main and `openldr_external`)
+- **Message Broker:** Apache Kafka via `kafkajs`
+- **Object Storage:** MinIO via `minio` and `@aws-sdk/client-s3`
+- **Schema Validation:** Zod
+- **Build System:** Turborepo (monorepo workspace `@openldr/mcp-server`)
+- **Containerization:** Docker (multi-stage build)
+
+## MCP Tools
+
+The server registers the following tools that MCP clients can invoke:
+
+| Tool | Description | Parameters | Read-Only |
+|------|-------------|------------|-----------|
+| `health_check` | Check server initialization status and service availability (databases, Kafka, MinIO) | None | Yes |
+| `get_message_status` | Get the current processing status, stage, and error details for a specific message | `messageId` (string) | Yes |
+| `get_message_events` | Get the full event history for a specific message through the pipeline | `messageId` (string) | Yes |
+
+### Tool Details
+
+**`health_check`** returns a JSON object with:
+- Server readiness and initialization state
+- Connection status for external database, main database, and Kafka
+- Any initialization error messages
+
+**`get_message_status`** returns:
+- Current pipeline stage (`ingest`, `validation`, `mapping`, `storage`, `outpost`)
+- Current status (`queued`, `processing`, `completed`, `failed`)
+- Object storage paths (raw, validated, mapped, processed)
+- Outpost delivery status
+- Error details (stage, code, message) if applicable
+
+**`get_message_events`** returns:
+- Chronological list of all processing events for a message
+- Each event includes stage, status, event type, timestamps, plugin info, and any errors
+
+## API Endpoints
+
+The server exposes a single Streamable HTTP endpoint for MCP communication:
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `POST` | `/stream` | MCP request handler. Accepts JSON-RPC messages. Creates a new session on `initialize` requests; routes subsequent requests by `mcp-session-id` header. |
+| `GET` | `/stream` | SSE stream for receiving server-to-client notifications. Requires `mcp-session-id` header. Supports reconnection via `Last-Event-ID`. |
+| `DELETE` | `/stream` | Terminates an MCP session. Requires `mcp-session-id` header. |
+
+The MCP transport uses session-based routing. Each client connection receives a unique session ID (UUID) via the `mcp-session-id` response header on initialization.
+
+## Prerequisites
+
+- Node.js >= 18
+- npm >= 11
+- Docker and Docker Compose (for containerized deployment)
+- Running OpenLDR infrastructure services:
+  - PostgreSQL (with `openldr` and `openldr_external` databases)
+  - Apache Kafka
+  - MinIO
+
+## Environment Variables
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `MCP_PORT` | Port the MCP server listens on | `6060` |
+| `MCP_SERVER_HOSTNAME` | Container hostname | `openldr-mcp-server` |
+| `NODE_ENV` | Environment mode (`production` / `development`) | -- |
+| `POSTGRES_HOSTNAME` | PostgreSQL host | `openldr-postgres` |
+| `POSTGRES_PORT` | PostgreSQL port | `5432` |
+| `POSTGRES_DB` | Main database name | `openldr` |
+| `POSTGRES_DB_EXTERNAL` | External database name | `openldr_external` |
+| `POSTGRES_USER` | PostgreSQL username | `postgres` |
+| `POSTGRES_PASSWORD` | PostgreSQL password | `postgres` |
+| `KAFKA_HOSTNAME` | Kafka broker host | `openldr-kafka1` |
+| `MINIO_HOSTNAME` | MinIO host | `openldr-minio` |
+| `MINIO_API_PORT` | MinIO API port | `9000` |
+| `MINIO_ROOT_USER` | MinIO access key | `minioadmin` |
+| `MINIO_ROOT_PASSWORD` | MinIO secret key | `minioadmin` |
+| `MINIO_USE_SSL` | Enable SSL for MinIO | `false` |
+| `MINIO_ENDPOINT` | Full MinIO endpoint URL | `http://openldr-minio:9000` |
+| `MINIO_REGION` | MinIO region | `us-east-1` |
+
+The `.env` file is auto-generated by merging base environment files from the repository root. Run the following to generate it:
+
+```bash
+npm run copy:env
+```
+
+## Setup and Running
+
+### Local Development
+
+From the monorepo root:
+
+```bash
+# Install dependencies
+npm install
+
+# Generate the .env file for this app
+npm run copy:env --workspace=@openldr/mcp-server
+
+# Start the server
+npm run start --workspace=@openldr/mcp-server
+```
+
+Or from the app directory:
+
+```bash
+cd apps/openldr-mcp-server
+npm run copy:env
+npm run start
+```
+
+The server starts on port `6060` by default.
+
+### MCP Inspector
+
+The MCP Inspector provides a web UI for testing and debugging the MCP server interactively:
+
+```bash
+npm run inspect
+```
+
+This launches the inspector at `http://127.0.0.1:6274` (client UI) with the server proxy on port `6277`.
+
+## Docker Deployment
+
+### Build and Run
+
+```bash
+# Build the Docker image
+npm run docker:build
+
+# Start the container (detached)
+npm run docker:start
+
+# Stop the container
+npm run docker:stop
+
+# Full reset (remove images, volumes, and orphans)
+npm run docker:reset
+```
+
+### Docker Compose Services
+
+The `docker-compose.yml` defines two services:
+
+| Service | Image | Ports | Description |
+|---------|-------|-------|-------------|
+| `openldr-mcp-server` | `openldr-mcp-server:latest` | `6060:6060` | The MCP server |
+| `openldr-mcp-inspector` | `ghcr.io/modelcontextprotocol/inspector:latest` | `6274:6274`, `6277:6277` | MCP Inspector web UI for debugging |
+
+Both services join the `openldr-network` bridge network for communication with other OpenLDR services.
+
+### Dockerfile
+
+The image uses a multi-stage build:
+
+1. **builder** -- Installs Turbo globally, copies the full monorepo, and runs `turbo prune` to isolate the `@openldr/mcp-server` workspace.
+2. **installer** -- Installs dependencies with `npm ci`, copies the pruned workspace, and builds.
+3. **runner** -- Copies the built output and runs `npm run start`.
+
+Base image: `node:24-alpine`.
+
+## MCP Client Configuration
+
+To connect an MCP client to this server, use the following configuration (also available in `mcp.json`):
+
+```json
+{
+  "mcpServers": {
+    "openldr": {
+      "type": "streamable-http",
+      "url": "http://openldr-mcp-server:6060/stream"
+    }
+  }
+}
+```
+
+When connecting from outside Docker, replace the hostname:
+
+```json
+{
+  "mcpServers": {
+    "openldr": {
+      "type": "streamable-http",
+      "url": "http://localhost:6060/stream"
+    }
+  }
+}
+```
+
+## Integration with OpenLDR Services
+
+This MCP server is part of the OpenLDR v2 monorepo and integrates with the following services:
+
+- **openldr-ai** -- The AI service consumes this MCP server to provide conversational access to pipeline monitoring and troubleshooting. The system message (`system-message.txt`) defines the AI assistant persona and tool usage guidelines.
+- **openldr-data-processing** -- The data processing pipeline writes message tracking events (`messageProcessingRuns`, `messageProcessingEvents`) that this server reads and exposes via MCP tools.
+- **openldr-internal-database (PostgreSQL)** -- Main database (`openldr`) stores message processing runs and events. External database (`openldr_external`) stores terminology, concepts, and concept mappings.
+- **openldr-kafka** -- The server connects as an admin client to inspect topics, offsets, and consumer lag. Kafka topics follow the naming convention: `raw-inbound`, `mapped-inbound`, `validated-inbound`, `processed-inbound`.
+- **openldr-minio** -- Object storage for raw and processed data payloads. The server reads objects and metadata for pipeline tracing.
+- **openldr-keycloak** -- Authentication service (Keycloak admin client is included as a dependency for user/client management).
+
+### Data Pipeline Stages
+
+The MCP server tracks messages through the following pipeline stages:
+
+```
+ingest -> validation -> mapping -> storage -> outpost
+```
+
+Each stage transitions through statuses: `queued` -> `processing` -> `completed` or `failed`.
+
+## System Message
+
+The file `system-message.txt` contains the AI assistant system prompt used by `openldr-ai` when connecting to this MCP server. It defines:
+
+- The assistant's role as a laboratory data system monitor
+- Tool usage guidelines and best practices
+- Response style conventions
+- Example interaction patterns
+
+## Troubleshooting
+
+### Server fails to start with database connection errors
+
+Ensure PostgreSQL is running and accessible. In Docker, verify the `openldr-postgres` container is healthy and on the `openldr-network`. Check that `POSTGRES_HOSTNAME`, `POSTGRES_PORT`, `POSTGRES_USER`, and `POSTGRES_PASSWORD` are correctly set in `.env`.
+
+### Kafka connection timeouts
+
+The server connects to Kafka at `${KAFKA_HOSTNAME}:19092` (internal Docker port). Ensure the Kafka broker is running and reachable. For local development, you may need to adjust the broker address in the Kafka configuration.
+
+### MinIO object retrieval fails
+
+Verify that `MINIO_HOSTNAME`, `MINIO_API_PORT`, `MINIO_ROOT_USER`, and `MINIO_ROOT_PASSWORD` are correct. Ensure the MinIO service is running and the target buckets exist.
+
+### Services not initialized error from tools
+
+If MCP tools return "Services not initialized", the server is still connecting to backend services. Wait a few seconds and retry. Check the server logs for initialization errors.
+
+### MCP Inspector cannot connect
+
+When running the inspector locally with `npm run inspect`, it expects the MCP server to be running on `localhost:6060`. When running via Docker Compose, ensure both containers are on the same network and use the service hostname `openldr-mcp-server`.
+
+### Session management issues
+
+The server uses in-memory session and event storage. Restarting the server invalidates all existing sessions. Clients must re-initialize after a server restart. For production, consider implementing a persistent event store.
+
+### Generating the .env file
+
+If `.env` is missing or outdated, regenerate it:
+
+```bash
+npm run copy:env
+```
+
+This merges environment fragments from `environments/.env.base`, `.env.openldr-minio`, `.env.openldr-keycloak`, `.env.openldr-postgres`, `.env.openldr-pgadmin`, `.env.openldr-kafka`, and `.env.openldr-mcp-server`.
+
+## License
+
+Apache License 2.0. See [LICENSE](./LICENSE) for details.

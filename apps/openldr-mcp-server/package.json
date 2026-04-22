@@ -1,0 +1,47 @@
+{
+  "name": "@openldr/mcp-server",
+  "version": "1.0.0",
+  "description": "OpenLDR MCP",
+  "main": "src/index.ts",
+  "author": "Association of Public Health Laboratories (APHL)",
+  "license": "Apache-2.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "copy:env": "tsx ../../environments/merge-env.ts ../../environments/.env.base ../../environments/.env.openldr-minio ../../environments/.env.openldr-keycloak ../../environments/.env.openldr-postgres ../../environments/.env.openldr-pgadmin ../../environments/.env.openldr-kafka ../../environments/.env.openldr-mcp-server .env",
+    "docker:build": "npm run copy:env && tsx ./docker-compose.ts build",
+    "docker:start": "npm run copy:env && tsx ./docker-compose.ts up -d",
+    "docker:stop": "npm run copy:env && tsx ./docker-compose.ts stop",
+    "docker:reset": "npm run copy:env && tsx ./docker-compose.ts down --rmi all -v --remove-orphans && npm run stop:services && rimraf ./.env",
+    "start": "cross-env NODE_ENV=production tsx src/index.ts",
+    "inspect": "cross-env DANGEROUSLY_OMIT_AUTH=true CLIENT_PORT=6274 SERVER_PORT=6277 HOST=127.0.0.1 MCP_AUTO_OPEN_ENABLED=false ALLOWED_ORIGINS=http://127.0.0.1:6274,http://localhost:6274 npx @modelcontextprotocol/inspector"
+  },
+  "keywords": [],
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.995.0",
+    "@aws-sdk/lib-storage": "^3.995.0",
+    "@keycloak/keycloak-admin-client": "^26.4.7",
+    "@modelcontextprotocol/sdk": "^1.25.1",
+    "@opensearch-project/opensearch": "^3.5.1",
+    "@repo/typescript-config": "*",
+    "axios": "^1.13.2",
+    "cross-env": "^10.1.0",
+    "dotenv": "^17.2.3",
+    "kafkajs": "^2.2.4",
+    "minio": "*",
+    "pg": "^8.13.1",
+    "tsx": "^4.20.6",
+    "zod": "^4.1.11"
+  },
+  "devDependencies": {
+    "@modelcontextprotocol/inspector": "^0.21.0",
+    "@openldr/data-processing": "*",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
+    "@types/node": "^24.7.0",
+    "@types/pg": "^8.16.0",
+    "eslint": "^9.39.2",
+    "typescript": "^5.8.3",
+    "typescript-eslint": "^8.56.0"
+  }
+}

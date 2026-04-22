@@ -1,0 +1,30 @@
+services:
+  # MinIO Object Storage
+  openldr-minio:
+    image: minio/minio:RELEASE.2025-02-28T09-55-16Z
+    container_name: openldr-minio
+    command: server /data --console-address ":9001"
+    restart: unless-stopped
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+      MINIO_BROWSER_REDIRECT_URL: ${MINIO_BROWSER_REDIRECT_URL}
+    # ports:
+    #   - "${MINIO_API_PORT}:9000" # API
+    #   - "${MINIO_CONSOLE_PORT}:9001" # Console
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - openldr-network
+
+volumes:
+  minio_data:
+
+networks:
+  openldr-network:
+    driver: bridge

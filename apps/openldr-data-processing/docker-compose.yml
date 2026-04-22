@@ -1,0 +1,21 @@
+services:
+  openldr-data-processing:
+    image: openldr-data-processing:latest
+    build:
+      context: ../../
+      dockerfile: ./apps/openldr-data-processing/Dockerfile
+    container_name: openldr-data-processing
+    hostname: openldr-data-processing
+    restart: unless-stopped
+    env_file:
+      - .env
+    # ports:
+    #   - "${DATA_PROCESSING_PORT}:3001"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - openldr-network
+
+networks:
+  openldr-network:
+    driver: bridge

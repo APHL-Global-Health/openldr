@@ -1,0 +1,53 @@
+{
+  "name": "openldr-v2",
+  "private": true,
+  "scripts": {
+    "init": "tsx ./apps/openldr-setup/openldr.ts init",
+    "setup:services": "turbo run setup:services",
+    "reset:services": "turbo run reset:services",
+    "stop:services": "turbo run stop:services",
+    "start:services": "turbo run start:services",
+    "docker:build:parallel": "turbo run docker:build --parallel --force",
+    "docker:build:force": "turbo run docker:build --force",
+    "docker:build": "turbo run docker:build",
+    "docker:start": "turbo run docker:start --force",
+    "docker:stop": "turbo run docker:stop --force",
+    "docker:reset": "turbo run docker:reset --force",
+    "build": "turbo run build",
+    "dev": "turbo run dev",
+    "lint": "turbo run lint",
+    "format": "prettier --write \"**/*.{ts,tsx,md}\"",
+    "check-types": "turbo run check-types"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "turbo": "^2.8.3"
+  },
+  "optionalDependencies": {
+    "@rollup/rollup-win32-x64-msvc": "4.59.0",
+    "@rollup/rollup-linux-x64-musl": "4.59.0",
+    "@rollup/rollup-linux-x64-gnu": "4.59.0"
+  },
+  "overrides": {
+    "minimatch": "^3.1.3",
+    "serve-handler": {
+      "minimatch": "^3.1.3"
+    },
+    "fast-xml-parser": ">=5.3.8",
+    "serialize-javascript": ">=7.0.3"
+  },
+  "devDependencies": {
+    "@repo/eslint-config": "*",
+    "@repo/typescript-config": "*"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "packageManager": "npm@11.3.0",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ]
+}

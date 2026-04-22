@@ -1,0 +1,199 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<message>
+  <patient>
+    <patient_guid>PAT-2024-00123</patient_guid>
+    <firstname>Jane</firstname>
+    <middlename></middlename>
+    <surname>Doe</surname>
+    <sex>F</sex>
+    <folder_no>FLD-9981</folder_no>
+    <date_of_birth>1990-05-14</date_of_birth>
+    <phone>+255712345678</phone>
+    <email></email>
+    <national_id></national_id>
+  </patient>
+
+  <lab_request>
+    <request_id>DEFAULT_REQ-2024-00456</request_id>
+    <facility_code>
+      <system_id>DEFAULT_FAC</system_id>
+      <concept_code>FAC001</concept_code>
+      <display_name>Central Hospital Lab</display_name>
+      <concept_class>facility</concept_class>
+      <datatype>coded</datatype>
+      <properties>
+        <region>Dar es Salaam</region>
+      </properties>
+    </facility_code>
+    <panel_code>
+      <system_id>DEFAULT_TEST</system_id>
+      <concept_code>CULT</concept_code>
+      <display_name>Blood Culture</display_name>
+      <concept_class>panel</concept_class>
+      <datatype>coded</datatype>
+    </panel_code>
+    <specimen_code>
+      <concept_code>BLD</concept_code>
+      <display_name>Blood</display_name>
+      <concept_class>specimen</concept_class>
+      <datatype>coded</datatype>
+    </specimen_code>
+    <taken_datetime>2024-07-20T08:30:00Z</taken_datetime>
+    <collected_datetime>2024-07-20T08:30:00Z</collected_datetime>
+    <received_at>2024-07-20T10:15:00Z</received_at>
+    <registered_at>2024-07-20T10:20:00Z</registered_at>
+    <analysis_at>2024-07-20T14:00:00Z</analysis_at>
+    <authorised_at>2024-07-21T09:00:00Z</authorised_at>
+    <clinical_info>Suspected sepsis, fever &gt;38.5C for 3 days</clinical_info>
+    <icd10_codes>A41.9</icd10_codes>
+    <therapy>Empirical ceftriaxone</therapy>
+    <priority>S</priority>
+    <age_years>34</age_years>
+    <age_days></age_days>
+    <sex>F</sex>
+    <patient_class>I</patient_class>
+    <section_code>MB</section_code>
+    <result_status>F</result_status>
+    <requesting_facility>Emergency Ward</requesting_facility>
+    <testing_facility>Central Hospital Lab</testing_facility>
+    <requesting_doctor>Dr. Mwakasege</requesting_doctor>
+    <tested_by>Lab Tech Kimaro</tested_by>
+    <authorised_by>Dr. Mushi</authorised_by>
+  </lab_request>
+
+  <lab_results>
+    <result>
+      <source_test_code>CULT</source_test_code>
+      <obx_sub_id>1</obx_sub_id>
+      <observation_code>
+        <concept_code>ORGS</concept_code>
+        <display_name>Organism Identified</display_name>
+        <concept_class>test</concept_class>
+        <datatype>coded</datatype>
+      </observation_code>
+      <result_value>Escherichia coli</result_value>
+      <result_type>CE</result_type>
+      <numeric_value></numeric_value>
+      <coded_value>ECO</coded_value>
+      <text_value></text_value>
+      <numeric_units></numeric_units>
+      <abnormal_flag></abnormal_flag>
+      <rpt_units></rpt_units>
+      <rpt_flag></rpt_flag>
+      <rpt_range></rpt_range>
+      <result_timestamp>2024-07-21T09:00:00Z</result_timestamp>
+      <isolate_index>1</isolate_index>
+      <is_resulted>true</is_resulted>
+      <raw_result></raw_result>
+    </result>
+    <result>
+      <source_test_code>CBC</source_test_code>
+      <obx_sub_id>1</obx_sub_id>
+      <observation_code>
+        <system_id>DEFAULT_TEST</system_id>
+        <concept_code>WBC</concept_code>
+        <display_name>White Blood Cell Count</display_name>
+        <concept_class>test</concept_class>
+        <datatype>coded</datatype>
+      </observation_code>
+      <result_value>15.2</result_value>
+      <result_type>NM</result_type>
+      <numeric_value>15.2</numeric_value>
+      <coded_value></coded_value>
+      <text_value></text_value>
+      <numeric_units>x10^9/L</numeric_units>
+      <abnormal_flag>H</abnormal_flag>
+      <rpt_units>x10^9/L</rpt_units>
+      <rpt_flag>H</rpt_flag>
+      <rpt_range>4.0-11.0</rpt_range>
+      <result_timestamp>2024-07-20T16:00:00Z</result_timestamp>
+      <isolate_index></isolate_index>
+      <is_resulted>true</is_resulted>
+      <raw_result></raw_result>
+    </result>
+  </lab_results>
+
+  <isolates>
+    <isolate>
+      <isolate_index>1</isolate_index>
+      <source_test_code>CULT</source_test_code>
+      <organism_code>
+        <concept_code>ECO</concept_code>
+        <display_name>Escherichia coli</display_name>
+        <concept_class>organism</concept_class>
+        <datatype>coded</datatype>
+      </organism_code>
+      <organism_type>bacteria</organism_type>
+      <isolate_number>1</isolate_number>
+      <serotype></serotype>
+      <patient_age_days>12410</patient_age_days>
+      <patient_sex>F</patient_sex>
+      <ward>Emergency Ward</ward>
+      <ward_type>er</ward_type>
+      <origin>h</origin>
+      <beta_lactamase></beta_lactamase>
+      <esbl>positive</esbl>
+      <carbapenemase></carbapenemase>
+      <mrsa_screen></mrsa_screen>
+      <inducible_clinda></inducible_clinda>
+      <custom_fields></custom_fields>
+    </isolate>
+  </isolates>
+
+  <susceptibility_tests>
+    <test>
+      <isolate_index>1</isolate_index>
+      <source_test_code>SENS</source_test_code>
+      <antibiotic_code>
+        <concept_code>AMP</concept_code>
+        <display_name>Ampicillin</display_name>
+        <concept_class>antibiotic</concept_class>
+        <datatype>coded</datatype>
+      </antibiotic_code>
+      <test_method>DISK</test_method>
+      <disk_potency>10</disk_potency>
+      <result_raw>6</result_raw>
+      <result_numeric>6</result_numeric>
+      <susceptibility_value>R</susceptibility_value>
+      <quantitative_value></quantitative_value>
+      <guideline>CLSI</guideline>
+      <guideline_version>2024</guideline_version>
+    </test>
+    <test>
+      <isolate_index>1</isolate_index>
+      <source_test_code>SENS</source_test_code>
+      <antibiotic_code>
+        <concept_code>CRO</concept_code>
+        <display_name>Ceftriaxone</display_name>
+        <concept_class>antibiotic</concept_class>
+        <datatype>coded</datatype>
+      </antibiotic_code>
+      <test_method>DISK</test_method>
+      <disk_potency>30</disk_potency>
+      <result_raw>14</result_raw>
+      <result_numeric>14</result_numeric>
+      <susceptibility_value>I</susceptibility_value>
+      <quantitative_value></quantitative_value>
+      <guideline>CLSI</guideline>
+      <guideline_version>2024</guideline_version>
+    </test>
+    <test>
+      <isolate_index>1</isolate_index>
+      <source_test_code>SENS</source_test_code>
+      <antibiotic_code>
+        <concept_code>MEM</concept_code>
+        <display_name>Meropenem</display_name>
+        <concept_class>antibiotic</concept_class>
+        <datatype>coded</datatype>
+      </antibiotic_code>
+      <test_method>MIC</test_method>
+      <disk_potency></disk_potency>
+      <result_raw>&lt;=0.25</result_raw>
+      <result_numeric>0.25</result_numeric>
+      <susceptibility_value>S</susceptibility_value>
+      <quantitative_value>&lt;=0.25</quantitative_value>
+      <guideline>CLSI</guideline>
+      <guideline_version>2024</guideline_version>
+    </test>
+  </susceptibility_tests>
+</message>

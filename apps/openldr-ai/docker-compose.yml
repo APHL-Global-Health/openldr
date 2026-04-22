@@ -1,0 +1,29 @@
+services:
+  openldr-ai:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: openldr-ai
+    restart: unless-stopped
+    env_file:
+      - .env
+    volumes:
+      - ./ai:/app/ai
+    ports:
+      - "8100:8100"
+    networks:
+      - openldr-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8100/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+
+volumes:
+  ai_models:
+    driver: local
+
+networks:
+  openldr-network:
+    driver: bridge

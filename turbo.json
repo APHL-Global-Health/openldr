@@ -1,0 +1,61 @@
+{
+  "$schema": "https://turbo.build/schema.json",
+  "ui": "tui",
+  "tasks": {
+    "build": {
+      "cache": false,
+      "dependsOn": ["^build"],
+      "inputs": ["$TURBO_DEFAULT$", ".env*"],
+      "outputs": [".next/**", "!.next/cache/**", "dist/**"]
+    },
+    "docker:test": {
+      "dependsOn": ["^docker:test"]   
+    },
+    "docker:build": {
+      "dependsOn": ["^docker:build"]   
+    },
+    "docker:start": {
+      "dependsOn": ["^docker:start"]   
+    },
+    "docker:stop": {
+      "dependsOn": ["^docker:stop"]   
+    },
+    "docker:reset": {
+      "dependsOn": ["^docker:reset"]   
+    },
+    "setup:services": {
+      "dependsOn": ["^setup:services"]   
+    },
+    "reset:services": {
+      "dependsOn": ["^reset:services"]
+    },
+    "stop:services": {
+      "dependsOn": ["^stop:services"]
+    },
+    "start:services": {
+      "dependsOn": ["^start:services"]
+    },
+    
+    "start": {
+      "dependsOn": ["^start"]
+    },
+    "lint": {
+      "dependsOn": ["^lint"]
+    },
+    "check-types": {
+      "dependsOn": ["^check-types"]
+    },
+    "dev": {
+      "cache": false,
+      "persistent": true
+    },
+    "migration": {
+      "cache": false,
+      "persistent": true
+    },
+    "migration:init": {
+      "cache": false,
+      "persistent": true
+    }
+  }
+}
