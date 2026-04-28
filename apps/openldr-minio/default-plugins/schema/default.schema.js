@@ -162,6 +162,8 @@ function xmlParseLabRequest(xml) {
   var facilityXml = xmlGetContent(lrXml, 'facility_code');
   var panelXml = xmlGetContent(lrXml, 'panel_code');
   var specimenXml = xmlGetContent(lrXml, 'specimen_code');
+  var reqFacXml = xmlGetContent(lrXml, 'requesting_facility_code');
+  var testFacXml = xmlGetContent(lrXml, 'testing_facility_code');
 
   return {
     request_id: xmlGetContent(lrXml, 'request_id') || null,
@@ -184,8 +186,8 @@ function xmlParseLabRequest(xml) {
     patient_class: xmlGetContent(lrXml, 'patient_class') || null,
     section_code: xmlGetContent(lrXml, 'section_code') || null,
     result_status: xmlGetContent(lrXml, 'result_status') || null,
-    requesting_facility: xmlGetContent(lrXml, 'requesting_facility') || null,
-    testing_facility: xmlGetContent(lrXml, 'testing_facility') || null,
+    requesting_facility_code: reqFacXml ? xmlParseConceptElement('<c>' + reqFacXml + '</c>') : null,
+    testing_facility_code: testFacXml ? xmlParseConceptElement('<c>' + testFacXml + '</c>') : null,
     requesting_doctor: xmlGetContent(lrXml, 'requesting_doctor') || null,
     tested_by: xmlGetContent(lrXml, 'tested_by') || null,
     authorised_by: xmlGetContent(lrXml, 'authorised_by') || null,
@@ -198,6 +200,7 @@ function xmlParseLabResult(resultXml) {
   var obsXml = xmlGetContent(resultXml, 'observation_code');
   return {
     source_test_code: xmlGetContent(resultXml, 'source_test_code') || null,
+    obx_set_id: xmlGetContent(resultXml, 'obx_set_id') != null ? Number(xmlGetContent(resultXml, 'obx_set_id')) : null,
     obx_sub_id: xmlGetContent(resultXml, 'obx_sub_id') != null ? Number(xmlGetContent(resultXml, 'obx_sub_id')) : null,
     observation_code: xmlParseConceptElement('<c>' + (obsXml || '') + '</c>'),
     result_value: xmlGetContent(resultXml, 'result_value') || null,
@@ -306,6 +309,10 @@ function csvRowToRecord(row) {
   var specimenName = row['specimen_name'] || specimenCode;
   var obsCode = row['observation_code'] || row['test_code'] || null;
   var obsName = row['observation_name'] || row['test_name'] || obsCode;
+  var reqFacCode = row['requesting_facility_code'] || null;
+  var reqFacName = row['requesting_facility_name'] || reqFacCode;
+  var testFacCode = row['testing_facility_code'] || null;
+  var testFacName = row['testing_facility_name'] || testFacCode;
 
   return {
     patient: {
@@ -342,8 +349,8 @@ function csvRowToRecord(row) {
       patient_class: row['patient_class'] || null,
       section_code: row['section_code'] || null,
       result_status: row['result_status'] || null,
-      requesting_facility: row['requesting_facility'] || null,
-      testing_facility: row['testing_facility'] || null,
+      requesting_facility_code: reqFacCode ? asConcept(row['requesting_facility_system_id'] || SYSTEMS.FACILITY, reqFacCode, reqFacName, 'facility', 'coded') : null,
+      testing_facility_code: testFacCode ? asConcept(row['testing_facility_system_id'] || SYSTEMS.FACILITY, testFacCode, testFacName, 'facility', 'coded') : null,
       requesting_doctor: row['requesting_doctor'] || null,
       tested_by: row['tested_by'] || null,
       authorised_by: row['authorised_by'] || null,
@@ -351,6 +358,7 @@ function csvRowToRecord(row) {
     },
     lab_results: obsCode ? [{
       source_test_code: row['source_test_code'] || null,
+      obx_set_id: row['obx_set_id'] ? Number(row['obx_set_id']) : null,
       obx_sub_id: row['obx_sub_id'] ? Number(row['obx_sub_id']) : null,
       observation_code: asConcept(row['obs_system_id'] || SYSTEMS.TEST, obsCode, obsName, 'test', 'coded'),
       result_value: row['result_value'] || null,
@@ -560,7 +568,7 @@ function convertRecord(record) {
     _metadata: record._metadata || {},
     _plugin: record._plugin || {
       plugin_name: 'default-schema',
-      plugin_version: '1.3.0',
+      plugin_version: '1.4.0',
       source_system: 'Canonical',
     },
   };
@@ -574,6 +582,8 @@ function convertRecord(record) {
   ensureSystem(out.lab_request.facility_code, SYSTEMS.FACILITY);
   ensureSystem(out.lab_request.panel_code, SYSTEMS.TEST);
   ensureSystem(out.lab_request.specimen_code, SYSTEMS.SPECIMEN);
+  ensureSystem(out.lab_request.requesting_facility_code, SYSTEMS.FACILITY);
+  ensureSystem(out.lab_request.testing_facility_code, SYSTEMS.FACILITY);
 
   // Default system_id on lab_results concept fields
   for (var i = 0; i < out.lab_results.length; i++) {
@@ -590,6 +600,37 @@ function convertRecord(record) {
     ensureSystem(out.susceptibility_tests[k].antibiotic_code, SYSTEMS.ABX);
   }
 
+  // Mirror each susceptibility_test as a lab_results entry. lab_results is the
+  // unified, general-form index of every result (including AMR); the structured
+  // per-antibiotic detail stays in susceptibility_tests for richer queries.
+  // Matches hl7-fhir.schema.js, where descendant AST observations are appended
+  // to lab_results alongside their susceptibility_tests rows.
+  var nextSetId = out.lab_results.length + 1;
+  for (var s = 0; s < out.susceptibility_tests.length; s++) {
+    var st = out.susceptibility_tests[s];
+    if (!st || !st.antibiotic_code) continue;
+    out.lab_results.push({
+      source_test_code: st.source_test_code || null,
+      obx_set_id: nextSetId++,
+      obx_sub_id: 0,
+      observation_code: st.antibiotic_code,
+      result_value: st.result_raw != null ? String(st.result_raw) : (st.susceptibility_value || null),
+      result_type: 'CE',
+      numeric_value: st.result_numeric != null ? Number(st.result_numeric) : null,
+      coded_value: st.susceptibility_value || null,
+      text_value: null,
+      numeric_units: null,
+      abnormal_flag: null,
+      rpt_units: null,
+      rpt_flag: null,
+      rpt_range: null,
+      result_timestamp: null,
+      isolate_index: st.isolate_index != null ? Number(st.isolate_index) : null,
+      is_resulted: true,
+      raw_result: st.raw_result || {},
+    });
+  }
+
   return out;
 }
 
@@ -602,4 +643,4 @@ function convert(message) {
   return results;
 }
 
-module.exports = { name: 'default-schema', version: '1.3.0', status: 'active', validate: validate, convert: convert };
+module.exports = { name: 'default-schema', version: '1.4.0', status: 'active', validate: validate, convert: convert };

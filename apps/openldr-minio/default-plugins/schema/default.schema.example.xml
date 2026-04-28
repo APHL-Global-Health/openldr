@@ -54,8 +54,20 @@
     <patient_class>I</patient_class>
     <section_code>MB</section_code>
     <result_status>F</result_status>
-    <requesting_facility>Emergency Ward</requesting_facility>
-    <testing_facility>Central Hospital Lab</testing_facility>
+    <requesting_facility_code>
+      <system_id>DEFAULT_FAC</system_id>
+      <concept_code>TDZ</concept_code>
+      <display_name>Emergency Ward</display_name>
+      <concept_class>facility</concept_class>
+      <datatype>coded</datatype>
+    </requesting_facility_code>
+    <testing_facility_code>
+      <system_id>DEFAULT_FAC</system_id>
+      <concept_code>FAC001</concept_code>
+      <display_name>Central Hospital Lab</display_name>
+      <concept_class>facility</concept_class>
+      <datatype>coded</datatype>
+    </testing_facility_code>
     <requesting_doctor>Dr. Mwakasege</requesting_doctor>
     <tested_by>Lab Tech Kimaro</tested_by>
     <authorised_by>Dr. Mushi</authorised_by>
@@ -64,8 +76,10 @@
   <lab_results>
     <result>
       <source_test_code>CULT</source_test_code>
-      <obx_sub_id>1</obx_sub_id>
+      <obx_set_id>1</obx_set_id>
+      <obx_sub_id>0</obx_sub_id>
       <observation_code>
+        <system_id>DEFAULT_ORG</system_id>
         <concept_code>ORGS</concept_code>
         <display_name>Organism Identified</display_name>
         <concept_class>test</concept_class>
@@ -88,7 +102,8 @@
     </result>
     <result>
       <source_test_code>CBC</source_test_code>
-      <obx_sub_id>1</obx_sub_id>
+      <obx_set_id>2</obx_set_id>
+      <obx_sub_id>0</obx_sub_id>
       <observation_code>
         <system_id>DEFAULT_TEST</system_id>
         <concept_code>WBC</concept_code>
@@ -118,6 +133,7 @@
       <isolate_index>1</isolate_index>
       <source_test_code>CULT</source_test_code>
       <organism_code>
+        <system_id>DEFAULT_ORG</system_id>
         <concept_code>ECO</concept_code>
         <display_name>Escherichia coli</display_name>
         <concept_class>organism</concept_class>
@@ -145,6 +161,7 @@
       <isolate_index>1</isolate_index>
       <source_test_code>SENS</source_test_code>
       <antibiotic_code>
+        <system_id>DEFAULT_ABX</system_id>
         <concept_code>AMP</concept_code>
         <display_name>Ampicillin</display_name>
         <concept_class>antibiotic</concept_class>
@@ -163,6 +180,7 @@
       <isolate_index>1</isolate_index>
       <source_test_code>SENS</source_test_code>
       <antibiotic_code>
+        <system_id>DEFAULT_ABX</system_id>
         <concept_code>CRO</concept_code>
         <display_name>Ceftriaxone</display_name>
         <concept_class>antibiotic</concept_class>
@@ -181,6 +199,7 @@
       <isolate_index>1</isolate_index>
       <source_test_code>SENS</source_test_code>
       <antibiotic_code>
+        <system_id>DEFAULT_ABX</system_id>
         <concept_code>MEM</concept_code>
         <display_name>Meropenem</display_name>
         <concept_class>antibiotic</concept_class>

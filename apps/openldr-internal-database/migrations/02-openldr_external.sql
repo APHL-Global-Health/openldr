@@ -304,8 +304,8 @@ CREATE TABLE lab_requests (
     therapy              TEXT,                                -- current patient therapy (important for AMR context)
 
     -- Requesting / performing
-    requesting_facility  VARCHAR(100),
-    testing_facility     VARCHAR(100),
+    requesting_facility_concept_id UUID REFERENCES concepts(id),  -- resolved facility concept (e.g. ward / clinic that ordered)
+    testing_facility_concept_id    UUID REFERENCES concepts(id),  -- resolved facility concept (e.g. lab that ran the test)
     requesting_doctor    VARCHAR(255),
     tested_by            VARCHAR(255),
     authorised_by        VARCHAR(255),
@@ -347,6 +347,8 @@ CREATE INDEX idx_requests_data           ON lab_requests USING gin(request_data)
 CREATE INDEX idx_requests_mappings       ON lab_requests USING gin(mappings);
 CREATE INDEX idx_requests_age            ON lab_requests(age_years);
 CREATE INDEX idx_requests_composite      ON lab_requests(request_id, obr_set_id, facility_id);
+CREATE INDEX idx_requests_req_facility_concept  ON lab_requests(requesting_facility_concept_id);
+CREATE INDEX idx_requests_test_facility_concept ON lab_requests(testing_facility_concept_id);
 
 -- ----------------------------------------------------------------------------
 -- lab_results — one row per observation / test result

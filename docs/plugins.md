@@ -199,7 +199,8 @@ When using the **default schema plugin**, the input must already be in canonical
   },
   "lab_results": [
     {
-      "obx_sub_id": 1,
+      "obx_set_id": 1,
+      "obx_sub_id": 0,
       "observation_code": {
         "concept_code": "GLU",
         "display_name": "Glucose",
@@ -368,8 +369,8 @@ These are used when no custom plugin is assigned to a data feed, or as fallbacks
 | `patient_class` | char(1) | `I`, `O`, `E` | Inpatient / Outpatient / Emergency |
 | `section_code` | varchar(10) | | Lab section: `CH`, `HM`, `MB`, etc. |
 | `result_status` | char(1) | `F`, `P`, `C` | Final / Preliminary / Corrected |
-| `requesting_facility` | string | | Ordering facility or ward |
-| `testing_facility` | string | | Lab that performed the test |
+| `requesting_facility_code` | concept | | Ordering facility or ward — coded concept (resolved to `requesting_facility_concept_id`) |
+| `testing_facility_code` | concept | | Lab that performed the test — coded concept (resolved to `testing_facility_concept_id`) |
 | `requesting_doctor` | string | | Ordering clinician |
 | `tested_by` | string | | Lab technician |
 | `authorised_by` | string | | Authorizing clinician |
@@ -379,7 +380,8 @@ These are used when no custom plugin is assigned to a data feed, or as fallbacks
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `obx_sub_id` | integer | Sub-observation ID (usually `1`) |
+| `obx_set_id` | integer | HL7 OBX-1: panel-position of this observation (1, 2, 3, ...) |
+| `obx_sub_id` | integer | HL7 OBX-4: sub-observation ID; `0` when no sub-result |
 | `observation_code` | concept | What was observed |
 | `result_value` | string | Raw result as reported |
 | `result_type` | string | `NM` (numeric), `CE` (coded), `ST` (string) |

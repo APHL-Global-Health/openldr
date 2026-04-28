@@ -119,8 +119,8 @@ Every record returned by `convert()` must follow this structure:
   result_status: 'F' | 'P' | 'C' | null,  // Final/Preliminary/Corrected
 
   // Personnel
-  requesting_facility: string | null,
-  testing_facility: string | null,
+  requesting_facility_code: concept | null,   // Ordering facility / ward — coded concept (asConcept(...))
+  testing_facility_code: concept | null,      // Lab that performed the test — coded concept
   requesting_doctor: string | null,
   tested_by: string | null,
   authorised_by: string | null,
@@ -136,7 +136,8 @@ Each entry is one observation/test result:
 ```javascript
 {
   source_test_code: string | null,    // Source system's test code
-  obx_sub_id: 1,                     // Always 1 for single-field observations
+  obx_set_id: number | null,         // HL7 OBX-1: panel-position of this observation (1, 2, 3, ...)
+  obx_sub_id: number | null,         // HL7 OBX-4: sub-ID; 0 (or null) when no sub-result
   observation_code: concept,          // What was observed — asConcept(...)
 
   // Values — set the appropriate ones based on result_type

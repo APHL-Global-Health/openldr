@@ -30,6 +30,7 @@
       "datatype": "coded"
     },
     "specimen_code": {
+      "system_id": "DEFAULT_SPEC",
       "concept_code": "BLD",
       "display_name": "Blood",
       "concept_class": "specimen",
@@ -51,8 +52,20 @@
     "patient_class": "I",
     "section_code": "MB",
     "result_status": "F",
-    "requesting_facility": "Emergency Ward",
-    "testing_facility": "Central Hospital Lab",
+    "requesting_facility_code": {
+      "system_id": "DEFAULT_FAC",
+      "concept_code": "TDZ",
+      "display_name": "Emergency Ward",
+      "concept_class": "facility",
+      "datatype": "coded"
+    },
+    "testing_facility_code": {
+      "system_id": "DEFAULT_FAC",
+      "concept_code": "FAC001",
+      "display_name": "Central Hospital Lab",
+      "concept_class": "facility",
+      "datatype": "coded"
+    },
     "requesting_doctor": "Dr. Mwakasege",
     "tested_by": "Lab Tech Kimaro",
     "authorised_by": "Dr. Mushi",
@@ -61,8 +74,10 @@
   "lab_results": [
     {
       "source_test_code": "CULT",
-      "obx_sub_id": 1,
+      "obx_set_id": 1,
+      "obx_sub_id": 0,
       "observation_code": {
+        "system_id": "DEFAULT_ORG",
         "concept_code": "ORGS",
         "display_name": "Organism Identified",
         "concept_class": "test",
@@ -85,7 +100,8 @@
     },
     {
       "source_test_code": "CBC",
-      "obx_sub_id": 1,
+      "obx_set_id": 2,
+      "obx_sub_id": 0,
       "observation_code": {
         "system_id": "DEFAULT_TEST",
         "concept_code": "WBC",
@@ -114,6 +130,7 @@
       "isolate_index": 1,
       "source_test_code": "CULT",
       "organism_code": {
+        "system_id": "DEFAULT_ORG",
         "concept_code": "ECO",
         "display_name": "Escherichia coli",
         "concept_class": "organism",
@@ -141,6 +158,7 @@
       "isolate_index": 1,
       "source_test_code": "SENS",
       "antibiotic_code": {
+        "system_id": "DEFAULT_ABX",
         "concept_code": "AMP",
         "display_name": "Ampicillin",
         "concept_class": "antibiotic",
@@ -160,6 +178,7 @@
       "isolate_index": 1,
       "source_test_code": "SENS",
       "antibiotic_code": {
+        "system_id": "DEFAULT_ABX",
         "concept_code": "CRO",
         "display_name": "Ceftriaxone",
         "concept_class": "antibiotic",
@@ -179,6 +198,7 @@
       "isolate_index": 1,
       "source_test_code": "SENS",
       "antibiotic_code": {
+        "system_id": "DEFAULT_ABX",
         "concept_code": "MEM",
         "display_name": "Meropenem",
         "concept_class": "antibiotic",
