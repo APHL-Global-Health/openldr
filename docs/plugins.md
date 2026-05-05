@@ -32,13 +32,13 @@ Upload → Schema → Mapper → Storage → Outpost
 
 Each stage writes its output to MinIO and publishes a Kafka message for the next stage:
 
-| Stage | Kafka Topic | MinIO Path | Purpose |
-|-------|------------|------------|---------|
-| Upload | `raw-inbound` | `{project}/raw/{feedId}/{messageId}.json` | Raw file storage |
-| Schema | `validated-inbound` | `{project}/validated/{feedId}/{messageId}.json` | Validation and conversion |
-| Mapper | `mapped-inbound` | `{project}/mapped/{feedId}/{messageId}.json` | Terminology resolution |
-| Storage | `processed-inbound` | `{project}/processed/{feedId}/{messageId}.json` | Database persistence |
-| Outpost | - | - | Downstream push (optional) |
+| Stage   | Kafka Topic         | MinIO Path                                      | Purpose                    |
+| ------- | ------------------- | ----------------------------------------------- | -------------------------- |
+| Upload  | `raw-inbound`       | `{project}/raw/{feedId}/{messageId}.json`       | Raw file storage           |
+| Schema  | `validated-inbound` | `{project}/validated/{feedId}/{messageId}.json` | Validation and conversion  |
+| Mapper  | `mapped-inbound`    | `{project}/mapped/{feedId}/{messageId}.json`    | Terminology resolution     |
+| Storage | `processed-inbound` | `{project}/processed/{feedId}/{messageId}.json` | Database persistence       |
+| Outpost | -                   | -                                               | Downstream push (optional) |
 
 If any stage fails, the message goes to a dead-letter topic (`{topic}-dead-letter`).
 
@@ -46,12 +46,12 @@ If any stage fails, the message goes to a dead-letter topic (`{topic}-dead-lette
 
 ## Plugin Types
 
-| Type | DB Value | Entry Points | Purpose |
-|------|----------|-------------|---------|
-| **Schema** | `validation` | `validate(message)`, `convert(message)` | Parse and validate incoming data, convert to canonical records |
-| **Mapper** | `mapping` | `map(message)` | Resolve terminology codes to concept IDs |
-| **Storage** | `storage` | `process(message)` | Record counting and pre-persistence checks |
-| **Outpost** | `outpost` | `process(message)` | Push data to external systems |
+| Type        | DB Value     | Entry Points                            | Purpose                                                        |
+| ----------- | ------------ | --------------------------------------- | -------------------------------------------------------------- |
+| **Schema**  | `validation` | `validate(message)`, `convert(message)` | Parse and validate incoming data, convert to canonical records |
+| **Mapper**  | `mapping`    | `map(message)`                          | Resolve terminology codes to concept IDs                       |
+| **Storage** | `storage`    | `process(message)`                      | Record counting and pre-persistence checks                     |
+| **Outpost** | `outpost`    | `process(message)`                      | Push data to external systems                                  |
 
 ---
 
@@ -66,25 +66,25 @@ Content-Type: multipart/form-data
 
 **Fields:**
 
-| Field | Required | Description |
-|-------|----------|-------------|
-| `pluginData` | Yes | The `.js` plugin file |
-| `pluginType` | Yes | `validation`, `mapping`, `storage`, or `outpost` |
-| `pluginName` | Yes | Human-readable name (e.g., `whonet-schema`) |
-| `pluginVersion` | Yes | Semantic version (e.g., `1.2.0`) |
-| `securityLevel` | No | `low`, `medium`, or `high` (default: `low`) |
-| `config` | No | JSON object with plugin-specific settings |
-| `notes` | No | Description or documentation |
+| Field           | Required | Description                                      |
+| --------------- | -------- | ------------------------------------------------ |
+| `pluginData`    | Yes      | The `.js` plugin file                            |
+| `pluginType`    | Yes      | `validation`, `mapping`, `storage`, or `outpost` |
+| `pluginName`    | Yes      | Human-readable name (e.g., `whonet-schema`)      |
+| `pluginVersion` | Yes      | Semantic version (e.g., `1.2.0`)                 |
+| `securityLevel` | No       | `low`, `medium`, or `high` (default: `low`)      |
+| `config`        | No       | JSON object with plugin-specific settings        |
+| `notes`         | No       | Description or documentation                     |
 
 **Other plugin endpoints:**
 
-| Method | Route | Purpose |
-|--------|-------|---------|
-| GET | `/api/v1/plugin/plugins` | List all plugins |
-| GET | `/api/v1/plugin/get-plugins?pluginType={type}` | List by type |
-| GET | `/api/v1/plugin/get-plugin/{pluginId}` | Get plugin details |
-| PUT | `/api/v1/plugin/update-plugin/{pluginId}` | Update plugin |
-| DELETE | `/api/v1/plugin/delete-plugin/{pluginId}` | Delete plugin |
+| Method | Route                                          | Purpose            |
+| ------ | ---------------------------------------------- | ------------------ |
+| GET    | `/api/v1/plugin/plugins`                       | List all plugins   |
+| GET    | `/api/v1/plugin/get-plugins?pluginType={type}` | List by type       |
+| GET    | `/api/v1/plugin/get-plugin/{pluginId}`         | Get plugin details |
+| PUT    | `/api/v1/plugin/update-plugin/{pluginId}`      | Update plugin      |
+| DELETE | `/api/v1/plugin/delete-plugin/{pluginId}`      | Delete plugin      |
 
 ---
 
@@ -113,12 +113,12 @@ If you omit a plugin ID, the system falls back to the bundled default plugin for
 
 ### Other data feed endpoints
 
-| Method | Route | Purpose |
-|--------|-------|---------|
-| GET | `/api/v1/datafeed` | List all feeds |
-| GET | `/api/v1/datafeed?isEnabled=1` | List enabled feeds |
-| PUT | `/api/v1/datafeed/update/{dataFeedId}` | Update feed config |
-| DELETE | `/api/v1/datafeed/delete/{dataFeedId}` | Delete feed |
+| Method | Route                                  | Purpose            |
+| ------ | -------------------------------------- | ------------------ |
+| GET    | `/api/v1/datafeed`                     | List all feeds     |
+| GET    | `/api/v1/datafeed?isEnabled=1`         | List enabled feeds |
+| PUT    | `/api/v1/datafeed/update/{dataFeedId}` | Update feed config |
+| DELETE | `/api/v1/datafeed/delete/{dataFeedId}` | Delete feed        |
 
 ---
 
@@ -140,8 +140,8 @@ The request body is the raw data to process. The content type determines how the
 
 **Query parameters:**
 
-| Parameter | Description |
-|-----------|-------------|
+| Parameter    | Description                                                         |
+| ------------ | ------------------------------------------------------------------- |
 | `force=true` | Skip deduplication, reprocess even if same file was uploaded before |
 
 **Response:**
@@ -220,6 +220,7 @@ When using the **default schema plugin**, the input must already be in canonical
 ```
 
 **Notes:**
+
 - `patient` is optional (some countries restrict patient-level data)
 - `lab_request.request_id` is required
 - `lab_results` must be an array
@@ -246,27 +247,27 @@ Many fields use **concept objects** to identify coded values. These are resolved
 }
 ```
 
-| Field | Required | Description |
-|-------|----------|-------------|
-| `concept_code` | Yes | The code from the source system |
-| `display_name` | Yes | Human-readable name |
-| `concept_class` | Yes | Category: `facility`, `panel`, `specimen`, `test`, `organism`, `antibiotic` |
-| `datatype` | No | Default: `coded` |
-| `system_id` | No | Coding system namespace. If omitted, the default schema plugin assigns one automatically |
-| `properties` | No | Extra key-value metadata |
+| Field           | Required | Description                                                                              |
+| --------------- | -------- | ---------------------------------------------------------------------------------------- |
+| `concept_code`  | Yes      | The code from the source system                                                          |
+| `display_name`  | Yes      | Human-readable name                                                                      |
+| `concept_class` | Yes      | Category: `facility`, `panel`, `specimen`, `test`, `organism`, `antibiotic`              |
+| `datatype`      | No       | Default: `coded`                                                                         |
+| `system_id`     | No       | Coding system namespace. If omitted, the default schema plugin assigns one automatically |
+| `properties`    | No       | Extra key-value metadata                                                                 |
 
 ### Default coding systems
 
 When `system_id` is omitted, the default schema plugin assigns these:
 
-| Concept field | Default system_id |
-|---------------|------------------|
-| `facility_code` | `DEFAULT_FACILITY` |
-| `panel_code` | `DEFAULT_TEST` |
-| `specimen_code` | `DEFAULT_SPEC` |
-| `observation_code` (lab_results) | `DEFAULT_TEST` |
-| `organism_code` (isolates) | `DEFAULT_ORG` |
-| `antibiotic_code` (susceptibility_tests) | `DEFAULT_ABX` |
+| Concept field                            | Default system_id |
+| ---------------------------------------- | ----------------- |
+| `facility_code`                          | `DEFAULT_FAC`     |
+| `panel_code`                             | `DEFAULT_TEST`    |
+| `specimen_code`                          | `DEFAULT_SPEC`    |
+| `observation_code` (lab_results)         | `DEFAULT_TEST`    |
+| `organism_code` (isolates)               | `DEFAULT_ORG`     |
+| `antibiotic_code` (susceptibility_tests) | `DEFAULT_ABX`     |
 
 Custom schema plugins define their own namespaces (e.g., `WHONET_TEST`, `DISA_FAC`).
 
@@ -307,12 +308,12 @@ Returns a timeline of every stage the message passed through, including plugin n
 
 ### Common errors
 
-| Error Code | Stage | Cause |
-|-----------|-------|-------|
-| `UNKNOWN_CODING_SYSTEM` | validation | The `system_id` values in concept objects don't exist in the `coding_systems` table. Insert them or omit `system_id` to use defaults. |
-| `SCHEMA_VALIDATION_FAILED` | validation | The message failed `validate()`. Check `details.errors` for specifics. |
-| `EXTERNAL_PERSISTENCE_FAILED` | storage | Database insert failed. Common cause: field value exceeds column size (e.g., `priority` must be a single character). |
-| `OUTPOST_PLUGIN_FAILED` | outpost | The outpost plugin's `process()` threw an error. |
+| Error Code                    | Stage      | Cause                                                                                                                                 |
+| ----------------------------- | ---------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| `UNKNOWN_CODING_SYSTEM`       | validation | The `system_id` values in concept objects don't exist in the `coding_systems` table. Insert them or omit `system_id` to use defaults. |
+| `SCHEMA_VALIDATION_FAILED`    | validation | The message failed `validate()`. Check `details.errors` for specifics.                                                                |
+| `EXTERNAL_PERSISTENCE_FAILED` | storage    | Database insert failed. Common cause: field value exceeds column size (e.g., `priority` must be a single character).                  |
+| `OUTPOST_PLUGIN_FAILED`       | outpost    | The outpost plugin's `process()` threw an error.                                                                                      |
 
 ### Dead-letter queues
 
@@ -331,12 +332,12 @@ Each DLQ message includes the original payload, the error details, and plugin se
 
 OpenLDR ships with four bundled default plugins that handle canonical JSON passthrough:
 
-| Plugin | File | Behavior |
-|--------|------|----------|
-| `default-schema` | `default-plugins/schema/default.schema.js` | Validates canonical structure, assigns `obr_set_id` and default `system_id` values |
-| `default-mapper` | `default-plugins/mapper/default.mapper.js` | Pass-through (no terminology transformation) |
-| `default-storage` | `default-plugins/storage/default.storage.js` | Counts records, returns success (persistence is handled by the pipeline) |
-| `default-outpost` | `default-plugins/outpost/default.outpost.js` | No-op (no downstream push) |
+| Plugin            | File                                         | Behavior                                                                           |
+| ----------------- | -------------------------------------------- | ---------------------------------------------------------------------------------- |
+| `default-schema`  | `default-plugins/schema/default.schema.js`   | Validates canonical structure, assigns `obr_set_id` and default `system_id` values |
+| `default-mapper`  | `default-plugins/mapper/default.mapper.js`   | Pass-through (no terminology transformation)                                       |
+| `default-storage` | `default-plugins/storage/default.storage.js` | Counts records, returns success (persistence is handled by the pipeline)           |
+| `default-outpost` | `default-plugins/outpost/default.outpost.js` | No-op (no downstream push)                                                         |
 
 These are used when no custom plugin is assigned to a data feed, or as fallbacks when a custom plugin fails to load.
 
@@ -346,103 +347,103 @@ These are used when no custom plugin is assigned to a data feed, or as fallbacks
 
 ### lab_request
 
-| Field | Type | Constraint | Description |
-|-------|------|-----------|-------------|
-| `request_id` | string | **required** | Unique ID for this request |
-| `obr_set_id` | integer | auto-assigned | Distinguishes multiple records sharing a `request_id` |
-| `facility_code` | concept | | Facility where test was performed |
-| `panel_code` | concept | | Test panel / order code |
-| `specimen_code` | concept | | Specimen type |
-| `taken_datetime` | ISO 8601 | | Specimen collection time |
-| `collected_datetime` | ISO 8601 | | Alias for `taken_datetime` |
-| `received_at` | ISO 8601 | | When specimen arrived at lab |
-| `registered_at` | ISO 8601 | | Registration time |
-| `analysis_at` | ISO 8601 | | Analysis start time |
-| `authorised_at` | ISO 8601 | | Result authorization time |
-| `clinical_info` | string | | Clinical notes |
-| `icd10_codes` | string | | ICD-10 diagnosis codes |
-| `therapy` | string | | Current therapy |
-| `priority` | char(1) | `S`, `R`, `A` | HL7 priority: Stat / Routine / ASAP |
-| `age_years` | integer | | Patient age in years at time of request |
-| `age_days` | integer | | Patient age in days (for infants) |
-| `sex` | char(1) | `M`, `F`, `U` | Patient sex |
-| `patient_class` | char(1) | `I`, `O`, `E` | Inpatient / Outpatient / Emergency |
-| `section_code` | varchar(10) | | Lab section: `CH`, `HM`, `MB`, etc. |
-| `result_status` | char(1) | `F`, `P`, `C` | Final / Preliminary / Corrected |
-| `requesting_facility_code` | concept | | Ordering facility or ward — coded concept (resolved to `requesting_facility_concept_id`) |
-| `testing_facility_code` | concept | | Lab that performed the test — coded concept (resolved to `testing_facility_concept_id`) |
-| `requesting_doctor` | string | | Ordering clinician |
-| `tested_by` | string | | Lab technician |
-| `authorised_by` | string | | Authorizing clinician |
-| `source_payload` | object | | Plugin-specific extra data |
+| Field                      | Type        | Constraint    | Description                                                                              |
+| -------------------------- | ----------- | ------------- | ---------------------------------------------------------------------------------------- |
+| `request_id`               | string      | **required**  | Unique ID for this request                                                               |
+| `obr_set_id`               | integer     | auto-assigned | Distinguishes multiple records sharing a `request_id`                                    |
+| `facility_code`            | concept     |               | Facility where test was performed                                                        |
+| `panel_code`               | concept     |               | Test panel / order code                                                                  |
+| `specimen_code`            | concept     |               | Specimen type                                                                            |
+| `taken_datetime`           | ISO 8601    |               | Specimen collection time                                                                 |
+| `collected_datetime`       | ISO 8601    |               | Alias for `taken_datetime`                                                               |
+| `received_at`              | ISO 8601    |               | When specimen arrived at lab                                                             |
+| `registered_at`            | ISO 8601    |               | Registration time                                                                        |
+| `analysis_at`              | ISO 8601    |               | Analysis start time                                                                      |
+| `authorised_at`            | ISO 8601    |               | Result authorization time                                                                |
+| `clinical_info`            | string      |               | Clinical notes                                                                           |
+| `icd10_codes`              | string      |               | ICD-10 diagnosis codes                                                                   |
+| `therapy`                  | string      |               | Current therapy                                                                          |
+| `priority`                 | char(1)     | `S`, `R`, `A` | HL7 priority: Stat / Routine / ASAP                                                      |
+| `age_years`                | integer     |               | Patient age in years at time of request                                                  |
+| `age_days`                 | integer     |               | Patient age in days (for infants)                                                        |
+| `sex`                      | char(1)     | `M`, `F`, `U` | Patient sex                                                                              |
+| `patient_class`            | char(1)     | `I`, `O`, `E` | Inpatient / Outpatient / Emergency                                                       |
+| `section_code`             | varchar(10) |               | Lab section: `CH`, `HM`, `MB`, etc.                                                      |
+| `result_status`            | char(1)     | `F`, `P`, `C` | Final / Preliminary / Corrected                                                          |
+| `requesting_facility_code` | concept     |               | Ordering facility or ward — coded concept (resolved to `requesting_facility_concept_id`) |
+| `testing_facility_code`    | concept     |               | Lab that performed the test — coded concept (resolved to `testing_facility_concept_id`)  |
+| `requesting_doctor`        | string      |               | Ordering clinician                                                                       |
+| `tested_by`                | string      |               | Lab technician                                                                           |
+| `authorised_by`            | string      |               | Authorizing clinician                                                                    |
+| `source_payload`           | object      |               | Plugin-specific extra data                                                               |
 
 ### lab_results (array)
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `obx_set_id` | integer | HL7 OBX-1: panel-position of this observation (1, 2, 3, ...) |
-| `obx_sub_id` | integer | HL7 OBX-4: sub-observation ID; `0` when no sub-result |
-| `observation_code` | concept | What was observed |
-| `result_value` | string | Raw result as reported |
-| `result_type` | string | `NM` (numeric), `CE` (coded), `ST` (string) |
-| `numeric_value` | number | Parsed number (when `NM`) |
-| `coded_value` | string | Code value (when `CE`) |
-| `text_value` | string | Free text (when `ST`) |
-| `numeric_units` | string | Units (e.g., `mmol/L`) |
-| `abnormal_flag` | string | `H`, `L`, `HH`, `LL`, `A`, `N` |
-| `rpt_units` | string | Reporting units |
-| `rpt_flag` | string | Reporting flag |
-| `rpt_range` | string | Reference range (e.g., `4.0-11.0`) |
-| `result_timestamp` | ISO 8601 | When result was finalized |
-| `isolate_index` | integer | Links to isolate (AMR only) |
-| `is_resulted` | boolean | Whether a result value exists |
+| Field              | Type     | Description                                                  |
+| ------------------ | -------- | ------------------------------------------------------------ |
+| `obx_set_id`       | integer  | HL7 OBX-1: panel-position of this observation (1, 2, 3, ...) |
+| `obx_sub_id`       | integer  | HL7 OBX-4: sub-observation ID; `0` when no sub-result        |
+| `observation_code` | concept  | What was observed                                            |
+| `result_value`     | string   | Raw result as reported                                       |
+| `result_type`      | string   | `NM` (numeric), `CE` (coded), `ST` (string)                  |
+| `numeric_value`    | number   | Parsed number (when `NM`)                                    |
+| `coded_value`      | string   | Code value (when `CE`)                                       |
+| `text_value`       | string   | Free text (when `ST`)                                        |
+| `numeric_units`    | string   | Units (e.g., `mmol/L`)                                       |
+| `abnormal_flag`    | string   | `H`, `L`, `HH`, `LL`, `A`, `N`                               |
+| `rpt_units`        | string   | Reporting units                                              |
+| `rpt_flag`         | string   | Reporting flag                                               |
+| `rpt_range`        | string   | Reference range (e.g., `4.0-11.0`)                           |
+| `result_timestamp` | ISO 8601 | When result was finalized                                    |
+| `isolate_index`    | integer  | Links to isolate (AMR only)                                  |
+| `is_resulted`      | boolean  | Whether a result value exists                                |
 
 ### isolates (array, AMR only)
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `isolate_index` | integer | 1-based, unique within record |
-| `organism_code` | concept | Organism identification |
-| `organism_type` | string | `bacteria`, `fungus`, `virus`, `parasite` |
-| `isolate_number` | string | Isolate sequence number |
-| `serotype` | string | Serotype if applicable |
-| `patient_age_days` | integer | Age in days (for AMR analytics) |
-| `patient_sex` | char(1) | `M`, `F`, `U` |
-| `ward` | string | Ward name |
-| `ward_type` | string | `in`, `out`, `er` |
-| `origin` | string | `h` (hospital), `c` (community) |
-| `beta_lactamase` | string | Beta-lactamase result |
-| `esbl` | string | ESBL result |
-| `carbapenemase` | string | Carbapenemase result |
-| `mrsa_screen` | string | MRSA screening result |
-| `inducible_clinda` | string | Inducible clindamycin result |
+| Field              | Type    | Description                               |
+| ------------------ | ------- | ----------------------------------------- |
+| `isolate_index`    | integer | 1-based, unique within record             |
+| `organism_code`    | concept | Organism identification                   |
+| `organism_type`    | string  | `bacteria`, `fungus`, `virus`, `parasite` |
+| `isolate_number`   | string  | Isolate sequence number                   |
+| `serotype`         | string  | Serotype if applicable                    |
+| `patient_age_days` | integer | Age in days (for AMR analytics)           |
+| `patient_sex`      | char(1) | `M`, `F`, `U`                             |
+| `ward`             | string  | Ward name                                 |
+| `ward_type`        | string  | `in`, `out`, `er`                         |
+| `origin`           | string  | `h` (hospital), `c` (community)           |
+| `beta_lactamase`   | string  | Beta-lactamase result                     |
+| `esbl`             | string  | ESBL result                               |
+| `carbapenemase`    | string  | Carbapenemase result                      |
+| `mrsa_screen`      | string  | MRSA screening result                     |
+| `inducible_clinda` | string  | Inducible clindamycin result              |
 
 ### susceptibility_tests (array, AMR only)
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `isolate_index` | integer | Must match an isolate's `isolate_index` |
-| `antibiotic_code` | concept | Antibiotic tested |
-| `test_method` | string | `DISK` or `MIC` |
-| `disk_potency` | string | Disk strength (e.g., `30`) |
-| `result_raw` | string | Original value (e.g., `22`, `<=0.5`) |
-| `result_numeric` | number | Parsed numeric value |
-| `susceptibility_value` | string | Interpretation: `S`, `I`, `R`, `SDD`, `NS` |
-| `guideline` | string | `CLSI`, `EUCAST`, etc. |
-| `guideline_version` | string | Year or version |
+| Field                  | Type    | Description                                |
+| ---------------------- | ------- | ------------------------------------------ |
+| `isolate_index`        | integer | Must match an isolate's `isolate_index`    |
+| `antibiotic_code`      | concept | Antibiotic tested                          |
+| `test_method`          | string  | `DISK` or `MIC`                            |
+| `disk_potency`         | string  | Disk strength (e.g., `30`)                 |
+| `result_raw`           | string  | Original value (e.g., `22`, `<=0.5`)       |
+| `result_numeric`       | number  | Parsed numeric value                       |
+| `susceptibility_value` | string  | Interpretation: `S`, `I`, `R`, `SDD`, `NS` |
+| `guideline`            | string  | `CLSI`, `EUCAST`, etc.                     |
+| `guideline_version`    | string  | Year or version                            |
 
 ### patient (optional)
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `patient_guid` | string | Unique patient ID from source system |
-| `firstname` | string | |
-| `middlename` | string | |
-| `surname` | string | |
-| `sex` | char(1) | `M`, `F`, `U`, `O` |
-| `folder_no` | string | Hospital folder/chart number |
-| `date_of_birth` | ISO date | `YYYY-MM-DD` |
-| `phone` | string | |
-| `email` | string | |
-| `national_id` | string | |
-| `patient_data` | object | Extra fields stored as JSONB |
+| Field           | Type     | Description                          |
+| --------------- | -------- | ------------------------------------ |
+| `patient_guid`  | string   | Unique patient ID from source system |
+| `firstname`     | string   |                                      |
+| `middlename`    | string   |                                      |
+| `surname`       | string   |                                      |
+| `sex`           | char(1)  | `M`, `F`, `U`, `O`                   |
+| `folder_no`     | string   | Hospital folder/chart number         |
+| `date_of_birth` | ISO date | `YYYY-MM-DD`                         |
+| `phone`         | string   |                                      |
+| `email`         | string   |                                      |
+| `national_id`   | string   |                                      |
+| `patient_data`  | object   | Extra fields stored as JSONB         |
