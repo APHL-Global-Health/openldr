@@ -5,24 +5,32 @@ import { CliError } from "../errors.js";
 import { requestGateway } from "../clients/gateway.js";
 
 interface Plugin {
-  id?: string;
-  name?: string;
+  pluginId?: string;
+  pluginName?: string;
   pluginType?: string;
+  pluginVersion?: string;
   status?: string;
-  version?: string;
-  description?: string;
+  pluginMinioObjectPath?: string;
+  securityLevel?: string;
+  isBundled?: boolean;
+  createdAt?: string;
   updatedAt?: string;
   [key: string]: unknown;
 }
 
 interface PluginListResponse {
   ok?: boolean;
-  data?: { plugins: Plugin[] | Plugin[][] };
+  /** Shape returned by /data-processing/api/v1/projects/plugins:
+   *  with no ?slot filter the API returns one array per slot type (nested);
+   *  with a ?slot=<type> filter it returns a flat array. */
+  plugins?: Plugin[] | Plugin[][];
+  /** Some other endpoints wrap the array in a `data` envelope. */
+  data?: { plugins?: Plugin[] | Plugin[][] };
 }
 
 function flattenPlugins(resp: PluginListResponse | Plugin[]): Plugin[] {
   if (Array.isArray(resp)) return resp;
-  const raw = resp.data?.plugins;
+  const raw = resp.plugins ?? resp.data?.plugins;
   if (!raw) return [];
   if (Array.isArray(raw) && raw.length > 0 && Array.isArray(raw[0])) {
     return (raw as Plugin[][]).flat();
@@ -62,40 +70,48 @@ export function registerPluginsCommand(program: Command): void {
       emitRow(res.data as unknown as Record<string, unknown>, rt.output);
     });
 
+  // enable / disable do a targeted SQL UPDATE rather than calling the
+  // entity-services /update-plugin/:id endpoint. That endpoint expects
+  // multipart/form-data with EVERY plugin field — sending only `{status}` as
+  // JSON would zero out the other columns. SQL is safer and atomic.
+  const setStatus = async (
+    rt: ReturnType<typeof loadRuntime>,
+    id: string,
+    status: "active" | "inactive",
+  ): Promise<void> => {
+    const { query } = await import("../clients/postgres.js");
+    const result = await query<{ pluginId: string; status: string }>(
+      rt.config,
+      "openldr",
+      `UPDATE plugins SET status = $1, "updatedAt" = NOW() WHERE "pluginId" = $2 RETURNING "pluginId", status`,
+      [status, id],
+    );
+    if (result.rowCount === 0) {
+      throw new CliError("NOT_FOUND", `Plugin not found: ${id}`, { id });
+    }
+    emitText(JSON.stringify(result.rows[0]));
+  };
+
   plugins
     .command("enable <id>")
-    .description("Set plugin status=active via entity-services update endpoint (write-gated)")
+    .description("Set plugin status=active via SQL UPDATE (write-gated; Postgres must be reachable)")
     .option("--confirm", "actually update", false)
     .action(async (id: string, opts: { confirm?: boolean }) => {
       const cmd = plugins.commands.find((c) => c.name() === "enable")!;
       const rt = loadRuntime(cmd);
-      if (!opts.confirm) {
-        throw new CliError("WRITE_NOT_CONFIRMED", "Re-run with --confirm.", { id });
-      }
-      const res = await requestGateway<unknown>(rt.config, {
-        method: "PUT",
-        path: `/entity-services/api/v1/plugin/update-plugin/${encodeURIComponent(id)}`,
-        body: { status: "active" },
-      });
-      emitText(JSON.stringify({ id, status: "active", server: res.data }));
+      if (!opts.confirm) throw new CliError("WRITE_NOT_CONFIRMED", "Re-run with --confirm.", { id });
+      await setStatus(rt, id, "active");
     });
 
   plugins
     .command("disable <id>")
-    .description("Set plugin status=inactive (write-gated)")
+    .description("Set plugin status=inactive via SQL UPDATE (write-gated)")
     .option("--confirm", "actually update", false)
     .action(async (id: string, opts: { confirm?: boolean }) => {
       const cmd = plugins.commands.find((c) => c.name() === "disable")!;
       const rt = loadRuntime(cmd);
-      if (!opts.confirm) {
-        throw new CliError("WRITE_NOT_CONFIRMED", "Re-run with --confirm.", { id });
-      }
-      const res = await requestGateway<unknown>(rt.config, {
-        method: "PUT",
-        path: `/entity-services/api/v1/plugin/update-plugin/${encodeURIComponent(id)}`,
-        body: { status: "inactive" },
-      });
-      emitText(JSON.stringify({ id, status: "inactive", server: res.data }));
+      if (!opts.confirm) throw new CliError("WRITE_NOT_CONFIRMED", "Re-run with --confirm.", { id });
+      await setStatus(rt, id, "inactive");
     });
 
   plugins
