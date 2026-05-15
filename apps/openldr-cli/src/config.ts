@@ -9,6 +9,8 @@ export interface LoadedConfig {
   // Postgres
   postgres: {
     host: string;
+    /** Original container hostname used by --internal docker exec. */
+    container: string;
     port: number;
     user: string;
     password: string;
@@ -18,11 +20,17 @@ export interface LoadedConfig {
   // Kafka (queue backend)
   kafka: {
     brokers: string[];
+    /** Original container hostname used by --internal docker exec. */
+    container: string;
+    /** Bootstrap host:port used when running inside the kafka container. */
+    internalBootstrap: string;
     clientId: string;
   };
   // MinIO (S3 backend)
   s3: {
     endpoint: string;
+    /** Original container hostname used by --internal docker exec. */
+    container: string;
     region: string;
     accessKey: string;
     secretKey: string;
@@ -31,6 +39,7 @@ export interface LoadedConfig {
   // OpenSearch (search backend)
   search: {
     url: string;
+    container: string;
   };
   // Keycloak (auth backend)
   auth: {
@@ -210,6 +219,7 @@ export function loadConfig(overrides: ConfigOverrides = {}): LoadedConfig {
   return {
     postgres: {
       host: postgresHost,
+      container: env.POSTGRES_HOSTNAME ?? "openldr-postgres",
       port: parseInt10(env.POSTGRES_PORT, 5432),
       user: env.POSTGRES_USER ?? "postgres",
       password: env.POSTGRES_PASSWORD ?? "postgres",
@@ -218,6 +228,8 @@ export function loadConfig(overrides: ConfigOverrides = {}): LoadedConfig {
     },
     kafka: {
       brokers: [`${kafkaHost}:${parseInt10(env.KAFKA_EXTERNAL_PORT, 9094)}`],
+      container: env.KAFKA_HOSTNAME ?? "openldr-kafka1",
+      internalBootstrap: `localhost:${parseInt10(env.KAFKA_DOCKER_PORT, 29092)}`,
       clientId: env.KAFKA_CLIENT_ID ?? "openldr-cli",
     },
     s3: {
@@ -225,6 +237,7 @@ export function loadConfig(overrides: ConfigOverrides = {}): LoadedConfig {
         env.MINIO_ENDPOINT && !env.MINIO_ENDPOINT.includes("openldr-minio")
           ? env.MINIO_ENDPOINT
           : `http://${minioHost}:${parseInt10(env.MINIO_API_PORT, 9000)}`,
+      container: env.MINIO_HOSTNAME ?? "openldr-minio",
       region: env.MINIO_REGION ?? "us-east-1",
       accessKey: env.MINIO_ROOT_USER ?? "minioadmin",
       secretKey: env.MINIO_ROOT_PASSWORD ?? "minioadmin",
@@ -234,6 +247,7 @@ export function loadConfig(overrides: ConfigOverrides = {}): LoadedConfig {
     },
     search: {
       url: env.OPENSEARCH_URL ?? `http://${searchHost}:${parseInt10(env.OPENSEARCH_PORT, 9200)}`,
+      container: env.OPENSEARCH_HOSTNAME ?? "openldr-opensearch",
     },
     auth: {
       baseUrl: env.KEYCLOAK_PUBLIC_URL ?? env.KEYCLOAK_BASE_URL ?? `${gatewayUrl}/keycloak`,

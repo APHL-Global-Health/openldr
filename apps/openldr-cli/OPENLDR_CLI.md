@@ -555,14 +555,31 @@ The default `docker-compose` only exposes the HTTPS gateway (port 443), the AI s
 | `plugins *` | `/data-processing` + `/entity-services/api/v1/plugin/*` | ✅ |
 | `concepts *` | `/entity-services/api/v1/concepts/*` | ✅ |
 | `search *` | `/opensearch/*` | ✅ |
-| `db query` / `tables` / `schema` | direct Postgres TCP 5432 | ❌ requires port exposure |
-| `queue topics/tail/dlq/publish` | direct Kafka TCP 9094 | ❌ requires port exposure |
-| `s3 *` | direct MinIO TCP 9000 | ❌ requires port exposure (SigV4 breaks under gateway path rewriting) |
+| `db query` / `tables` / `schema` | direct Postgres TCP 5432 | ❌ — use `--internal` (psql via `docker exec`) or expose port |
+| `queue topics/offsets/tail/dlq/publish` | direct Kafka TCP 9094 | ❌ — use `--internal` (kafka-* tools via `docker exec`) or expose port |
+| `s3 *` | direct MinIO TCP 9000 | ❌ — use `--internal` (mc via `docker exec`) or expose port (SigV4 breaks under gateway path rewriting) |
 
 **Three ways to use the direct-protocol commands:**
 
-1. **Run the CLI inside the docker network.** `docker compose exec openldr-mcp-server sh -c "cd /apps/openldr-cli && pnpm dev <subcommand>"` — the container can see `openldr-postgres:5432` etc.
-2. **Publish the ports in `docker/docker-compose.yml`.** Add a `ports:` block to each affected service. Convenient but exposes the services to anyone on your machine.
+1. **Use `--internal` (recommended).** The CLI shells into the running container via `docker exec` and uses the tool that's already installed there: `psql` for `db`/`tables`/`schema`, `kafka-topics`/`kafka-console-consumer`/`kafka-console-producer` for `queue`, `mc` for `s3`. No port exposure required.
+
+   ```bash
+   openldr db query "SELECT COUNT(*) FROM \"messageProcessingRuns\"" --internal
+   openldr tables --db openldr_external --internal
+   openldr schema messageProcessingRuns --internal
+   openldr queue topics --internal
+   openldr queue tail processed-inbound --limit 3 --internal
+   openldr queue dlq --summary --internal
+   openldr s3 buckets --internal
+   openldr s3 ls raw-inbound --limit 5 --internal
+   openldr s3 cat raw-inbound/<uuid>.json --internal | jq .
+   openldr s3 download mapped-inbound/<key> --out ./payload.json --internal
+   ```
+
+   Requirements: `docker` on the operator's PATH and the relevant containers running. Container names come from `POSTGRES_HOSTNAME` / `KAFKA_HOSTNAME` / `MINIO_HOSTNAME` in the env (defaults: `openldr-postgres`, `openldr-kafka1`, `openldr-minio`).
+
+2. **Publish the ports in `docker/docker-compose.yml`.** Add a `ports:` block to each affected service. Convenient for repeated use but exposes the services to anyone on your machine.
+
 3. **Use the alternative HTTP-API command instead.** `db query` → `runs list` / `concepts search`. `s3 ls` → MinIO console at `/minio-console/`. `queue tail` → Conduktor console at `/kafka-console/` or the Kafka Connect REST API at `/kafka-connect/`.
 
 ### Other gotchas
