@@ -30,7 +30,7 @@
         └──────────────────────────┘  └──────────────────────┘
 ```
 
-**Default routing:** every command except `db`, `tables`, `schema`, `queue`, and `s3` goes through the HTTPS gateway. The direct-protocol commands require either (a) running the CLI inside the docker network, or (b) publishing the relevant ports in `docker-compose.yml`. The gateway proxies HTTP services (data-processing, entity-services, external-database, keycloak, opensearch, kafka-connect) but cannot proxy native protocols (Postgres TCP, Kafka native protocol, MinIO S3 — which breaks under nginx path rewriting due to SigV4).
+**Default routing:** every command except the direct-protocol set goes through the HTTPS gateway. The direct-protocol commands — `tables` and `schema` (top-level), `db query` and `db explain` (inside the `db` group), every `queue` subcommand, every `s3` subcommand — require either (a) running the CLI inside the docker network, (b) passing `--internal` so the CLI shells into the right container via `docker exec`, or (c) publishing the relevant ports in `docker-compose.yml`. The gateway proxies HTTP services (data-processing, entity-services, external-database, keycloak, opensearch, kafka-connect) but cannot proxy native protocols (Postgres TCP, Kafka native protocol, MinIO S3 — which breaks under nginx path rewriting due to SigV4).
 
 **Vendor-neutral commands map to backing technology:**
 
@@ -555,13 +555,17 @@ The default `docker-compose` only exposes the HTTPS gateway (port 443), the AI s
 | `plugins *` | `/data-processing` + `/entity-services/api/v1/plugin/*` | ✅ |
 | `concepts *` | `/entity-services/api/v1/concepts/*` | ✅ |
 | `search *` | `/opensearch/*` | ✅ |
-| `db query` / `tables` / `schema` | direct Postgres TCP 5432 | ❌ — use `--internal` (psql via `docker exec`) or expose port |
-| `queue topics/offsets/tail/dlq/publish` | direct Kafka TCP 9094 | ❌ — use `--internal` (kafka-* tools via `docker exec`) or expose port |
-| `s3 *` | direct MinIO TCP 9000 | ❌ — use `--internal` (mc via `docker exec`) or expose port (SigV4 breaks under gateway path rewriting) |
+| `tables` *(top-level)* | direct Postgres TCP 5432 | ❌ — use `--internal` (psql via `docker exec`) or expose port |
+| `schema <table>` *(top-level)* | direct Postgres TCP 5432 | ❌ — use `--internal` or expose port |
+| `db query` and `db explain` | direct Postgres TCP 5432 | ❌ — use `--internal` or expose port |
+| `queue topics` / `offsets` / `tail` / `dlq` / `publish` | direct Kafka TCP 9094 | ❌ — use `--internal` (kafka-* tools via `docker exec`) or expose port |
+| `s3 buckets` / `ls` / `cat` / `stat` / `download` / `upload` | direct MinIO TCP 9000 | ❌ — use `--internal` (mc via `docker exec`) or expose port (SigV4 breaks under gateway path rewriting) |
+
+> **Note on the command tree.** `tables` and `schema` are **top-level commands**, not subcommands of `db`. The `db` group contains only `query` and `explain`. `openldr db tables` will fail with `unknown command 'tables'` — use `openldr tables --internal` instead. See §4 for the full tree.
 
 **Three ways to use the direct-protocol commands:**
 
-1. **Use `--internal` (recommended).** The CLI shells into the running container via `docker exec` and uses the tool that's already installed there: `psql` for `db`/`tables`/`schema`, `kafka-topics`/`kafka-console-consumer`/`kafka-console-producer` for `queue`, `mc` for `s3`. No port exposure required.
+1. **Use `--internal` (recommended).** The CLI shells into the running container via `docker exec` and uses the tool that's already installed there: `psql` for `tables`, `schema`, `db query`, `db explain`; `kafka-topics`/`kafka-console-consumer`/`kafka-console-producer` for `queue`; `mc` for `s3`. No port exposure required.
 
    ```bash
    openldr db query "SELECT COUNT(*) FROM \"messageProcessingRuns\"" --internal
