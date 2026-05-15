@@ -15,12 +15,13 @@
     "start:services": "tsx openldr.ts start"
   },
   "dependencies": {
+    "dotenv": "^17.4.2",
     "tsx": "^4.21.0"
   },
   "devDependencies": {
     "@openldr/kafka": "*",
-    "@repo/openldr-core":"*",
     "@repo/eslint-config": "*",
+    "@repo/openldr-core": "*",
     "@repo/typescript-config": "*",
     "@types/node": "^24.2.0",
     "eslint": "^9.39.2",

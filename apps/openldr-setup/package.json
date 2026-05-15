@@ -11,11 +11,12 @@
     "start:services": "tsx openldr.ts start"
   },
   "dependencies": {
-    "@inquirer/prompts": "^7.8.6"    
+    "@inquirer/prompts": "^7.8.6",
+    "tsx": "^4.22.0"
   },
   "devDependencies": {
-    "@repo/openldr-core": "*",
     "@repo/eslint-config": "*",
+    "@repo/openldr-core": "*",
     "@repo/typescript-config": "*",
     "@types/node": "^24.2.0"
   }

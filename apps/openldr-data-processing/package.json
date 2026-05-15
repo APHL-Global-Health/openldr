@@ -5,10 +5,10 @@
   "type": "module",
   "scripts": {
     "copy:env": "tsx ../../environments/merge-env.ts ../../environments/.env.base ../../environments/.env.openldr-data-processing ../../environments/.env.openldr-minio ../../environments/.env.openldr-keycloak ../../environments/.env.openldr-postgres .env",
-    "docker:build": "pnpm runcopy:env && tsx ./docker-compose.ts build",
-    "docker:start": "pnpm runcopy:env && tsx ./docker-compose.ts up -d --force-recreate",
-    "docker:stop": "pnpm runcopy:env && tsx ./docker-compose.ts stop",
-    "docker:reset": "pnpm runcopy:env && tsx ./docker-compose.ts down --rmi all -v --remove-orphans",
+    "docker:build": "pnpm run copy:env && tsx ./docker-compose.ts build",
+    "docker:start": "pnpm run copy:env && tsx ./docker-compose.ts up -d --force-recreate",
+    "docker:stop": "pnpm run copy:env && tsx ./docker-compose.ts stop",
+    "docker:reset": "pnpm run copy:env && tsx ./docker-compose.ts down --rmi all -v --remove-orphans",
     "dev": "cross-env NODE_ENV=development tsx watch src/index.ts",
     "start": "cross-env NODE_ENV=production tsx watch src/index.ts"
   },
