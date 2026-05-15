@@ -1,9 +1,16 @@
 import { readFileSync, existsSync } from "node:fs";
-import { resolve } from "node:path";
+import { resolve, dirname } from "node:path";
+import { fileURLToPath } from "node:url";
 import dotenv from "dotenv";
 import { z } from "zod";
 import { CliError } from "./errors.js";
 import { isValidFormat, type OutputFormat } from "./output.js";
+
+/** Directory of this file at runtime. `config.ts` lives in `src/` during dev
+ *  (tsx) and `dist/` after build — both are one level under the package root,
+ *  so the package's `.env` (written by `copy:env`) is always at `../.env`. */
+const SCRIPT_DIR = dirname(fileURLToPath(import.meta.url));
+const PACKAGE_ENV = resolve(SCRIPT_DIR, "..", ".env");
 
 export interface LoadedConfig {
   // Postgres
@@ -151,9 +158,8 @@ function resolveLocalHost(containerHost: string | undefined, hostIp: string | un
 }
 
 export function loadConfig(overrides: ConfigOverrides = {}): LoadedConfig {
-  const envFilePath = overrides.envFile ?? resolve(process.cwd(), ".env");
-
   if (overrides.envFile !== undefined) {
+    const envFilePath = overrides.envFile;
     let contents: string;
     try {
       contents = readFileSync(envFilePath, "utf8");
@@ -168,8 +174,19 @@ export function loadConfig(overrides: ConfigOverrides = {}): LoadedConfig {
     for (const [k, v] of Object.entries(parsed)) {
       if (process.env[k] === undefined) process.env[k] = v;
     }
-  } else if (existsSync(envFilePath)) {
-    dotenv.config({ path: envFilePath, quiet: true });
+  } else {
+    // Search order (highest precedence first; dotenv only sets unset keys):
+    //   1. ./.env in the current working directory (operator overrides)
+    //   2. <package>/.env written by `pnpm copy:env`
+    // This makes the CLI work whether the operator runs it from the package
+    // directory, the repo root, or anywhere else on the filesystem.
+    const cwdEnv = resolve(process.cwd(), ".env");
+    if (existsSync(cwdEnv)) {
+      dotenv.config({ path: cwdEnv, quiet: true });
+    }
+    if (PACKAGE_ENV !== cwdEnv && existsSync(PACKAGE_ENV)) {
+      dotenv.config({ path: PACKAGE_ENV, quiet: true });
+    }
   }
 
   const sanitised: Record<string, string> = {};
