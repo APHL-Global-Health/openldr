@@ -36,6 +36,10 @@ importers:
         version: 4.59.0
 
   apps/openldr-ai:
+    dependencies:
+      tsx:
+        specifier: ^4.22.0
+        version: 4.22.0
     devDependencies:
       '@openldr/mcp-server':
         specifier: '*'
