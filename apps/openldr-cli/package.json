@@ -1,0 +1,43 @@
+{
+  "name": "@openldr/cli",
+  "version": "1.0.0",
+  "description": "Operator CLI for the OpenLDR v2 platform. JSON on stdout, structured errors on stderr, deterministic exit codes. AI-friendly by default.",
+  "type": "module",
+  "main": "src/index.ts",
+  "private": true,
+  "license": "Apache-2.0",
+  "author": "Association of Public Health Laboratories (APHL)",
+  "bin": {
+    "openldr": "./bin/openldr"
+  },
+  "scripts": {
+    "copy:env": "tsx ../../environments/merge-env.ts ../../environments/.env.base ../../environments/.env.openldr-postgres ../../environments/.env.openldr-kafka ../../environments/.env.openldr-minio ../../environments/.env.openldr-opensearch ../../environments/.env.openldr-keycloak ../../environments/.env.openldr-data-processing ../../environments/.env.openldr-entity-services ../../environments/.env.openldr-external-database .env",
+    "dev": "tsx src/index.ts",
+    "build": "tsc -p tsconfig.build.json && chmod +x dist/index.js",
+    "start": "node dist/index.js",
+    "lint": "eslint src --ext .ts",
+    "check-types": "tsc --noEmit",
+    "clean": "rimraf dist .turbo *.tsbuildinfo"
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.995.0",
+    "@keycloak/keycloak-admin-client": "^26.4.7",
+    "@opensearch-project/opensearch": "^3.5.1",
+    "chalk": "^5.4.1",
+    "commander": "^12.1.0",
+    "dotenv": "^17.2.3",
+    "kafkajs": "^2.2.4",
+    "ora": "^8.1.1",
+    "pg": "^8.13.1",
+    "tsx": "^4.20.6",
+    "zod": "^4.1.11"
+  },
+  "devDependencies": {
+    "@repo/typescript-config": "*",
+    "@types/node": "^24.7.0",
+    "@types/pg": "^8.16.0",
+    "rimraf": "^6.0.1",
+    "typescript": "^5.8.3"
+  },
+  "packageManager": "pnpm@10.33.0"
+}
