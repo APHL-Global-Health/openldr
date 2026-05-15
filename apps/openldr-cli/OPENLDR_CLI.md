@@ -8,26 +8,29 @@
 
 ## 1. What this is
 
-`openldr-cli` is the human + AI operator entry point for openldr-v2. It wraps every backing service behind a vendor-neutral command surface:
+`openldr-cli` is the human + AI operator entry point for openldr-v2. It wraps every backing service behind a vendor-neutral command surface and prefers the HTTPS gateway so it works from a workstation outside the docker network:
 
 ```
-        ┌─────────────────────────────────────────────────────────┐
-        │                       openldr-cli                       │
-        │                                                         │
-        │   commands/                                              │
-        │     ping  health  services  config  tables  schema       │
-        │     errors                                               │
-        │     runs   queue   db                                    │
-        │     s3     search                                        │
-        │     ingest                                               │
-        │     auth   plugins   concepts                            │
-        └────┬────┬────┬────┬────┬────┬────┬────┬────┬────┬───────┘
-             │    │    │    │    │    │    │    │    │    │
-        ┌────▼─┐ ┌▼──┐ ┌▼──┐ ┌▼─┐ ┌▼─┐ ┌▼──┐ ┌▼──┐ ┌▼──┐ ┌▼─┐
-        │ pg  │ │kfk│ │mio│ │os│ │kc│ │gw │ │gw │ │gw │ │gw│
-        │5432 │ │94 │ │9000│ │92│ │443│ │443│ │443│ │443│ │…│
-        └─────┘ └───┘ └────┘ └──┘ └──┘ └───┘ └───┘ └───┘ └──┘
+                       ┌────────────────────────┐
+                       │       openldr-cli      │
+                       └────┬──────────────┬────┘
+                            │              │
+                  Gateway   │              │   Direct (in-docker only)
+                  (HTTPS,   │              │   ports 5432 / 9094 / 9000
+                   port 443)│              │
+                            ▼              ▼
+        ┌──────────────────────────┐  ┌──────────────────────┐
+        │  ping  health  services  │  │ db query             │
+        │  runs (data-processing)  │  │ tables / schema      │
+        │  ingest (data-processing)│  │ queue topics/tail/dlq│
+        │  search  (opensearch)    │  │ s3 buckets/ls/cat    │
+        │  auth   (keycloak)       │  │                      │
+        │  plugins(entity-services)│  │                      │
+        │  concepts(entity-services)  │                      │
+        └──────────────────────────┘  └──────────────────────┘
 ```
+
+**Default routing:** every command except `db`, `tables`, `schema`, `queue`, and `s3` goes through the HTTPS gateway. The direct-protocol commands require either (a) running the CLI inside the docker network, or (b) publishing the relevant ports in `docker-compose.yml`. The gateway proxies HTTP services (data-processing, entity-services, external-database, keycloak, opensearch, kafka-connect) but cannot proxy native protocols (Postgres TCP, Kafka native protocol, MinIO S3 — which breaks under nginx path rewriting due to SigV4).
 
 **Vendor-neutral commands map to backing technology:**
 
@@ -539,13 +542,39 @@ pnpm --filter @openldr/cli dev concepts search "hemoglobin" --limit 3
 
 ## 9. Known limitations & gotchas
 
+### Connectivity (read first if a command fails with ECONNREFUSED)
+
+The default `docker-compose` only exposes the HTTPS gateway (port 443), the AI service (8100), and the MCP server (6060) to the host. Everything else is internal-only on the `openldr-network`. The CLI handles this by routing every HTTP-capable command through the gateway:
+
+| Command | Route | Works from host without port exposure? |
+|---|---|---|
+| `ping`, `health`, `services`, `config show` | gateway / local | ✅ |
+| `runs *` | `/data-processing/api/v1/runs/*` | ✅ |
+| `ingest *` | `/data-processing/api/v1/processor/*` | ✅ |
+| `auth *` | `/keycloak/*` | ✅ |
+| `plugins *` | `/data-processing` + `/entity-services/api/v1/plugin/*` | ✅ |
+| `concepts *` | `/entity-services/api/v1/concepts/*` | ✅ |
+| `search *` | `/opensearch/*` | ✅ |
+| `db query` / `tables` / `schema` | direct Postgres TCP 5432 | ❌ requires port exposure |
+| `queue topics/tail/dlq/publish` | direct Kafka TCP 9094 | ❌ requires port exposure |
+| `s3 *` | direct MinIO TCP 9000 | ❌ requires port exposure (SigV4 breaks under gateway path rewriting) |
+
+**Three ways to use the direct-protocol commands:**
+
+1. **Run the CLI inside the docker network.** `docker compose exec openldr-mcp-server sh -c "cd /apps/openldr-cli && pnpm dev <subcommand>"` — the container can see `openldr-postgres:5432` etc.
+2. **Publish the ports in `docker/docker-compose.yml`.** Add a `ports:` block to each affected service. Convenient but exposes the services to anyone on your machine.
+3. **Use the alternative HTTP-API command instead.** `db query` → `runs list` / `concepts search`. `s3 ls` → MinIO console at `/minio-console/`. `queue tail` → Conduktor console at `/kafka-console/` or the Kafka Connect REST API at `/kafka-connect/`.
+
+### Other gotchas
+
 - **Self-signed TLS:** the local `openldr-nginx` gateway uses a self-signed cert. Either run with `--insecure-tls`, set `OPENLDR_INSECURE_TLS=true`, or trust the cert in your host keychain.
 - **Kafka log retention is 1 hour** (`KAFKA_LOG_RETENTION_HOURS=1`) in dev. `queue tail --from-beginning` may show fewer messages than expected on long-running stacks.
 - **MinIO TTL auto-expiry:** `raw-inbound` objects live 7 days, `validated-inbound` / `mapped-inbound` 3 days, `processed-inbound` 90 days, `sources` indefinitely. `s3 cat` on an aged object returns `NOT_FOUND` (exit 6).
-- **`runs follow` polls Postgres, not Kafka.** A run is only visible after the validation stage writes its first event. For very-early failures the CLI shows `NOT_FOUND` until the row materialises.
+- **`runs follow` polls the data-processing API.** A run is only visible after the validation stage writes its first event. For very-early failures the CLI shows `NOT_FOUND` until the row materialises.
 - **`auth users create` requires admin credentials** (`KEYCLOAK_ADMIN_USER` / `KEYCLOAK_ADMIN_PASSWORD`). Client-credentials tokens don't have realm-admin scopes.
 - **`db query` row cap:** results are sliced to `--limit` (default 200) before serialization. Use `--limit 10000` for larger pulls, but consider NDJSON to stream.
 - **No `--track` for ingest batch yet.** Tracking is per-payload via `runs follow` after the bulk submit completes.
+- **`ping --internal`** additionally probes raw Postgres + Kafka TCP — useful when verifying port exposure but expected to fail otherwise.
 
 ---
 

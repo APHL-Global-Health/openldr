@@ -25,9 +25,14 @@ export async function getAdmin(cfg: LoadedConfig): Promise<Admin> {
     await admin.connect();
   } catch (err) {
     admin = undefined;
+    const inner = err instanceof Error ? err.message : String(err);
     throw new CliError(
       "QUEUE_CONNECT_FAILED",
-      `Kafka admin connect failed: ${err instanceof Error ? err.message : String(err)}`,
+      `Kafka admin connect failed: ${inner}. ` +
+        `Kafka's native protocol is not proxied through the HTTPS gateway. Either ` +
+        `(a) run the CLI inside the docker network, ` +
+        `(b) publish KAFKA_EXTERNAL_PORT on the host in docker-compose.yml, or ` +
+        `(c) for read-only inspection use the Kafka Connect API at \`${cfg.gateway.url}/kafka-connect/\` or the Conduktor console at \`${cfg.gateway.url}/kafka-console/\`.`,
       { brokers: cfg.kafka.brokers },
     );
   }

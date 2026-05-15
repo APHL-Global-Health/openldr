@@ -1,79 +1,109 @@
 import type { Command } from "commander";
-import { loadRuntime, emitMetaIfNotQuiet } from "../runtime.js";
+import { loadRuntime } from "../runtime.js";
 import { emitArray, emitRow, emitText } from "../output.js";
-import { query } from "../clients/postgres.js";
 import { CliError } from "../errors.js";
+import { requestGateway } from "../clients/gateway.js";
 
-const RUNS_COLS = `
-  "id","messageId","projectId","dataFeedId","userId",
-  "currentStage","currentStatus","outpostStatus",
-  "errorStage","errorCode","errorMessage",
-  "rawObjectPath","validatedObjectPath","mappedObjectPath","processedObjectPath",
-  "createdAt","updatedAt","completedAt"
-`;
+interface RunRow {
+  id?: string;
+  messageId?: string;
+  projectId?: string;
+  dataFeedId?: string | null;
+  currentStage?: string;
+  currentStatus?: string;
+  errorStage?: string | null;
+  errorCode?: string | null;
+  errorMessage?: string | null;
+  createdAt?: string;
+  updatedAt?: string;
+  completedAt?: string | null;
+}
+
+interface ListRunsResponse {
+  data?: RunRow[];
+  items?: RunRow[];
+  page?: number;
+  limit?: number;
+  total?: number;
+}
+
+interface RunDetail {
+  run?: RunRow;
+  events?: Record<string, unknown>[];
+  [key: string]: unknown;
+}
+
+function rowsFrom(resp: ListRunsResponse | RunRow[]): RunRow[] {
+  if (Array.isArray(resp)) return resp;
+  return resp.data ?? resp.items ?? [];
+}
 
 export function registerRunsCommand(program: Command): void {
-  const runs = program.command("runs").description("Inspect messageProcessingRuns / events");
+  const runs = program.command("runs").description("Inspect message-processing runs (via data-processing /api/v1/runs)");
 
   runs
     .command("list")
-    .description("List recent runs (most recent first)")
-    .option("--status <s>", "filter on currentStatus (e.g. SUCCESS, FAILED, IN_PROGRESS)")
-    .option("--stage <s>", "filter on currentStage")
+    .description("List recent runs")
+    .option("--status <s>", "filter on currentStatus")
     .option("--feed <id>", "filter on dataFeedId")
-    .option("--since <iso>", "createdAt >= <iso>")
-    .option("--limit <n>", "max rows", "50")
-    .action(async (opts: { status?: string; stage?: string; feed?: string; since?: string; limit: string }) => {
-      const cmd = runs.commands.find((c) => c.name() === "list")!;
-      const rt = loadRuntime(cmd);
-      const where: string[] = [];
-      const params: unknown[] = [];
-      if (opts.status) { params.push(opts.status); where.push(`"currentStatus" = $${params.length}`); }
-      if (opts.stage) { params.push(opts.stage); where.push(`"currentStage" = $${params.length}`); }
-      if (opts.feed) { params.push(opts.feed); where.push(`"dataFeedId" = $${params.length}`); }
-      if (opts.since) { params.push(opts.since); where.push(`"createdAt" >= $${params.length}`); }
-      const whereSql = where.length ? `WHERE ${where.join(" AND ")}` : "";
-      params.push(parseInt(opts.limit, 10) || 50);
-      const sql = `SELECT ${RUNS_COLS} FROM "messageProcessingRuns" ${whereSql} ORDER BY "createdAt" DESC LIMIT $${params.length}`;
-      const result = await query(rt.config, "openldr", sql, params);
-      emitArray(result.rows as Record<string, unknown>[], rt.output);
-    });
+    .option("--project <id>", "filter on projectId")
+    .option("--since <iso>", "createdAt >= <iso> (mapped to dateFrom)")
+    .option("--until <iso>", "createdAt <= <iso> (mapped to dateTo)")
+    .option("--limit <n>", "max rows (capped at 200 server-side)", "50")
+    .option("--page <n>", "page index", "0")
+    .option("--sort-by <col>", "sort column", "createdAt")
+    .option("--sort-dir <dir>", "sort direction (asc | desc)", "desc")
+    .action(
+      async (opts: {
+        status?: string;
+        feed?: string;
+        project?: string;
+        since?: string;
+        until?: string;
+        limit: string;
+        page: string;
+        sortBy: string;
+        sortDir: string;
+      }) => {
+        const cmd = runs.commands.find((c) => c.name() === "list")!;
+        const rt = loadRuntime(cmd);
+        const res = await requestGateway<ListRunsResponse | RunRow[]>(rt.config, {
+          path: "/data-processing/api/v1/runs",
+          query: {
+            page: opts.page,
+            limit: opts.limit,
+            sortBy: opts.sortBy,
+            sortDir: opts.sortDir,
+            status: opts.status,
+            dataFeedId: opts.feed,
+            projectId: opts.project,
+            dateFrom: opts.since,
+            dateTo: opts.until,
+          },
+        });
+        emitArray(rowsFrom(res.data) as unknown as Record<string, unknown>[], rt.output);
+      },
+    );
 
   runs
     .command("get <runId>")
-    .description("Single run by id OR messageId, with all joined events")
+    .description("Run detail by messageId (with events + file hash)")
     .action(async (runId: string) => {
       const cmd = runs.commands.find((c) => c.name() === "get")!;
       const rt = loadRuntime(cmd);
-      const isUuid = /^[0-9a-f-]{36}$/i.test(runId);
-      if (!isUuid) {
-        throw new CliError("USAGE", "runId must be a UUID (matches id or messageId)", { runId });
-      }
-      const runSql = `SELECT ${RUNS_COLS} FROM "messageProcessingRuns" WHERE "id" = $1 OR "messageId" = $1 LIMIT 1`;
-      const run = await query(rt.config, "openldr", runSql, [runId]);
-      if (run.rowCount === 0) {
-        throw new CliError("NOT_FOUND", `Run not found: ${runId}`, { runId });
-      }
-      const row = run.rows[0] as { messageId: string };
-      const events = await query(
-        rt.config,
-        "openldr",
-        `SELECT "id","stage","status","eventType","topic","objectPath","pluginName","pluginVersion","errorCode","errorMessage","errorDetails","metadata","createdAt"
-         FROM "messageProcessingEvents" WHERE "messageId" = $1 ORDER BY "createdAt" ASC`,
-        [row.messageId],
-      );
-      if (rt.output.format === "json" || rt.output.format === "table") {
-        emitText(JSON.stringify({ run: row, events: events.rows }, null, 2));
+      const res = await requestGateway<RunDetail>(rt.config, {
+        path: `/data-processing/api/v1/runs/${encodeURIComponent(runId)}`,
+      });
+      if (rt.output.format === "json") {
+        emitText(JSON.stringify(res.data, null, 2));
       } else {
-        emitRow(row as Record<string, unknown>, rt.output);
-        emitMetaIfNotQuiet(rt, { events: events.rowCount });
-        for (const ev of events.rows) emitRow(ev as Record<string, unknown>, rt.output);
+        emitRow(res.data as unknown as Record<string, unknown>, rt.output);
       }
     });
 
   runs
     .command("follow <runId>")
-    .description("Poll a run until it reaches a terminal status (SUCCESS, FAILED)")
+    .description("Poll a run via the runs API until it reaches a terminal status (SUCCESS / FAILED / COMPLETED)")
     .option("--interval <s>", "poll interval in seconds", "2")
     .option("--timeout <s>", "give up after N seconds", "120")
     .action(async (runId: string, opts: { interval: string; timeout: string }) => {
@@ -84,76 +114,81 @@ export function registerRunsCommand(program: Command): void {
       const terminal = new Set(["SUCCESS", "FAILED", "COMPLETED", "ERROR"]);
       let lastSig = "";
       while (Date.now() < deadline) {
-        const result = await query<{ currentStage: string; currentStatus: string; errorMessage: string | null; updatedAt: Date }>(
-          rt.config,
-          "openldr",
-          `SELECT "currentStage","currentStatus","errorMessage","updatedAt"
-           FROM "messageProcessingRuns" WHERE "id" = $1 OR "messageId" = $1 LIMIT 1`,
-          [runId],
-        );
-        if (result.rowCount === 0) {
+        const res = await requestGateway<RunDetail>(rt.config, {
+          path: `/data-processing/api/v1/runs/${encodeURIComponent(runId)}`,
+          expectStatus: [200, 404],
+        });
+        if (res.status === 404) {
           throw new CliError("NOT_FOUND", `Run not found: ${runId}`, { runId });
         }
-        const row = result.rows[0]!;
-        const sig = `${row.currentStage}:${row.currentStatus}`;
+        const run = (res.data.run ?? (res.data as unknown as RunRow)) as RunRow;
+        const sig = `${run.currentStage ?? ""}:${run.currentStatus ?? ""}`;
         if (sig !== lastSig) {
-          emitRow(row as unknown as Record<string, unknown>, rt.output);
+          emitRow(
+            {
+              currentStage: run.currentStage,
+              currentStatus: run.currentStatus,
+              updatedAt: run.updatedAt,
+              errorCode: run.errorCode,
+              errorMessage: run.errorMessage,
+            } as Record<string, unknown>,
+            rt.output,
+          );
           lastSig = sig;
         }
-        if (terminal.has(row.currentStatus.toUpperCase())) return;
+        if (run.currentStatus && terminal.has(run.currentStatus.toUpperCase())) return;
         await new Promise((r) => setTimeout(r, intervalMs));
       }
-      throw new CliError("TIMEOUT", `Run did not reach a terminal status within ${opts.timeout}s`, { runId });
+      throw new CliError("TIMEOUT", `Run did not reach terminal status within ${opts.timeout}s`, { runId });
     });
 
   runs
     .command("events <runId>")
-    .description("Stream messageProcessingEvents for a run")
+    .description("Stream events for a run (extracted from runs/:messageId detail response)")
     .option("--stage <s>", "filter on stage")
     .action(async (runId: string, opts: { stage?: string }) => {
       const cmd = runs.commands.find((c) => c.name() === "events")!;
       const rt = loadRuntime(cmd);
-      const run = await query<{ messageId: string }>(
-        rt.config,
-        "openldr",
-        `SELECT "messageId" FROM "messageProcessingRuns" WHERE "id" = $1 OR "messageId" = $1 LIMIT 1`,
-        [runId],
-      );
-      if (run.rowCount === 0) throw new CliError("NOT_FOUND", `Run not found: ${runId}`, { runId });
-      const params: unknown[] = [run.rows[0]!.messageId];
-      let stageClause = "";
-      if (opts.stage) {
-        params.push(opts.stage);
-        stageClause = ` AND "stage" = $${params.length}`;
-      }
-      const result = await query(
-        rt.config,
-        "openldr",
-        `SELECT * FROM "messageProcessingEvents" WHERE "messageId" = $1 ${stageClause} ORDER BY "createdAt" ASC`,
-        params,
-      );
-      emitArray(result.rows as Record<string, unknown>[], rt.output);
+      const res = await requestGateway<RunDetail>(rt.config, {
+        path: `/data-processing/api/v1/runs/${encodeURIComponent(runId)}`,
+      });
+      const events = (res.data.events ?? []) as Record<string, unknown>[];
+      const filtered = opts.stage ? events.filter((e) => e.stage === opts.stage) : events;
+      emitArray(filtered, rt.output);
     });
 
   runs
     .command("replay <runId>")
-    .description("Re-enqueue a failed run via the data-processing retry endpoint (write-gated)")
+    .description("Re-enqueue a failed run via /api/v1/runs/:messageId/retry (write-gated)")
     .option("--confirm", "actually perform the retry", false)
     .action(async (runId: string, opts: { confirm?: boolean }) => {
       const cmd = runs.commands.find((c) => c.name() === "replay")!;
       const rt = loadRuntime(cmd);
       if (!opts.confirm) {
-        throw new CliError(
-          "WRITE_NOT_CONFIRMED",
-          `Replay is a mutating operation. Re-run with --confirm to actually retry run ${runId}.`,
-          { runId },
-        );
+        throw new CliError("WRITE_NOT_CONFIRMED", `Replay is mutating. Re-run with --confirm.`, { runId });
       }
-      const { requestGateway } = await import("../clients/gateway.js");
-      const res = await requestGateway(rt.config, {
+      const res = await requestGateway<Record<string, unknown>>(rt.config, {
         method: "POST",
-        path: `/data-processing/api/v1/runs/${runId}/retry`,
+        path: `/data-processing/api/v1/runs/${encodeURIComponent(runId)}/retry`,
+        expectStatus: [200, 202],
       });
-      emitText(JSON.stringify({ status: res.status, data: res.data }, null, 2));
+      emitText(JSON.stringify(res.data, null, 2));
+    });
+
+  runs
+    .command("delete <runId>")
+    .description("Soft-delete a run and purge its MinIO objects (write-gated)")
+    .option("--confirm", "actually delete", false)
+    .action(async (runId: string, opts: { confirm?: boolean }) => {
+      const cmd = runs.commands.find((c) => c.name() === "delete")!;
+      const rt = loadRuntime(cmd);
+      if (!opts.confirm) {
+        throw new CliError("WRITE_NOT_CONFIRMED", `Delete is mutating. Re-run with --confirm.`, { runId });
+      }
+      const res = await requestGateway<Record<string, unknown>>(rt.config, {
+        method: "DELETE",
+        path: `/data-processing/api/v1/runs/${encodeURIComponent(runId)}`,
+      });
+      emitText(JSON.stringify(res.data, null, 2));
     });
 }

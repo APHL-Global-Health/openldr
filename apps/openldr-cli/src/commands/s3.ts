@@ -22,8 +22,28 @@ function splitKey(spec: string): { bucket: string; key: string } {
   return { bucket: spec.slice(0, idx), key: spec.slice(idx + 1) };
 }
 
+function wrapS3Error(err: unknown, gatewayUrl: string, context: Record<string, unknown> = {}): CliError {
+  if (err instanceof CliError) return err;
+  const msg = err instanceof Error ? err.message : String(err);
+  if (/ECONNREFUSED|ENOTFOUND|ETIMEDOUT|EHOSTUNREACH/.test(msg)) {
+    return new CliError(
+      "S3_OP_FAILED",
+      `Object storage unreachable: ${msg}. ` +
+        `MinIO's S3 API cannot be proxied through the HTTPS gateway (nginx path rewriting breaks SigV4). Either ` +
+        `(a) run the CLI inside the docker network, ` +
+        `(b) publish MINIO_API_PORT (default 9000) on the host in docker-compose.yml, or ` +
+        `(c) for ad-hoc browsing use the MinIO console UI at ${gatewayUrl}/minio-console/.`,
+      context,
+    );
+  }
+  if (/NotFound|NoSuchKey|NoSuchBucket/.test(msg)) {
+    return new CliError("NOT_FOUND", msg, context);
+  }
+  return new CliError("S3_OP_FAILED", msg, context);
+}
+
 export function registerS3Command(program: Command): void {
-  const s3 = program.command("s3").description("Object storage inspection (currently backed by MinIO)");
+  const s3 = program.command("s3").description("Object storage inspection (currently backed by MinIO, direct port 9000 — not via gateway)");
 
   s3
     .command("buckets")
@@ -38,6 +58,8 @@ export function registerS3Command(program: Command): void {
           created_at: b.CreationDate?.toISOString(),
         }));
         emitArray(rows as unknown as Record<string, unknown>[], rt.output);
+      } catch (err) {
+        throw wrapS3Error(err, rt.config.gateway.url);
       } finally {
         closeS3();
       }
@@ -66,6 +88,8 @@ export function registerS3Command(program: Command): void {
           etag: o.ETag,
         }));
         emitArray(rows as unknown as Record<string, unknown>[], rt.output);
+      } catch (err) {
+        throw wrapS3Error(err, rt.config.gateway.url, { bucket });
       } finally {
         closeS3();
       }
@@ -80,15 +104,10 @@ export function registerS3Command(program: Command): void {
       const { bucket, key } = splitKey(spec);
       try {
         const out = await getS3(rt.config).send(new GetObjectCommand({ Bucket: bucket, Key: key }));
-        if (!out.Body) throw new CliError("NOT_FOUND", `Empty body for ${spec}`);
+        if (!out.Body) throw new CliError("NOT_FOUND", `Empty body for ${spec}`, { bucket, key });
         await pipeline(out.Body as Readable, process.stdout);
       } catch (err) {
-        if (err instanceof CliError) throw err;
-        throw new CliError(
-          "S3_OP_FAILED",
-          `cat failed: ${err instanceof Error ? err.message : String(err)}`,
-          { bucket, key },
-        );
+        throw wrapS3Error(err, rt.config.gateway.url, { bucket, key });
       } finally {
         closeS3();
       }
@@ -116,9 +135,7 @@ export function registerS3Command(program: Command): void {
           rt.output,
         );
       } catch (err) {
-        const msg = err instanceof Error ? err.message : String(err);
-        if (/NotFound|NoSuchKey/.test(msg)) throw new CliError("NOT_FOUND", `Object not found: ${spec}`, { bucket, key });
-        throw new CliError("S3_OP_FAILED", msg, { bucket, key });
+        throw wrapS3Error(err, rt.config.gateway.url, { bucket, key });
       } finally {
         closeS3();
       }
@@ -134,9 +151,11 @@ export function registerS3Command(program: Command): void {
       const { bucket, key } = splitKey(spec);
       try {
         const out = await getS3(rt.config).send(new GetObjectCommand({ Bucket: bucket, Key: key }));
-        if (!out.Body) throw new CliError("NOT_FOUND", `Empty body for ${spec}`);
+        if (!out.Body) throw new CliError("NOT_FOUND", `Empty body for ${spec}`, { bucket, key });
         await pipeline(out.Body as Readable, createWriteStream(opts.out));
         emitText(JSON.stringify({ bucket, key, out: opts.out }));
+      } catch (err) {
+        throw wrapS3Error(err, rt.config.gateway.url, { bucket, key });
       } finally {
         closeS3();
       }
@@ -168,6 +187,8 @@ export function registerS3Command(program: Command): void {
           }),
         );
         emitText(JSON.stringify({ bucket, key, size }));
+      } catch (err) {
+        throw wrapS3Error(err, rt.config.gateway.url, { bucket, key });
       } finally {
         closeS3();
       }

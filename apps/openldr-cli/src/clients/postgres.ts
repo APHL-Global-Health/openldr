@@ -40,11 +40,15 @@ export async function query<T extends QueryResultRow = QueryResultRow>(
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     if (/ECONNREFUSED|ENOTFOUND|ETIMEDOUT/.test(msg)) {
-      throw new CliError("DB_CONNECT_FAILED", `Postgres connection failed: ${msg}`, {
-        host: cfg.postgres.host,
-        port: cfg.postgres.port,
-        db,
-      });
+      throw new CliError(
+        "DB_CONNECT_FAILED",
+        `Postgres connection failed: ${msg}. ` +
+          `Postgres is not exposed outside the docker network by default. Either ` +
+          `(a) run the CLI inside the docker network (e.g. \`docker compose exec openldr-mcp-server …\`), ` +
+          `(b) publish POSTGRES_PORT on the host in docker-compose.yml, or ` +
+          `(c) use the HTTP-API-backed commands instead (\`openldr runs list\`, \`openldr concepts search\`, …).`,
+        { host: cfg.postgres.host, port: cfg.postgres.port, db },
+      );
     }
     throw new CliError("DB_QUERY_FAILED", msg, { db });
   }

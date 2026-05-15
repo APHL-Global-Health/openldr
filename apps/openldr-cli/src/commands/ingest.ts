@@ -86,20 +86,18 @@ export function registerIngestCommand(program: Command): void {
         const messageId = res.data?.messageId;
         emitRow({ file, feed: opts.feed, status: res.status, messageId } as Record<string, unknown>, rt.output);
         if (opts.track && messageId) {
-          // delegate to runs follow logic inline
+          // Poll the data-processing runs API (no direct Postgres dependency).
           const intervalMs = (parseInt(opts.trackInterval, 10) || 2) * 1_000;
           const deadline = Date.now() + (parseInt(opts.trackTimeout, 10) || 120) * 1_000;
           const terminal = new Set(["SUCCESS", "FAILED", "COMPLETED", "ERROR"]);
-          const { query } = await import("../clients/postgres.js");
+          interface RunDetail { run?: { currentStage?: string; currentStatus?: string }; currentStage?: string; currentStatus?: string }
           while (Date.now() < deadline) {
-            const result = await query<{ currentStage: string; currentStatus: string }>(
-              rt.config,
-              "openldr",
-              `SELECT "currentStage","currentStatus" FROM "messageProcessingRuns" WHERE "messageId" = $1 LIMIT 1`,
-              [messageId],
-            );
-            const row = result.rows[0];
-            if (row) {
+            const r = await requestGateway<RunDetail>(rt.config, {
+              path: `/data-processing/api/v1/runs/${encodeURIComponent(messageId)}`,
+              expectStatus: [200, 404],
+            });
+            const row = r.status === 200 ? (r.data.run ?? (r.data as RunDetail)) : undefined;
+            if (row && row.currentStage && row.currentStatus) {
               emitRow(row as unknown as Record<string, unknown>, rt.output);
               if (terminal.has(row.currentStatus.toUpperCase())) return;
             }
