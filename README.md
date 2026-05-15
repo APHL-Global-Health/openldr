@@ -78,6 +78,7 @@
 
 - Docker and Docker Compose
 - Node.js 24+ (for local development)
+- [pnpm](https://pnpm.io/) 10+ (the monorepo pins `pnpm@10.33.0` via `packageManager`; run `corepack enable` once to activate it automatically)
 - 16GB+ RAM recommended for running all services (in production)
 
 ### Quick Start
@@ -87,17 +88,17 @@
 git clone https://github.com/APHL-Global-Health/openldr.git
 cd openldr
 
-# fetch dependences
-npm install
+# fetch dependencies
+pnpm install
 
 # initialize environmental variables
-npm run init
+pnpm init
 
 # build all services
-npm run docker:build
+pnpm docker:build
 
 # start all services
-npm run docker:start
+pnpm docker:start
 ```
 
 ## Deploy with Docker Hub Images

@@ -26,7 +26,7 @@ The AI inference service for [OpenLDR](../../), an open-source Laboratory Inform
 | Configuration | Pydantic Settings |
 | Containerization | Docker (Python 3.11 slim-bookworm) |
 | Orchestration | Docker Compose (v1/v2 compatible) |
-| Monorepo | Turborepo + npm workspaces |
+| Monorepo | Turborepo + pnpm workspaces |
 | Default Model | `LiquidAI/LFM2-1.2B-RAG` |
 
 ## API Endpoints
@@ -94,7 +94,7 @@ The AI inference service for [OpenLDR](../../), an open-source Laboratory Inform
 ## Prerequisites
 
 - **Docker** and **Docker Compose** (v1 or v2)
-- **Node.js** >= 18 and **npm** (for monorepo scripts)
+- **Node.js** >= 18 and **pnpm** >= 10 (for monorepo scripts; run `corepack enable` once to activate the pinned version)
 - **Python 3.11+** (only if running outside Docker)
 - Minimum **512 MB RAM** for the container (configurable via `MEMORY_LIMIT`)
 - Sufficient disk space for model downloads (1-5 GB per model)
@@ -130,7 +130,7 @@ The service is configured via environment variables, loaded from `.env` files as
 The `.env` file is assembled from two base files using the monorepo merge script:
 
 ```bash
-npm run copy:env
+pnpm copy:env
 # Merges: environments/.env.base + environments/.env.openldr-ai → .env
 ```
 
@@ -159,23 +159,23 @@ From the **monorepo root**:
 
 ```bash
 # Build and start all services (including openldr-ai)
-npm run docker:build
-npm run docker:start
+pnpm docker:build
+pnpm docker:start
 
 # Or build/start only openldr-ai
 cd apps/openldr-ai
-npm run docker:build:off
-npm run docker:start:off
+pnpm docker:build:off
+pnpm docker:start:off
 ```
 
 ### Stopping and Resetting
 
 ```bash
 # Stop the service
-npm run docker:stop
+pnpm docker:stop
 
 # Full reset (removes images, volumes, and .env)
-npm run docker:reset
+pnpm docker:reset
 ```
 
 ### Running Locally (Development)
@@ -269,7 +269,7 @@ apps/openldr-ai/
 ├── docker-compose.yml         # Docker Compose service definition
 ├── docker-compose.ts          # Docker Compose CLI wrapper (v1/v2 compatible)
 ├── Dockerfile                 # Container build definition
-├── package.json               # npm package config (monorepo scripts)
+├── package.json               # Package manifest (monorepo scripts, pnpm-managed)
 ├── tsconfig.json              # TypeScript config (for monorepo tooling)
 └── LICENSE                    # Apache 2.0
 ```

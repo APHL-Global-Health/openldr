@@ -126,13 +126,13 @@ Before you begin, ensure you have:
 4. **Install dependencies**
 
 ```bash
-   npm install
+   pnpm install
 ```
 
 5. **Initialize environment**
 
 ```bash
-   npm run init
+   pnpm init
 ```
 
 Select `127.0.0.1` when prompted for IP address.
@@ -140,8 +140,8 @@ Select `127.0.0.1` when prompted for IP address.
 6. **Build and start services**
 
 ```bash
-   npm run docker:build
-   npm run docker:start
+   pnpm docker:build
+   pnpm docker:start
 ```
 
 7. **Verify installation**
@@ -192,10 +192,10 @@ Examples:
 ```bash
    # Run tests for a specific service
    cd apps/openldr-entity-services
-   npm test
+   pnpm test
 
    # Build to check for compilation errors
-   npm run docker:build
+   pnpm docker:build
 ```
 
 ## Coding Standards
@@ -266,10 +266,10 @@ We use Prettier for code formatting:
 
 ```bash
 # Format all files
-npm run format
+pnpm format
 
 # Check formatting
-npm run format:check
+pnpm format:check
 ```
 
 ## Commit Guidelines
@@ -425,17 +425,17 @@ Add screenshots for UI changes
 
 ```bash
 # Run all tests
-npm test
+pnpm test
 
 # Run tests for specific service
 cd apps/openldr-entity-services
-npm test
+pnpm test
 
 # Run tests in watch mode
-npm test -- --watch
+pnpm test -- --watch
 
 # Run tests with coverage
-npm test -- --coverage
+pnpm test -- --coverage
 ```
 
 ### Writing Tests
@@ -483,10 +483,10 @@ describe("FacilityService", () => {
 
 ```bash
 # Start documentation server (if available)
-npm run docs:dev
+pnpm docs:dev
 
 # Build documentation
-npm run docs:build
+pnpm docs:build
 ```
 
 ## Community

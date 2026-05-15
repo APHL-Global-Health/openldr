@@ -9,7 +9,7 @@ Before you begin, ensure you have the following installed:
 - **Docker** (version 20.10 or higher)
 - **Docker Compose** (version 2.0 or higher)
 - **Node.js** (version 24 or higher)
-- **npm** (version 11 or higher)
+- **pnpm** (version 10 or higher; run `corepack enable` once to activate the version pinned in root `package.json`)
 - **Git**
 
 ### System Requirements
@@ -31,7 +31,7 @@ cd openldr
 ### 2. Install dependences
 
 ```bash
-npm install
+pnpm install
 ```
 
 ### 3. Run the Initialization Script
@@ -39,7 +39,7 @@ npm install
 The initialization script will configure all necessary environment files and prepare the services for deployment.
 
 ```bash
-npm run init
+pnpm init
 ```
 
 > **Important**: If you've previously run the initialization script and need to reconfigure, delete all `.env` files from the root directory before running the script again.
@@ -91,10 +91,10 @@ Once initialization is complete, build and start all services:
 
 ```bash
 # Build services
-npm run docker:build
+pnpm docker:build
 
 # Start services
-npm run docker:start
+pnpm docker:start
 ```
 
 The build process may take several minutes depending on your system and network speed.

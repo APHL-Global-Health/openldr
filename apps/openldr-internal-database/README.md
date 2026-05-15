@@ -145,7 +145,7 @@ patients --> lab_requests --> lab_results --> isolates --> susceptibility_tests
 
 - **Docker** (with Docker Compose V1 or V2)
 - **Node.js** >= 18
-- **npm** 11.3.0+ (monorepo package manager)
+- **pnpm** 10+ (the monorepo pins `pnpm@10.33.0` via `packageManager`; run `corepack enable` once to activate it automatically)
 - **tsx** (TypeScript execution, installed as a dependency)
 
 ## Configuration
@@ -195,16 +195,16 @@ From the **monorepo root**:
 
 ```bash
 # Pull images and set up all services
-npm run docker:build
+pnpm docker:build
 
 # Start all services
-npm run docker:start
+pnpm docker:start
 
 # Stop all services
-npm run docker:stop
+pnpm docker:stop
 
 # Full reset (removes images, volumes, and orphan containers)
-npm run docker:reset
+pnpm docker:reset
 ```
 
 ### Standalone
@@ -213,16 +213,16 @@ From this directory (`apps/openldr-internal-database`):
 
 ```bash
 # Pull images (generates .env from environment files first)
-npm run docker:build
+pnpm docker:build
 
 # Start services in detached mode
-npm run docker:start
+pnpm docker:start
 
 # Stop services
-npm run docker:stop
+pnpm docker:stop
 
 # Full reset -- removes all data, images, and volumes
-npm run docker:reset
+pnpm docker:reset
 ```
 
 ### Verifying the Setup
@@ -252,7 +252,7 @@ Migrations use PostgreSQL's built-in `docker-entrypoint-initdb.d` mechanism:
 | 97 | `97-openldr_external_whonet_reference.sql` | Loads WHONET reference data into `openldr_external` |
 | 98 | `98-openldr_external_amr_for_r_ref.sql` | Loads AMR-for-R reference data into `openldr_external` |
 
-> **Important:** Migrations only run on a fresh volume. To re-run migrations, you must destroy the data volume first (`npm run docker:reset`).
+> **Important:** Migrations only run on a fresh volume. To re-run migrations, you must destroy the data volume first (`pnpm docker:reset`).
 
 A commented-out `99-mock-data.sql` entry in `docker-compose.yml` and `.gitignore` indicates support for optional test data that is not committed to version control.
 
@@ -356,7 +356,7 @@ docker exec openldr-postgres psql -U postgres -c "SELECT * FROM pg_stat_activity
 ### Volume Management
 
 - Data persists in the `postgres_data` Docker volume across container restarts.
-- To completely reset the database (including re-running all migrations): `npm run docker:reset`
+- To completely reset the database (including re-running all migrations): `pnpm docker:reset`
 - To inspect volume data: `docker volume inspect openldr_postgres_data`
 
 ### Production Considerations

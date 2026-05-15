@@ -22,7 +22,7 @@ OpenLDR Studio is the administrative front-end application for the [OpenLDR](htt
 | **PDF** | react-pdf, jsPDF, jspdf-autotable |
 | **Offline / Client DB** | SQLite WASM (in-browser) |
 | **Animation** | Framer Motion |
-| **Monorepo** | Turborepo with npm workspaces |
+| **Monorepo** | Turborepo with pnpm workspaces |
 | **Containerization** | Docker (multi-stage Alpine build) |
 
 ## Features Overview
@@ -105,7 +105,7 @@ Keycloak-based authentication with role-based access control and a dedicated log
 ## Prerequisites
 
 - **Node.js** >= 18
-- **npm** >= 11.3.0 (specified as `packageManager` in the root)
+- **pnpm** >= 10 (the root pins `pnpm@10.33.0` as `packageManager`; run `corepack enable` once to activate it)
 - **Docker** (optional, for containerized deployment)
 - A running **Keycloak** instance (for authentication)
 - Access to the OpenLDR backend services (entity-services, data-processing, AI) -- typically through the API gateway
@@ -119,7 +119,7 @@ This application is part of the `openldr-v2` Turborepo monorepo. All commands sh
 ```bash
 git clone <repository-url>
 cd openldr-v2
-npm install
+pnpm install
 ```
 
 ### 2. Configure Environment Variables
@@ -134,7 +134,7 @@ To generate the local `.env` file for the studio app:
 
 ```bash
 cd apps/openldr-studio
-npm run copy:env
+pnpm copy:env
 ```
 
 This creates an `.env` file in the studio app directory by merging the three environment sources.
@@ -144,14 +144,14 @@ This creates an `.env` file in the studio app directory by merging the three env
 From the monorepo root (starts all apps):
 
 ```bash
-npm run dev
+pnpm dev
 ```
 
 Or run just the studio app:
 
 ```bash
 cd apps/openldr-studio
-npm run dev
+pnpm dev
 ```
 
 The development server starts at `http://localhost:3000` with hot module replacement enabled.
@@ -159,14 +159,14 @@ The development server starts at `http://localhost:3000` with hot module replace
 ### 4. Build for Production
 
 ```bash
-npm run build
+pnpm build
 ```
 
 ### 5. Preview Production Build
 
 ```bash
 cd apps/openldr-studio
-npm run preview
+pnpm preview
 ```
 
 ### 6. Start Production Server
@@ -175,8 +175,8 @@ The production build is served via an Express server (`server.mjs`) with SPA fal
 
 ```bash
 cd apps/openldr-studio
-npm run build
-npm run start
+pnpm build
+pnpm start
 ```
 
 ## Project Structure
@@ -244,7 +244,7 @@ apps/openldr-studio/
 
 ## Environment Variables
 
-The `.env` file is auto-generated via `npm run copy:env`. Key variables:
+The `.env` file is auto-generated via `pnpm copy:env`. Key variables:
 
 | Variable | Description | Default |
 |---|---|---|
@@ -275,28 +275,28 @@ Run from the `apps/openldr-studio` directory:
 
 | Script | Description |
 |---|---|
-| `npm run dev` | Start Vite development server with HMR on port 3000 |
-| `npm run build` | Type-check with `tsc` then build with Vite |
-| `npm run preview` | Preview the production build locally |
-| `npm run start` | Serve the production build via Express |
-| `npm run lint` | Run ESLint |
-| `npm run copy:env` | Merge environment files into a local `.env` |
-| `npm run wasm` | Copy SQLite WASM binary to the `public/` directory |
-| `npm run docker:build` | Build the Docker image |
-| `npm run docker:start` | Start the container (detached) |
-| `npm run docker:stop` | Stop the container |
-| `npm run docker:reset` | Tear down containers, images, volumes, and clean up |
+| `pnpm dev` | Start Vite development server with HMR on port 3000 |
+| `pnpm build` | Type-check with `tsc` then build with Vite |
+| `pnpm preview` | Preview the production build locally |
+| `pnpm start` | Serve the production build via Express |
+| `pnpm lint` | Run ESLint |
+| `pnpm copy:env` | Merge environment files into a local `.env` |
+| `pnpm wasm` | Copy SQLite WASM binary to the `public/` directory |
+| `pnpm docker:build` | Build the Docker image |
+| `pnpm docker:start` | Start the container (detached) |
+| `pnpm docker:stop` | Stop the container |
+| `pnpm docker:reset` | Tear down containers, images, volumes, and clean up |
 
 Run from the **monorepo root** to orchestrate all apps:
 
 | Script | Description |
 |---|---|
-| `npm run dev` | Start all apps in development mode via Turborepo |
-| `npm run build` | Build all apps |
-| `npm run lint` | Lint all apps |
-| `npm run docker:build` | Build Docker images for all apps |
-| `npm run docker:start` | Start all containers |
-| `npm run docker:stop` | Stop all containers |
+| `pnpm dev` | Start all apps in development mode via Turborepo |
+| `pnpm build` | Build all apps |
+| `pnpm lint` | Lint all apps |
+| `pnpm docker:build` | Build Docker images for all apps |
+| `pnpm docker:start` | Start all containers |
+| `pnpm docker:stop` | Stop all containers |
 
 ## Docker Support
 
@@ -318,12 +318,12 @@ The application includes full Docker support with a multi-stage build:
 
 ```bash
 # From monorepo root
-npm run docker:build
+pnpm docker:build
 
 # Or just the studio app
 cd apps/openldr-studio
-npm run docker:build
-npm run docker:start
+pnpm docker:build
+pnpm docker:start
 ```
 
 ## License

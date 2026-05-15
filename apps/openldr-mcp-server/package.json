@@ -9,10 +9,10 @@
   "type": "module",
   "scripts": {
     "copy:env": "tsx ../../environments/merge-env.ts ../../environments/.env.base ../../environments/.env.openldr-minio ../../environments/.env.openldr-keycloak ../../environments/.env.openldr-postgres ../../environments/.env.openldr-pgadmin ../../environments/.env.openldr-kafka ../../environments/.env.openldr-mcp-server .env",
-    "docker:build": "npm run copy:env && tsx ./docker-compose.ts build",
-    "docker:start": "npm run copy:env && tsx ./docker-compose.ts up -d",
-    "docker:stop": "npm run copy:env && tsx ./docker-compose.ts stop",
-    "docker:reset": "npm run copy:env && tsx ./docker-compose.ts down --rmi all -v --remove-orphans && npm run stop:services && rimraf ./.env",
+    "docker:build": "pnpm run copy:env && tsx ./docker-compose.ts build",
+    "docker:start": "pnpm run copy:env && tsx ./docker-compose.ts up -d",
+    "docker:stop": "pnpm run copy:env && tsx ./docker-compose.ts stop",
+    "docker:reset": "pnpm run copy:env && tsx ./docker-compose.ts down --rmi all -v --remove-orphans && pnpm run stop:services && rimraf ./.env",
     "start": "cross-env NODE_ENV=production tsx src/index.ts",
     "inspect": "cross-env DANGEROUSLY_OMIT_AUTH=true CLIENT_PORT=6274 SERVER_PORT=6277 HOST=127.0.0.1 MCP_AUTO_OPEN_ENABLED=false ALLOWED_ORIGINS=http://127.0.0.1:6274,http://localhost:6274 npx @modelcontextprotocol/inspector"
   },

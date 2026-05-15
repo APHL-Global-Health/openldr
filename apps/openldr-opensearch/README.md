@@ -26,7 +26,7 @@ OpenSearch serves as the central search and analytics layer in OpenLDR:
 
 - **Docker** and **Docker Compose** (V2 recommended)
 - **Node.js** >= 18
-- **npm** 11.x (workspace-aware)
+- **pnpm** 10+ (the monorepo pins `pnpm@10.33.0` via `packageManager`; run `corepack enable` once to activate it automatically)
 - At least **2 GB** of free memory for the OpenSearch container (hard limit), with 1 GB reserved
 
 ## Project Structure
@@ -35,7 +35,7 @@ OpenSearch serves as the central search and analytics layer in OpenLDR:
 apps/openldr-opensearch/
   docker-compose.yml      # Service definitions (OpenSearch + Dashboards)
   docker-compose.ts       # TypeScript wrapper for docker compose commands
-  package.json            # npm scripts for build/start/stop/reset
+  package.json            # pnpm scripts for build/start/stop/reset
   tsconfig.json           # TypeScript config (extends monorepo base)
   .env                    # Generated environment variables (do not edit manually)
   .dockerignore           # Docker build exclusions
@@ -110,16 +110,16 @@ From the repository root:
 
 ```bash
 # Pull OpenSearch images
-npm run docker:build
+pnpm docker:build
 
 # Start OpenSearch and Dashboards
-npm run docker:start
+pnpm docker:start
 
 # Stop services
-npm run docker:stop
+pnpm docker:stop
 
 # Full reset (remove containers, images, volumes)
-npm run docker:reset
+pnpm docker:reset
 ```
 
 ### Service-Level Commands
@@ -128,16 +128,16 @@ From the `apps/openldr-opensearch/` directory:
 
 ```bash
 # Pull images
-npm run docker:build
+pnpm docker:build
 
 # Start containers (detached, force recreate)
-npm run docker:start
+pnpm docker:start
 
 # Stop containers
-npm run docker:stop
+pnpm docker:stop
 
 # Full reset (remove containers, images, volumes, and orphans)
-npm run docker:reset
+pnpm docker:reset
 ```
 
 Each command first runs `copy:env` to regenerate the `.env` file from the environment sources, then invokes Docker Compose through the `docker-compose.ts` wrapper (which tries Docker Compose V2 first, with a V1 fallback and up to 3 retries).
@@ -272,7 +272,7 @@ The Dashboards security plugin is disabled, so no login is required in the defau
 To completely wipe OpenSearch data and start fresh:
 
 ```bash
-npm run docker:reset
+pnpm docker:reset
 ```
 
 This removes containers, images, volumes (including `opensearch-data`), and orphan containers.

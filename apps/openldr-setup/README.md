@@ -13,17 +13,17 @@ The initialization and configuration tool for the OpenLDR monorepo. This CLI uti
 
 ## How It Fits Into the Monorepo
 
-The OpenLDR monorepo uses [Turborepo](https://turbo.build/) with npm workspaces. The setup app is invoked **before** any build or service-start commands because every other app reads environment files that this tool generates.
+The OpenLDR monorepo uses [Turborepo](https://turbo.build/) with pnpm workspaces. The setup app is invoked **before** any build or service-start commands because every other app reads environment files that this tool generates.
 
 Typical workflow:
 
 ```
-npm run init          # runs this setup tool
-npm run docker:build  # builds all Docker images (also creates the Docker network)
-npm run dev           # starts development servers
+pnpm init          # runs this setup tool
+pnpm docker:build  # builds all Docker images (also creates the Docker network)
+pnpm dev           # starts development servers
 ```
 
-The root `package.json` maps `npm run init` to:
+The root `package.json` maps `pnpm init` to:
 
 ```
 tsx ./apps/openldr-setup/openldr.ts init
@@ -39,7 +39,7 @@ tsx ./apps/openldr-setup/openldr.ts init
 ## Prerequisites
 
 - **Node.js** >= 18
-- **npm** >= 11.3.0 (defined as `packageManager` in root `package.json`)
+- **pnpm** >= 10 (the monorepo pins `pnpm@10.33.0` as `packageManager` in root `package.json`; run `corepack enable` once to activate it automatically)
 - **Docker** -- must be running; required for network creation and container management
 - **tsx** -- installed as a transitive dependency (no global install needed)
 
@@ -49,10 +49,10 @@ tsx ./apps/openldr-setup/openldr.ts init
 
 ```bash
 # Install dependencies first
-npm install
+pnpm install
 
 # Run initialization
-npm run init
+pnpm init
 ```
 
 ### From the app directory
@@ -61,32 +61,32 @@ npm run init
 cd apps/openldr-setup
 
 # Initialize the project
-npm run init
+pnpm init
 
 # Build (creates Docker network)
-npm run docker:build
+pnpm docker:build
 
 # Service lifecycle
-npm run setup:services
-npm run start:services
-npm run stop:services
-npm run reset:services
+pnpm setup:services
+pnpm start:services
+pnpm stop:services
+pnpm reset:services
 ```
 
 ### All available commands
 
 | Command              | Script                     | Description                                       |
 | -------------------- | -------------------------- | ------------------------------------------------- |
-| `npm run init`       | `tsx openldr.ts init`      | Interactive setup wizard for network configuration |
-| `npm run docker:build` | `tsx openldr.ts build`   | Creates the `openldr-network` Docker bridge network |
-| `npm run setup:services` | `tsx openldr.ts setup` | Runs service setup routines                        |
-| `npm run start:services` | `tsx openldr.ts start` | Starts services                                    |
-| `npm run stop:services`  | `tsx openldr.ts stop`  | Stops services                                     |
-| `npm run reset:services` | `tsx openldr.ts reset` | Resets services                                    |
+| `pnpm init`       | `tsx openldr.ts init`      | Interactive setup wizard for network configuration |
+| `pnpm docker:build` | `tsx openldr.ts build`   | Creates the `openldr-network` Docker bridge network |
+| `pnpm setup:services` | `tsx openldr.ts setup` | Runs service setup routines                        |
+| `pnpm start:services` | `tsx openldr.ts start` | Starts services                                    |
+| `pnpm stop:services`  | `tsx openldr.ts stop`  | Stops services                                     |
+| `pnpm reset:services` | `tsx openldr.ts reset` | Resets services                                    |
 
 ## Step-by-Step Setup Flow
 
-When you run `npm run init`, the tool walks you through the following interactive steps:
+When you run `pnpm init`, the tool walks you through the following interactive steps:
 
 ### 1. Choose network configuration method
 
@@ -185,11 +185,11 @@ If you see `Network 'openldr-network' already exists, continuing...`, this is no
 
 ### Re-running init
 
-You can safely re-run `npm run init` at any time. The tool updates existing environment files in place -- existing keys are overwritten and missing keys are appended. No data is lost from keys the tool does not manage.
+You can safely re-run `pnpm init` at any time. The tool updates existing environment files in place -- existing keys are overwritten and missing keys are appended. No data is lost from keys the tool does not manage.
 
 ### Environment files not found
 
-If services fail to start because of missing environment variables, verify that the `environments/` directory at the repository root contains the expected `.env.*` files. Running `npm run init` will create or update them.
+If services fail to start because of missing environment variables, verify that the `environments/` directory at the repository root contains the expected `.env.*` files. Running `pnpm init` will create or update them.
 
 ## License
 

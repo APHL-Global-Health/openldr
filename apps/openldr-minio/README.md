@@ -57,7 +57,7 @@ OpenLDR MinIO sits at the core of the data ingestion and processing pipeline:
 
 - **Node.js** >= 18
 - **Docker** (with Docker Compose v2 or v1)
-- **npm** 11.3.0+ (monorepo package manager)
+- **pnpm** 10+ (the monorepo pins `pnpm@10.33.0` via `packageManager`; run `corepack enable` once to activate it automatically)
 - The following sibling services should be available on the `openldr-network`:
   - `openldr-kafka` (for bucket event notifications)
   - `openldr-postgres` (for plugin metadata seeding)
@@ -118,18 +118,18 @@ This service is part of the `openldr-v2` Turborepo monorepo. All commands should
 
 ```bash
 # From the monorepo root - build and start all services
-npm run docker:build
-npm run docker:start
+pnpm docker:build
+pnpm docker:start
 ```
 
 ### MinIO Only
 
 ```bash
 # From apps/openldr-minio/
-npm run docker:build    # Pull the MinIO image
-npm run docker:start    # Start container + run initialization
-npm run docker:stop     # Stop the container
-npm run docker:reset    # Tear down container, volumes, and images
+pnpm docker:build    # Pull the MinIO image
+pnpm docker:start    # Start container + run initialization
+pnpm docker:stop     # Stop the container
+pnpm docker:reset    # Tear down container, volumes, and images
 ```
 
 ### What Happens on Start
@@ -238,7 +238,7 @@ apps/openldr-minio/
   docker-compose.ts                     # Docker Compose CLI wrapper
   docker-compose.yml                    # Container definition
   openldr.ts                            # Lifecycle management (setup/start/stop/reset)
-  package.json                          # Package config and npm scripts
+  package.json                          # Package config and pnpm scripts
   .env                                  # Generated env file (not committed)
 ```
 
@@ -277,7 +277,7 @@ The `openldr.ts start` script depends on several other containers being up:
 Check initialization output:
 
 ```bash
-npm run start:services
+pnpm start:services
 ```
 
 ### Cannot access MinIO console

@@ -14,7 +14,7 @@ The public-facing marketing and landing page for the **OpenLDR** platform -- an 
 | UI Primitives| [Radix UI](https://www.radix-ui.com/) (Accordion, Navigation Menu) |
 | Utilities    | clsx, tailwind-merge, class-variance-authority                  |
 | Production   | [Express](https://expressjs.com/) static server with SPA fallback |
-| Monorepo     | [Turborepo](https://turbo.build/) with npm workspaces           |
+| Monorepo     | [Turborepo](https://turbo.build/) with pnpm workspaces          |
 
 ## Features Overview
 
@@ -59,7 +59,7 @@ The site is a single-page marketing/landing application composed of the followin
 ## Prerequisites
 
 - **Node.js** >= 18
-- **npm** >= 11 (the monorepo specifies `npm@11.3.0` as the package manager)
+- **pnpm** >= 10 (the monorepo pins `pnpm@10.33.0` via `packageManager`; run `corepack enable` once to activate it automatically)
 - **Docker** and **Docker Compose** (optional, for containerized deployment)
 
 ## Getting Started
@@ -70,18 +70,18 @@ This app lives inside the `openldr-v2` Turborepo monorepo at `apps/openldr-web`.
 
 ```bash
 cd /path/to/openldr-v2
-npm install
+pnpm install
 ```
 
 ### 2. Run the development server
 
 ```bash
 # From monorepo root (starts all apps)
-npm run dev
+pnpm dev
 
 # Or from this app directory
 cd apps/openldr-web
-npm run dev
+pnpm dev
 ```
 
 The dev server starts at **http://localhost:3000** by default.
@@ -89,13 +89,13 @@ The dev server starts at **http://localhost:3000** by default.
 ### 3. Build for production
 
 ```bash
-npm run build
+pnpm build
 ```
 
 ### 4. Start the production server
 
 ```bash
-npm run start
+pnpm start
 ```
 
 This launches an Express server that serves the `dist/` directory with SPA fallback routing.
@@ -144,15 +144,15 @@ The following `VITE_`-prefixed variables are used at build/runtime:
 
 | Script           | Description                                                        |
 | ---------------- | ------------------------------------------------------------------ |
-| `npm run dev`    | Merge env files and start Vite dev server with HMR                 |
-| `npm run build`  | Type-check with `tsc` and build production bundle with Vite        |
-| `npm run start`  | Start Express production server serving `dist/`                    |
-| `npm run preview`| Preview the production build locally via Vite                      |
-| `npm run copy:env` | Merge environment files into a single `.env`                     |
-| `npm run docker:build` | Build the Docker image                                       |
-| `npm run docker:start` | Start the Docker container (detached)                        |
-| `npm run docker:stop`  | Stop the Docker container                                    |
-| `npm run docker:reset` | Tear down containers, images, volumes, and clean up          |
+| `pnpm dev`    | Merge env files and start Vite dev server with HMR                 |
+| `pnpm build`  | Type-check with `tsc` and build production bundle with Vite        |
+| `pnpm start`  | Start Express production server serving `dist/`                    |
+| `pnpm preview`| Preview the production build locally via Vite                      |
+| `pnpm copy:env` | Merge environment files into a single `.env`                     |
+| `pnpm docker:build` | Build the Docker image                                       |
+| `pnpm docker:start` | Start the Docker container (detached)                        |
+| `pnpm docker:stop`  | Stop the Docker container                                    |
+| `pnpm docker:reset` | Tear down containers, images, volumes, and clean up          |
 
 ## Docker Support
 
@@ -161,8 +161,8 @@ The app includes full Docker support with a multi-stage build:
 **Dockerfile stages:**
 
 1. **builder** -- Installs Turbo globally, copies the full monorepo, and runs `turbo prune` to isolate this workspace.
-2. **installer** -- Installs dependencies with `npm ci`, copies pruned sources, and runs `turbo run build`.
-3. **runner** -- Copies the built app and starts the Express production server via `npm start`.
+2. **installer** -- Installs dependencies with `pnpm install --frozen-lockfile`, copies pruned sources, and runs `turbo run build`.
+3. **runner** -- Copies the built app and starts the Express production server via `pnpm start`.
 
 **docker-compose.yml** defines a single service:
 
@@ -172,14 +172,14 @@ The app includes full Docker support with a multi-stage build:
 
 ```bash
 # Build and start
-npm run docker:build
-npm run docker:start
+pnpm docker:build
+pnpm docker:start
 
 # Stop
-npm run docker:stop
+pnpm docker:stop
 
 # Full teardown (removes images, volumes, orphans)
-npm run docker:reset
+pnpm docker:reset
 ```
 
 ## License

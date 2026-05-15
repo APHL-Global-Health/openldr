@@ -326,7 +326,7 @@ All endpoints are prefixed with `/api/v1`.
 ## Prerequisites
 
 - **Node.js** >= 18
-- **npm** >= 11.3.0
+- **pnpm** >= 10 (the monorepo pins `pnpm@10.33.0` via `packageManager`; run `corepack enable` once to activate it automatically)
 - **PostgreSQL** with the `openldr_external` database initialized
 - **Docker** and **Docker Compose** (for containerized deployment)
 
@@ -369,11 +369,11 @@ The connection pool (`src/lib/db.ts`) is configured with:
 
 ```bash
 # From the monorepo root
-npm install
+pnpm install
 
 # Start the external database service in development mode
 cd apps/openldr-external-database
-npm run dev
+pnpm dev
 ```
 
 The `dev` script runs the server with `tsx watch` for hot-reloading on file changes. In development mode, HTTP request logging uses Morgan's `dev` format.
@@ -381,20 +381,20 @@ The `dev` script runs the server with `tsx watch` for hot-reloading on file chan
 ### Production
 
 ```bash
-npm run start
+pnpm start
 ```
 
 ### Monorepo Commands (from root)
 
 ```bash
 # Start all services in development mode
-npm run dev
+pnpm dev
 
 # Build all services
-npm run build
+pnpm build
 
 # Initialize the entire OpenLDR platform
-npm run init
+pnpm init
 ```
 
 ## Docker Support
@@ -403,16 +403,16 @@ npm run init
 
 ```bash
 # Build the Docker image
-npm run docker:build
+pnpm docker:build
 
 # Start the container
-npm run docker:start
+pnpm docker:start
 
 # Stop the container
-npm run docker:stop
+pnpm docker:stop
 
 # Full reset (remove images, volumes, orphans)
-npm run docker:reset
+pnpm docker:reset
 ```
 
 ### Dockerfile
@@ -420,8 +420,8 @@ npm run docker:reset
 The Dockerfile uses a multi-stage Alpine build:
 
 1. **builder** -- Installs Turbo globally, copies the full monorepo, and runs `turbo prune` to isolate the `@openldr/external-database` workspace.
-2. **installer** -- Installs dependencies with `npm ci`, copies pruned workspace, and runs `turbo run build`.
-3. **runner** -- Minimal runtime image that runs `npm start`.
+2. **installer** -- Installs dependencies with `pnpm install --frozen-lockfile`, copies pruned workspace, and runs `turbo run build`.
+3. **runner** -- Minimal runtime image that runs `pnpm start`.
 
 Base image: `node:24-alpine`.
 

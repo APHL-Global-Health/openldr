@@ -42,7 +42,7 @@ This service is part of the **openldr-v2** Turborepo monorepo alongside 13 other
 | Logging | Pino, Morgan |
 | Security | Helmet, CORS, express-rate-limit |
 | Build / Monorepo | Turborepo, tsx |
-| Package Manager | npm 11 (workspaces) |
+| Package Manager | pnpm 10 (workspaces, pinned via `packageManager` in root `package.json`) |
 
 ## API Endpoints Overview
 
@@ -262,7 +262,7 @@ The Query Engine enforces per-extension permission checks. Extensions must be in
 ## Prerequisites
 
 - **Node.js** >= 18
-- **npm** >= 11
+- **pnpm** >= 10 (the monorepo pins `pnpm@10.33.0` via `packageManager`; run `corepack enable` once to activate it automatically)
 - **Docker** and **Docker Compose** (for containerized deployment)
 - Running instances of:
   - PostgreSQL (databases: `openldr`, `openldr_external`)
@@ -309,14 +309,14 @@ Configuration is driven entirely by environment variables. The `.env` file is as
 
 ```bash
 # From monorepo root
-npm install
+pnpm install
 
 # Copy/merge environment files
 cd apps/openldr-entity-services
-npm run copy:env
+pnpm copy:env
 
 # Start in dev mode (with hot reload via tsx watch)
-npm run dev
+pnpm dev
 ```
 
 The service starts at `http://localhost:3002` by default.
@@ -324,7 +324,7 @@ The service starts at `http://localhost:3002` by default.
 ### Production
 
 ```bash
-npm run start
+pnpm start
 ```
 
 ## Docker
@@ -333,23 +333,23 @@ npm run start
 
 ```bash
 # From the app directory
-npm run docker:build
+pnpm docker:build
 
 # Or from monorepo root (all services)
-npm run docker:build
+pnpm docker:build
 ```
 
 The Dockerfile uses a multi-stage build:
 1. **Builder** -- installs Turbo, prunes the workspace to only this service's dependencies
 2. **Installer** -- installs dependencies, runs the Turbo build
-3. **Runner** -- minimal Alpine image, copies built artifacts, runs `npm start`
+3. **Runner** -- minimal Alpine image, copies built artifacts, runs `pnpm start`
 
 ### Run
 
 ```bash
-npm run docker:start    # Start container
-npm run docker:stop     # Stop container
-npm run docker:reset    # Remove container, images, and volumes
+pnpm docker:start    # Start container
+pnpm docker:stop     # Stop container
+pnpm docker:reset    # Remove container, images, and volumes
 ```
 
 ### Docker Compose

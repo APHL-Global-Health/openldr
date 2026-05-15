@@ -22,13 +22,13 @@ Key responsibilities:
 | Database | PostgreSQL (shared `openldr-postgres` container, database `keycloak`) |
 | Runtime / scripting | Node.js, TypeScript, tsx |
 | Orchestration | Docker / Docker Compose |
-| Monorepo tooling | Turborepo, npm workspaces |
+| Monorepo tooling | Turborepo, pnpm workspaces |
 | Shared library | `@repo/openldr-core` (KeyCloak client, Docker helpers, service utilities) |
 
 ## Prerequisites
 
 - **Docker** (v20+) and **Docker Compose** (v2 recommended; v1 fallback is supported)
-- **Node.js** >= 18 and **npm** >= 9
+- **Node.js** >= 18 and **pnpm** >= 10 (run `corepack enable` once to activate the version pinned in root `package.json`)
 - The `openldr-postgres` container must be running with a `keycloak` database available.
 - TLS certificates at `packages/openldr-core/certs/domain.crt` and `domain.key`.
 
@@ -39,7 +39,7 @@ apps/openldr-keycloak/
   docker-compose.yml      # Keycloak container definition
   docker-compose.ts       # Wrapper that runs docker compose with v2/v1 fallback
   openldr.ts              # Service lifecycle script (setup, start, stop, reset)
-  package.json            # Package metadata and npm scripts
+  package.json            # Package metadata and pnpm scripts
   .env                    # Merged environment variables (generated, git-ignored)
   realm-config/
     openldr-realm.json    # Realm import file (roles, default admin user)
@@ -198,16 +198,16 @@ From the repository root:
 
 ```bash
 # Pull the Keycloak image
-npm run docker:build
+pnpm docker:build
 
 # Start all services (including Keycloak)
-npm run docker:start
+pnpm docker:start
 
 # Stop all services
-npm run docker:stop
+pnpm docker:stop
 
 # Tear down containers, images, and volumes
-npm run docker:reset
+pnpm docker:reset
 ```
 
 ### Using the App Directly
@@ -216,16 +216,16 @@ From `apps/openldr-keycloak/`:
 
 ```bash
 # Merge environment files and pull the image
-npm run docker:build
+pnpm docker:build
 
 # Start the container and run the initialization script
-npm run docker:start
+pnpm docker:start
 
 # Stop the container
-npm run docker:stop
+pnpm docker:stop
 
 # Remove the container, image, and volumes
-npm run docker:reset
+pnpm docker:reset
 ```
 
 ### Lifecycle Scripts
@@ -297,8 +297,8 @@ Keycloak connects to the shared PostgreSQL instance:
 ### Realm or clients are not created
 
 - The `start` script waits up to 8 minutes for the container to become healthy. If the container is still starting, increase the timeout in `openldr.ts` (currently `480000` ms).
-- Verify environment variables are set correctly -- run `npm run copy:env` and check the generated `.env` file.
-- If the realm already exists, the import step is skipped. To re-create it, delete the realm from the Keycloak admin console first, or run `npm run docker:reset` to wipe all data.
+- Verify environment variables are set correctly -- run `pnpm copy:env` and check the generated `.env` file.
+- If the realm already exists, the import step is skipped. To re-create it, delete the realm from the Keycloak admin console first, or run `pnpm docker:reset` to wipe all data.
 
 ### "Neither docker compose nor docker-compose worked"
 

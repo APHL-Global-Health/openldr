@@ -143,7 +143,7 @@ All pipeline topics are also sunk into OpenSearch via Kafka Connect.
 
 - **Docker** and **Docker Compose** (v2 preferred, v1 fallback supported)
 - **Node.js** >= 18
-- **npm** 11.3.0+ (monorepo workspace manager)
+- **pnpm** 10+ (the monorepo pins `pnpm@10.33.0` via `packageManager`; run `corepack enable` once to activate it automatically)
 - **PostgreSQL** running (for Conduktor Console database: `conduktor_console`)
 - **OpenSearch** running (for the sink connector target)
 - **MinIO** running (produces S3 event notifications to Kafka topics)
@@ -294,7 +294,7 @@ A custom Nginx configuration (`conduktor-nginx-override.conf`) is included for C
 
 ## Setup and Deployment
 
-This service is part of the OpenLDR v2 Turborepo monorepo. It is managed through npm scripts that integrate with the `turbo` build system.
+This service is part of the OpenLDR v2 Turborepo monorepo. It is managed through pnpm scripts that integrate with the `turbo` build system.
 
 ### Quick Start
 
@@ -302,14 +302,14 @@ From the monorepo root:
 
 ```bash
 # Pull all Docker images (including Kafka)
-npm run docker:build
+pnpm docker:build
 
 # Start all services
-npm run docker:start
+pnpm docker:start
 
 # Or target just the Kafka service
 cd apps/openldr-kafka
-npm run docker:start
+pnpm docker:start
 ```
 
 ### Lifecycle Commands
@@ -318,14 +318,14 @@ From the `apps/openldr-kafka` directory:
 
 | Command | Description |
 |---|---|
-| `npm run docker:build` | Merge env files, run setup, and pull Docker images |
-| `npm run docker:start` | Merge env files, start containers, create OpenSearch sink connector |
-| `npm run docker:stop` | Merge env files, stop containers, delete OpenSearch sink connector |
-| `npm run docker:reset` | Merge env files, tear down containers, remove images and volumes |
-| `npm run setup:services` | Run the setup lifecycle hook (currently a no-op) |
-| `npm run start:services` | Wait for Kafka Connect health, then create the OpenSearch sink connector |
-| `npm run stop:services` | Delete the OpenSearch sink connector |
-| `npm run reset:services` | Delete and recreate the OpenSearch sink connector |
+| `pnpm docker:build` | Merge env files, run setup, and pull Docker images |
+| `pnpm docker:start` | Merge env files, start containers, create OpenSearch sink connector |
+| `pnpm docker:stop` | Merge env files, stop containers, delete OpenSearch sink connector |
+| `pnpm docker:reset` | Merge env files, tear down containers, remove images and volumes |
+| `pnpm setup:services` | Run the setup lifecycle hook (currently a no-op) |
+| `pnpm start:services` | Wait for Kafka Connect health, then create the OpenSearch sink connector |
+| `pnpm stop:services` | Delete the OpenSearch sink connector |
+| `pnpm reset:services` | Delete and recreate the OpenSearch sink connector |
 
 ### Startup Order
 
@@ -478,7 +478,7 @@ Useful endpoints:
 
 ### OpenSearch sink connector not created
 
-- The connector is created programmatically during `npm run start:services`. It waits up to 120 seconds for Kafka Connect to be healthy.
+- The connector is created programmatically during `pnpm start:services`. It waits up to 120 seconds for Kafka Connect to be healthy.
 - Verify Kafka Connect is reachable: `curl http://localhost:8083/` (or through the gateway).
 - Check that OpenSearch is running and accessible at the configured URL.
 - Review logs from the `openldr.ts start` command for error details.
@@ -503,7 +503,7 @@ To completely reset Kafka and all its data:
 
 ```bash
 cd apps/openldr-kafka
-npm run docker:reset
+pnpm docker:reset
 ```
 
 This removes all containers, images, and volumes (including topic data and connector state).
@@ -531,7 +531,7 @@ apps/openldr-kafka/
 │   └── LICENSE
 ├── LICENSE                          # Apache License 2.0
 ├── openldr.ts                       # Lifecycle management script
-├── package.json                     # npm package definition
+├── package.json                     # Package manifest (pnpm-managed)
 └── tsconfig.json                    # TypeScript configuration
 ```
 
