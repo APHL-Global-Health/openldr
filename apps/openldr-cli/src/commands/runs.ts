@@ -27,9 +27,17 @@ interface ListRunsResponse {
   total?: number;
 }
 
+interface FileHashInfo {
+  hash?: string;
+  sourceObjectPath?: string;
+  fileSize?: string;
+  contentType?: string;
+}
+
 interface RunDetail {
   run?: RunRow;
   events?: Record<string, unknown>[];
+  fileHash?: FileHashInfo | null;
   [key: string]: unknown;
 }
 
@@ -87,18 +95,32 @@ export function registerRunsCommand(program: Command): void {
 
   runs
     .command("get <runId>")
-    .description("Run detail by messageId (with events + file hash)")
+    .description(
+      "Run detail by messageId. Default/NDJSON output flattens the run row + event count + file hash; " +
+        "`--output json` emits the full {run, events, fileHash} envelope for deep inspection.",
+    )
     .action(async (runId: string) => {
       const cmd = runs.commands.find((c) => c.name() === "get")!;
       const rt = loadRuntime(cmd);
       const res = await requestGateway<RunDetail>(rt.config, {
         path: `/data-processing/api/v1/runs/${encodeURIComponent(runId)}`,
+        expectStatus: [200, 404],
       });
+      if (res.status === 404 || !res.data.run) {
+        throw new CliError("NOT_FOUND", `Run not found: ${runId}`, { runId });
+      }
       if (rt.output.format === "json") {
         emitText(JSON.stringify(res.data, null, 2));
-      } else {
-        emitRow(res.data as unknown as Record<string, unknown>, rt.output);
+        return;
       }
+      const flat: Record<string, unknown> = {
+        ...res.data.run,
+        events_count: (res.data.events ?? []).length,
+        fileHash: res.data.fileHash?.hash,
+        sourceObjectPath: res.data.fileHash?.sourceObjectPath,
+        fileSize: res.data.fileHash?.fileSize,
+      };
+      emitRow(flat, rt.output);
     });
 
   runs
