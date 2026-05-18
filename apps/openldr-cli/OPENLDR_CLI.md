@@ -97,13 +97,47 @@ pnpm --filter @openldr/cli dev ping
 pnpm --filter @openldr/cli build
 node apps/openldr-cli/dist/index.js --help
 
-# (Optional) symlink the bin shim:
+# (Optional) symlink the bin shim — Linux / macOS:
 chmod +x apps/openldr-cli/bin/openldr
 ln -s "$(pwd)/apps/openldr-cli/bin/openldr" ~/.local/bin/openldr
 openldr ping
 ```
 
 When the CLI runs **on the operator's host** (the typical case), it connects to docker-compose services via their externally-mapped ports on `127.0.0.1`. When env vars point at the docker-compose internal hostnames (e.g. `openldr-postgres`), the CLI auto-rewrites them to `HOST_IP` (default `127.0.0.1`).
+
+### Windows (PowerShell / cmd)
+
+The CLI runs natively on Windows — `pnpm install`, `pnpm build`, `pnpm dev`, and `pnpm clean` work in PowerShell / cmd / Git Bash / WSL without modification. [src/config.ts](src/config.ts) already discovers `.env` from both the cwd and the package root, so `node apps/openldr-cli/dist/index.js ping` works from any directory.
+
+The shell-only differences are:
+
+**Symlinking the bin globally** (the Linux `ln -s` equivalent). Pick one:
+
+```powershell
+# Option 1 — PowerShell function in $PROFILE (no setup, instant)
+if (-not (Test-Path $PROFILE)) {
+  New-Item -ItemType File -Path $PROFILE -Force | Out-Null
+}
+notepad $PROFILE
+# Then add (substitute your clone path):
+#   function openldr { node D:\Projects\Repositories\openldr-v2\apps\openldr-cli\dist\index.js @args }
+# Save, close, then reload:
+. $PROFILE
+openldr ping
+
+# Option 2 — .cmd shim on PATH
+# Create C:\Users\you\bin\openldr.cmd (any PATH directory) with:
+#   @echo off
+#   node "D:\Projects\Repositories\openldr-v2\apps\openldr-cli\dist\index.js" %*
+
+# Option 3 — pnpm link --global (requires one-time `pnpm setup`)
+pnpm setup                              # restart terminal afterwards
+pnpm --filter @openldr/cli build
+pnpm --filter @openldr/cli link --global
+openldr ping
+```
+
+**Output redirection.** PowerShell's `>` writes UTF-16 with a BOM by default, which breaks NDJSON consumers (`jq`, downstream pipes). For `> file.ndjson` examples in this doc, use `| Out-File -Encoding utf8NoBOM file.ndjson` (PowerShell 7+) or wrap the call in `cmd /c "... > file.ndjson"`. Git Bash / WSL don't have this problem.
 
 ---
 
