@@ -338,10 +338,26 @@ The `ingest stream` path is served by a path-scoped relaxed nginx zone (`ingest-
 printf '%s\n' '{"hello":"a"}' '{"hello":"b"}' \
   | openldr ingest stream --feed <feedId> --dry-run-post
 
-# Pipe from cdr-toolchain (Phase-2 export-batch --emit-payloads)
-cdr-toolchain export-batch --where "labno BETWEEN '2024-01-01' AND '2024-06-30'" --emit-payloads \
+# Pipe from cdr-toolchain (Phase-2 export-batch --emit-payloads).
+# Note: REGDAT4's WHERE clause can only reference the `LabNo` SQL column
+# (everything else is decoded from a binary blob post-fetch). To filter
+# by date, first look up matching LabNos via `cdr list lab-number
+# --where "LABDATE >= '...'"` and feed them into a `LabNo IN (...)`
+# clause — or just use a LabNo prefix / range.
+pnpm -s -C apps/cli dev export-batch \
+    --where "LabNo LIKE '00613%'" \
+    --emit-payloads \
+    --limit 10 \
   | openldr ingest stream --feed <feedId> --concurrency 16 --track \
   > submitted.ndjson 2> summary.json
+```
+
+If pnpm leaks workspace banners into stdout, bypass it:
+
+```bash
+apps/cli/node_modules/.bin/tsx apps/cli/src/index.ts export-batch \
+    --where "LabNo LIKE '00613%'" --emit-payloads \
+  | openldr ingest stream --feed <feedId> --concurrency 16 --track
 ```
 
 ```bash
