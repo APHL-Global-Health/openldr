@@ -329,6 +329,20 @@ $ openldr search mapping lab-requests
 | `ingest validate <file>` | Local payload validation (JSON parse + size + top-level keys). No network. |
 | `ingest submit <file> --feed <id> [--dry-run] [--dry-run-post] [--track] [--track-timeout Ns] [--track-interval Ns]` | POST to `/data-processing/api/v1/processor/process-feed`. `--track` polls `messageProcessingRuns` until terminal status. |
 | `ingest batch <dir> --feed <id> [--concurrency N] [--resume-from i] --confirm` | Bulk submit. Emits NDJSON journal to stdout, summary to stderr. Without `--confirm` runs in dry-run-post mode. |
+| `ingest stream --feed <id> [--concurrency N] [--track] [--track-timeout Ns] [--track-interval Ns] [--dry-run-post] [--fail-fast]` | **Reads NDJSON payloads from stdin**, one per line. POSTs each through the gateway with a worker pool. Emits per-payload status to stdout, summary to stderr. Exit 1 if any line failed. Designed as the consumer side of `cdr-toolchain export-batch --emit-payloads | openldr ingest stream …`. |
+
+The `ingest stream` path is served by a path-scoped relaxed nginx zone (`ingest-bulk`, 500 r/s + 200 burst — see `apps/openldr-gateway/nginx.conf.template`) so a single bulk client can sustain ~10× more throughput than the default `/data-processing/*` 50 r/s ceiling.
+
+```bash
+# Local dry-run
+printf '%s\n' '{"hello":"a"}' '{"hello":"b"}' \
+  | openldr ingest stream --feed <feedId> --dry-run-post
+
+# Pipe from cdr-toolchain (Phase-2 export-batch --emit-payloads)
+cdr-toolchain export-batch --where "labno BETWEEN '2024-01-01' AND '2024-06-30'" --emit-payloads \
+  | openldr ingest stream --feed <feedId> --concurrency 16 --track \
+  > submitted.ndjson 2> summary.json
+```
 
 ```bash
 # Validate without contacting the platform

@@ -10,6 +10,11 @@ http {
     js_import auth from appdata/auth.js;
 
     limit_req_zone $binary_remote_addr zone=limiter-middleware:10m rate=50r/s;
+    # Path-scoped relaxed zone for bulk ingest (POST /data-processing/api/v1/
+    # processor/process-feed). Bulk migration clients can sustain ~500 r/s
+    # without tripping a 429; everything else still goes through the 50 r/s
+    # `limiter-middleware` zone above.
+    limit_req_zone $binary_remote_addr zone=ingest-bulk:10m rate=500r/s;
     limit_req_status 429;
 
     resolver 127.0.0.11 valid=10s ipv6=off;
@@ -363,6 +368,33 @@ http {
 
             limit_req zone=limiter-middleware burst=50 nodelay;
             
+            proxy_set_header Host $http_host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+            proxy_read_timeout 900;
+        }
+
+        # More-specific match wins: bulk ingest gets the relaxed 500 r/s zone
+        # while the rest of /data-processing/* keeps the 50 r/s ceiling.
+        location /data-processing/api/v1/processor/process-feed {
+            resolver 127.0.0.11 valid=10s ipv6=off;
+            rewrite ^/data-processing/(.*)$ /$1 break;
+            proxy_pass http://$openldr_data_processing;
+
+            proxy_request_buffering on;
+            client_max_body_size 50m;
+
+            auth_request /auth-middleware;
+            limit_req zone=ingest-bulk burst=200 nodelay;
+
+            auth_request_set $auth_user $upstream_http_x_auth_user;
+            auth_request_set $auth_email $upstream_http_x_auth_email;
+            auth_request_set $auth_roles $upstream_http_x_auth_roles;
+
+            proxy_set_header X-Auth-User $auth_user;
+            proxy_set_header X-Auth-Email $auth_email;
+            proxy_set_header X-Auth-Roles $auth_roles;
             proxy_set_header Host $http_host;
             proxy_set_header X-Real-IP $remote_addr;
             proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
