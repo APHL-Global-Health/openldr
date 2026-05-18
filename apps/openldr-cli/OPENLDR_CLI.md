@@ -119,8 +119,19 @@ if (-not (Test-Path $PROFILE)) {
   New-Item -ItemType File -Path $PROFILE -Force | Out-Null
 }
 notepad $PROFILE
-# Then add (substitute your clone path):
-#   function openldr { node D:\Projects\Repositories\openldr-v2\apps\openldr-cli\dist\index.js @args }
+# Then add (substitute your clone path). The conditional matters — a plain
+# `function openldr { node ... @args }` does NOT forward pipeline input to
+# node's stdin, so the `cdr export-batch --emit-payloads | openldr ingest
+# stream` workflow silently receives empty stdin. The
+# $MyInvocation.ExpectingInput check forwards only when actually piped, so
+# interactive `openldr ping` (no pipe) still works.
+#   function openldr {
+#       if ($MyInvocation.ExpectingInput) {
+#           $input | & node D:\Projects\Repositories\openldr-v2\apps\openldr-cli\dist\index.js @args
+#       } else {
+#           & node D:\Projects\Repositories\openldr-v2\apps\openldr-cli\dist\index.js @args
+#       }
+#   }
 # Save, close, then reload:
 . $PROFILE
 openldr ping
