@@ -109,35 +109,6 @@ async function init() {
 
       hostIp = domainName.trim();
     } else if (selectedNetwork.value === "ip") {
-      const { _httpPort } = await prompts
-        .input({
-          message: "Default HTTP port for openldr-gateway",
-          default: httpPort.toString(),
-          validate: (input: string) => {
-            const value = parseInt(input, 10);
-            return isNaN(value) || value < 1
-              ? "Please enter a number greater than 0"
-              : true;
-          },
-        })
-        .then((answer) => ({ _httpPort: parseInt(answer, 10) }));
-
-      const { _httpsPort } = await prompts
-        .input({
-          message: "Default HTTPS port for openldr-gateway",
-          default: httpsPort.toString(),
-          validate: (input: string) => {
-            const value = parseInt(input, 10);
-            return isNaN(value) || value < 1
-              ? "Please enter a number greater than 0"
-              : true;
-          },
-        })
-        .then((answer) => ({ _httpsPort: parseInt(answer, 10) }));
-
-      httpPort = _httpPort;
-      httpsPort = _httpsPort;
-
       // Get system information
       const systemInfo = await services.getSystemInfo();
 
@@ -163,6 +134,35 @@ async function init() {
         }
       }
     }
+
+    const { _httpPort } = await prompts
+      .input({
+        message: "Default HTTP port for openldr-gateway",
+        default: httpPort.toString(),
+        validate: (input: string) => {
+          const value = parseInt(input, 10);
+          return isNaN(value) || value < 1
+            ? "Please enter a number greater than 0"
+            : true;
+        },
+      })
+      .then((answer) => ({ _httpPort: parseInt(answer, 10) }));
+
+    const { _httpsPort } = await prompts
+      .input({
+        message: "Default HTTPS port for openldr-gateway",
+        default: httpsPort.toString(),
+        validate: (input: string) => {
+          const value = parseInt(input, 10);
+          return isNaN(value) || value < 1
+            ? "Please enter a number greater than 0"
+            : true;
+        },
+      })
+      .then((answer) => ({ _httpsPort: parseInt(answer, 10) }));
+
+    httpPort = _httpPort;
+    httpsPort = _httpsPort;
 
     const env_path = path.resolve(__dirname, "..", "..", "environments");
 
