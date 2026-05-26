@@ -1,0 +1,5 @@
+MSH|^~\&|LabSystem|CentralHospitalLab|HIS|EmergencyWard|20240721090000||ORU^R01|MSG-2024-00456|P|2.5
+PID|1||PAT-2024-00123^^^MRN||Doe^Jane||19900514|F|||Dar es Salaam
+OBR|1|ORD-001|DEFAULT_REQ-2024-00456|CULT^Blood Culture^LOINC|||20240720083000||||||||BLD^Blood|Dr. Mwakasege||||||||F
+OBX|1|CE|ORGS^Organism Identified^LOINC||ECO^Escherichia coli||||||F
+OBX|2|NM|WBC^White Blood Cell Count^LOINC||15.2|x10^9/L|4.0-11.0|H|||F

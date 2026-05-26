@@ -1,0 +1,34 @@
+{
+  "name": "@openldr/keycloak",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "copy:env": "tsx ../../environments/merge-env.ts ../../environments/.env.base ../../environments/.env.openldr-keycloak ../../environments/.env.openldr-minio .env",
+    "docker:build": "pnpm run setup:services && pnpm run copy:env && tsx ./docker-compose.ts pull",
+    "docker:start": "pnpm run copy:env && tsx ./docker-compose.ts up -d --force-recreate && pnpm run start:services",
+    "docker:stop": "pnpm run copy:env && tsx ./docker-compose.ts stop && pnpm run stop:services",
+    "docker:reset": "pnpm run copy:env && tsx ./docker-compose.ts down --rmi all -v --remove-orphans && pnpm run stop:services",
+    "setup:services": "tsx openldr.ts setup",
+    "reset:services": "tsx openldr.ts reset",
+    "stop:services": "tsx openldr.ts stop",
+    "start:services": "tsx openldr.ts start"
+  },
+  "dependencies": {
+    "dockerode": "^4.0.9",
+    "dotenv": "^16.6.1",
+    "tsx": "^4.21.0",
+    "uuid": "^14.0.0"
+  },
+  "devDependencies": {
+    "@openldr/gateway": "*",
+    "@repo/eslint-config": "*",
+    "@repo/openldr-core": "*",
+    "@repo/typescript-config": "*",
+    "@types/dockerode": "^4.0.1",
+    "@types/node": "^24.2.0",
+    "eslint": "^9.39.2",
+    "typescript": "^5.8.3",
+    "typescript-eslint": "^8.56.0"
+  }
+}

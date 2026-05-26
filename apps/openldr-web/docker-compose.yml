@@ -1,0 +1,22 @@
+# version: "3"
+services:
+  openldr-web:
+    image: openldr-web:latest
+    build:
+      context: ../../
+      dockerfile: ./apps/openldr-web/Dockerfile
+    container_name: openldr-web
+    hostname: openldr-web
+    restart: unless-stopped
+    env_file:
+      - .env
+    ##uncomment below if not using proxy
+    # ports:
+    #   - "3112:3000"
+    stdin_open: true
+    networks:
+      - openldr-network
+
+networks:
+  openldr-network:
+    driver: bridge

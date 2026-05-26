@@ -1,0 +1,371 @@
+import express from "express";
+import * as minioUtil from "../services/minio.service";
+import { utils } from "@repo/openldr-core";
+import { getDataFeedById } from "../services/datafeed.service";
+import * as messageTrackingService from "../services/message.tracking.service";
+import * as fileHashService from "../services/file-hash.service";
+import { logger } from "../lib/logger";
+// import { createRemoteJWKSet, jwtVerify } from "jose";
+
+// // Lazily initialised so env vars are read after dotenv has loaded
+// let _jwks: ReturnType<typeof createRemoteJWKSet> | null = null;
+// function getJWKS() {
+//   if (!_jwks) {
+//     _jwks = createRemoteJWKSet(
+//       new URL(
+//         `${process.env.KEYCLOAK_BASE_URL}/realms/${process.env.KEYCLOAK_REALM}/protocol/openid-connect/certs`,
+//       ),
+//     );
+//   }
+//   return _jwks;
+// }
+
+const router = express.Router();
+
+// Supported content types mapping (alphabetically ordered)
+const SUPPORTED_CONTENT_TYPES: any = {
+  "application/fhir+json": ".json",
+  "application/fhir+xml": ".xml",
+  "application/hl7-v2": ".hl7",
+  "application/json": ".json",
+  "application/jsonl": ".jsonl",
+  "application/x-ndjson": ".jsonl",
+  "application/octet-stream": ".dat", // Default for binary data
+  "application/pdf": ".pdf",
+  "application/vnd.sqlite3": ".sqlite",
+  "application/x-sqlite3": ".sqlite",
+  "application/xml": ".xml",
+  "image/jpeg": ".jpg",
+  "image/png": ".png",
+  "text/csv": ".csv",
+  "text/plain": ".txt",
+  "text/tab-separated-values": ".tsv",
+  "text/xml": ".xml",
+};
+
+// Content types that must be stored as raw binary (not converted to string)
+const BINARY_CONTENT_TYPES = new Set([
+  "application/vnd.sqlite3",
+  "application/x-sqlite3",
+  "application/octet-stream",
+  "application/pdf",
+  "image/jpeg",
+  "image/png",
+]);
+
+// Get list of supported content types
+const getSupportedContentTypes = () => {
+  return Object.keys(SUPPORTED_CONTENT_TYPES);
+};
+
+// Check if content type is supported
+const isContentTypeSupported = (contentType: string) => {
+  return SUPPORTED_CONTENT_TYPES.hasOwnProperty(contentType);
+};
+
+// Determine file extension based on content type
+const getFileExtension = (contentType: string) => {
+  return SUPPORTED_CONTENT_TYPES[contentType] || ".txt";
+};
+
+// Middleware to handle ANY content type (not just JSON)
+router.use(
+  express.raw({
+    type: "*/*", // Accept any content type
+    limit: "50mb", // Increase limit for large files
+  }),
+);
+
+router.post("/process-feed", async (req, res) => {
+  try {
+    const dataFeedId: any = req.headers["x-datafeed-id"];
+    if (!dataFeedId) {
+      return res.status(400).json({ error: "Missing X-DataFeed-Id header" });
+    }
+
+    const authHeader = req.headers["authorization"];
+    if (!authHeader) {
+      return res.status(401).json({ error: "Missing Authorization header" });
+    }
+
+    const jwtToken = authHeader.split(" ")[1];
+    if (!jwtToken) {
+      return res
+        .status(401)
+        .json({ error: "Invalid Authorization header format" });
+    }
+
+    // Decode the JWT (base64)
+    const parts: any[] = jwtToken.split(".");
+    if (parts.length !== 3) {
+      return null;
+    }
+
+    // Decode payload (second part)
+    const payload = JSON.parse(
+      Buffer.from(parts[1], "base64").toString("utf-8"),
+    );
+    const userId = payload?.sub; //client_id
+    if (!userId) {
+      return res
+        .status(403)
+        .json({ error: "No client_id found in token payload" });
+    }
+
+    // // Verify JWT signature against Keycloak JWKS
+    // let userId: string;
+    // try {
+    //   const { payload } = await jwtVerify(jwtToken, getJWKS(), {
+    //     issuer: `${process.env.KEYCLOAK_BASE_URL}/realms/${process.env.KEYCLOAK_REALM}`,
+    //   });
+    //   if (!payload.sub) {
+    //     return res.status(403).json({ error: "No user ID found in token" });
+    //   }
+    //   userId = payload.sub;
+    // } catch (jwtError: any) {
+    //   return res
+    //     .status(401)
+    //     .json({ error: "Invalid or expired token", details: jwtError.message });
+    // }
+
+    // Get the data feed
+    const dataFeed = await getDataFeedById(dataFeedId);
+    if (!dataFeed) {
+      return res
+        .status(404)
+        .json({ error: `Data feed with ID ${dataFeedId} not found` });
+    }
+
+    const projectId = dataFeed.projectId;
+    const bucket = projectId.toLowerCase().replace(/_/g, "-"); // minio bucket names must be lowercase
+
+    // Check if the bucket exists, error if it doesn't
+    const bucketExists = await minioUtil.bucketExists(bucket);
+    if (!bucketExists) {
+      logger.error(
+        `Bucket '${bucket}' does not exist. Facility buckets must be created when the facility is created.`,
+      );
+      return res.status(404).json({
+        error: "Facility bucket not found",
+        message:
+          "The facility bucket does not exist. Facility buckets must be created when the facility is created due to MinIO configuration requirements.",
+      });
+    }
+
+    // Handle ANY content type - req.body is now a Buffer with raw data
+    const contentType =
+      req.headers["content-type"] || "application/octet-stream";
+
+    // Validate content type is supported
+    if (!isContentTypeSupported(contentType)) {
+      const supportedTypes = getSupportedContentTypes();
+      return res.status(400).json({
+        error: "Unsupported content type",
+        message: `Content-Type '${contentType}' is not supported. Please use one of the supported content types.`,
+        supportedContentTypes: supportedTypes,
+        received: contentType,
+      });
+    }
+
+    // Keep binary content types as raw Buffers; convert text to string
+    let bodyData: Buffer | string;
+    let size: number;
+
+    if (BINARY_CONTENT_TYPES.has(contentType)) {
+      // Binary: preserve raw bytes
+      bodyData = req.body as Buffer;
+      size = Buffer.byteLength(bodyData);
+    } else if (getFileExtension(contentType) === ".json") {
+      // JSON: re-stringify to normalize
+      bodyData = Buffer.from(JSON.stringify(req.body));
+      size = Buffer.byteLength(bodyData);
+    } else {
+      // Text formats: convert to string
+      bodyData = req.body?.toString() || "";
+      size = Buffer.byteLength(bodyData);
+    }
+
+    if (size === 0) {
+      return res.status(400).json({
+        error: "Empty request body",
+        message:
+          "The request body is empty. Please include file content in the request body.",
+        contentType: contentType,
+      });
+    }
+
+    // --- Phase 1: Content-hash deduplication ---
+    const force = req.query.force === "true";
+    const fileHash = fileHashService.hashBuffer(
+      Buffer.isBuffer(bodyData) ? bodyData : Buffer.from(bodyData),
+    );
+
+    const existing = await fileHashService.findByHash(fileHash, dataFeedId);
+    if (existing && !force) {
+      logger.info(
+        { hash: fileHash, existingMessageId: existing.messageId, dataFeedId },
+        "Duplicate file detected — skipping re-processing",
+      );
+      return res.status(200).json({
+        message: "File already processed (deduplicated).",
+        messageId: existing.messageId,
+        deduplicated: true,
+        contentType: contentType,
+        size: size,
+        userId: userId,
+        projectId: projectId,
+      });
+    }
+
+    // --- Phase 3: Content-addressed source storage ---
+    const fileExt = getFileExtension(contentType);
+    const sourceObjectName = `sources/${fileHash}${fileExt}`;
+
+    // Check if source already exists in MinIO (HEAD request)
+    let sourceExists = false;
+    try {
+      await minioUtil.statObject({ bucketName: bucket, objectName: sourceObjectName });
+      sourceExists = true;
+    } catch {
+      // Object doesn't exist — will upload
+    }
+
+    // create standard message metadata with enhanced content type info
+    const messageMetadata = utils.generateMessageMetadata({
+      dataFeed: dataFeed,
+      size: size,
+      status: "raw",
+      messageContentType: contentType,
+      fileFormat: fileExt,
+      userId: userId,
+    });
+
+    // Store source file (content-addressed, upload once)
+    if (!sourceExists) {
+      await minioUtil.putObject({
+        bucketName: bucket,
+        objectName: sourceObjectName,
+        data: bodyData,
+        messageMetadata: messageMetadata,
+      });
+    }
+
+    // Store run-specific raw object (pipeline reads from here)
+    await minioUtil.putObject({
+      bucketName: bucket,
+      objectName: messageMetadata.FileName,
+      data: bodyData,
+      messageMetadata: messageMetadata,
+    });
+
+    // Record the hash for future dedup
+    await fileHashService.insertHash({
+      hash: fileHash,
+      dataFeedId: dataFeedId,
+      messageId: messageMetadata.MessageId,
+      projectId: projectId,
+      sourceObjectPath: `${bucket}/${sourceObjectName}`,
+      fileSize: size,
+      contentType: contentType,
+    });
+
+    await messageTrackingService.startRun({
+      messageId: messageMetadata.MessageId,
+      projectId: projectId,
+      dataFeedId: dataFeedId,
+      userId: userId,
+      rawObjectPath: `${bucket}/${messageMetadata.FileName}`,
+      metadata: {
+        contentType,
+        size,
+        bucket,
+        sourceHash: fileHash,
+        sourceObjectPath: `${bucket}/${sourceObjectName}`,
+      },
+    });
+
+    // return a 200 status with the messageId
+    res.status(200).json({
+      message: "Message successfully processed.",
+      messageId: messageMetadata.MessageId,
+      deduplicated: false,
+      contentType: contentType,
+      size: size,
+      userId: userId,
+      projectId: projectId,
+    });
+  } catch (error: any) {
+    logger.error(
+      { error: error.message, stack: error.stack },
+      "Error in /send-message route",
+    );
+    const statusCode = error.status || 500;
+    const errorMessage = error.message || "An unexpected error occurred";
+    return res.status(statusCode).json({ error: errorMessage });
+  }
+});
+
+router.get("/messages/:messageId/status", async (req, res) => {
+  try {
+    const run = await messageTrackingService.getRunByMessageId(
+      req.params.messageId,
+    );
+    if (!run) {
+      return res
+        .status(404)
+        .json({ error: "Message tracking record not found" });
+    }
+    return res.status(200).json({
+      messageId: run.messageId,
+      status: run.currentStatus,
+      currentStage: run.currentStage,
+      projectId: run.projectId,
+      dataFeedId: run.dataFeedId,
+      paths: {
+        raw: run.rawObjectPath,
+        validated: run.validatedObjectPath,
+        mapped: run.mappedObjectPath,
+        processed: run.processedObjectPath,
+      },
+      outpostStatus: run.outpostStatus,
+      error: run.errorMessage
+        ? {
+            stage: run.errorStage,
+            code: run.errorCode,
+            message: run.errorMessage,
+            details: run.errorDetails,
+          }
+        : null,
+      createdAt: run.createdAt,
+      updatedAt: run.updatedAt,
+      completedAt: run.completedAt,
+    });
+  } catch (error: any) {
+    logger.error(
+      { error: error.message, stack: error.stack },
+      "Error in status route",
+    );
+    return res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+router.get("/messages/:messageId/events", async (req, res) => {
+  try {
+    const events = await messageTrackingService.getEventsByMessageId(
+      req.params.messageId,
+    );
+    return res.status(200).json({
+      messageId: req.params.messageId,
+      count: events.length,
+      events,
+    });
+  } catch (error: any) {
+    logger.error(
+      { error: error.message, stack: error.stack },
+      "Error in events route",
+    );
+    return res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+export default router;

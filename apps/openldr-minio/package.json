@@ -1,0 +1,31 @@
+{
+  "name": "@openldr/minio",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "copy:env": "tsx ../../environments/merge-env.ts ../../environments/.env.base ../../environments/.env.openldr-minio .env",
+    "docker:build": "pnpm run setup:services && pnpm run copy:env && tsx ./docker-compose.ts pull",
+    "docker:start": "pnpm run copy:env && tsx ./docker-compose.ts up -d --force-recreate && pnpm run start:services",
+    "docker:stop": "pnpm run copy:env && tsx ./docker-compose.ts stop && pnpm run stop:services",
+    "docker:reset": "pnpm run copy:env && tsx ./docker-compose.ts down --rmi all -v --remove-orphans && pnpm run stop:services && rimraf ./.env",
+    "setup:services": "tsx openldr.ts setup",
+    "reset:services": "tsx openldr.ts reset",
+    "stop:services": "tsx openldr.ts stop",
+    "start:services": "tsx openldr.ts start"
+  },
+  "dependencies": {
+    "dotenv": "^17.4.2",
+    "tsx": "^4.21.0"
+  },
+  "devDependencies": {
+    "@openldr/kafka": "*",
+    "@repo/eslint-config": "*",
+    "@repo/openldr-core": "*",
+    "@repo/typescript-config": "*",
+    "@types/node": "^24.2.0",
+    "eslint": "^9.39.2",
+    "typescript": "^5.8.3",
+    "typescript-eslint": "^8.56.0"
+  }
+}

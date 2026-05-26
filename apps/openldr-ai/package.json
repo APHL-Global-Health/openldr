@@ -1,0 +1,25 @@
+{
+  "name": "@openldr/ai",
+  "private": true,
+  "version": "1.2.0",
+  "scripts": {
+    "copy:env": "tsx ../../environments/merge-env.ts ../../environments/.env.base ../../environments/.env.openldr-ai .env",
+    "docker:build:off": "pnpm run copy:env && tsx ./docker-compose.ts build",
+    "docker:start:off": "pnpm run copy:env && tsx ./docker-compose.ts up -d --force-recreate",
+    "docker:stop": "pnpm run copy:env && tsx ./docker-compose.ts stop",
+    "docker:reset": "pnpm run copy:env && tsx ./docker-compose.ts down --rmi all -v --remove-orphans && rimraf ./.env"
+  },
+  "devDependencies": {
+    "@openldr/mcp-server": "*",
+    "@repo/eslint-config": "*",
+    "@repo/openldr-core": "*",
+    "@repo/typescript-config": "*",
+    "@types/node": "^24.2.0",
+    "eslint": "^9.39.2",
+    "typescript": "^5.8.3",
+    "typescript-eslint": "^8.56.0"
+  },
+  "dependencies": {
+    "tsx": "^4.22.0"
+  }
+}

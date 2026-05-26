@@ -1,0 +1,14 @@
+{
+  "extends": "../../packages/typescript-config/openldr.base.json",
+  "compilerOptions": {
+    "rootDir": "src",
+    "noEmit": true,
+    "resolveJsonModule": true,
+    "esModuleInterop": true,
+    "isolatedModules": true,
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist"]
+}

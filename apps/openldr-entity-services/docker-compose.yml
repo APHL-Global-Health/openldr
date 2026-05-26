@@ -1,0 +1,21 @@
+services:
+  openldr-entity-services:
+    image: openldr-entity-services:latest
+    build:
+      context: ../../
+      dockerfile: ./apps/openldr-entity-services/Dockerfile
+    container_name: openldr-entity-services
+    hostname: openldr-entity-services
+    restart: unless-stopped
+    env_file:
+      - .env
+    # ports:
+    #   - "${ENTITY_SERVICES_PORT}:3002"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - openldr-network
+
+networks:
+  openldr-network:
+    driver: bridge

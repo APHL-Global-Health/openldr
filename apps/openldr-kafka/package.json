@@ -1,0 +1,29 @@
+{
+  "name": "@openldr/kafka",
+  "private": true,
+  "version": "1.2.0",
+  "scripts": {
+    "copy:env": "tsx ../../environments/merge-env.ts ../../environments/.env.base ../../environments/.env.openldr-entity-services ../../environments/.env.openldr-data-processing ../../environments/.env.openldr-external-database ../../environments/.env.openldr-minio ../../environments/.env.openldr-keycloak ../../environments/.env.openldr-postgres ../../environments/.env.openldr-pgadmin ../../environments/.env.openldr-opensearch ../../environments/.env.openldr-kafka ../../environments/.env.openldr-studio ../../environments/.env.openldr-ai .env",
+    "docker:build": "pnpm run setup:services && pnpm run copy:env && tsx ./docker-compose.ts pull",
+    "docker:start": "pnpm run copy:env && tsx ./docker-compose.ts up -d && pnpm run start:services",
+    "docker:stop": "pnpm run copy:env && tsx ./docker-compose.ts stop && pnpm run stop:services",
+    "docker:reset": "pnpm run copy:env && tsx ./docker-compose.ts down --rmi all -v --remove-orphans && pnpm run stop:services && rimraf ./.env",
+    "setup:services": "tsx openldr.ts setup",
+    "reset:services": "tsx openldr.ts reset",
+    "stop:services": "tsx openldr.ts stop",
+    "start:services": "tsx openldr.ts start"
+  },
+  "devDependencies": {
+    "@openldr/opensearch": "*",
+    "@repo/eslint-config": "*",
+    "@repo/openldr-core": "*",
+    "@repo/typescript-config": "*",
+    "@types/node": "^24.2.0",
+    "eslint": "^9.39.2",
+    "typescript": "^5.8.3",
+    "typescript-eslint": "^8.56.0"
+  },
+  "dependencies": {
+    "tsx": "^4.22.0"
+  }
+}

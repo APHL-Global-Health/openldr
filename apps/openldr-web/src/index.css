@@ -1,0 +1,165 @@
+@import "tailwindcss";
+
+@theme {
+  /* Light base — warm paper whites */
+  --color-paper: #FAF9F6;
+  --color-paper2: #F3F1EC;
+  --color-cream: #EDE9E0;
+  --color-white: #FFFFFF;
+
+  /* Dark sections */
+  --color-ink: #0F1419;
+  --color-ink2: #1A2028;
+  --color-ink-surface: #212830;
+  --color-ink-border: #2D343D;
+
+  /* Text hierarchy */
+  --color-heading: #1C1C1E;
+  --color-body: #4A4A4C;
+  --color-caption: #8E8E93;
+  --color-ghost: #C7C7CC;
+
+  /* Accent — burnt vermillion (bold, clinical, not AI-purple) */
+  --color-accent: #C83C0C;
+  --color-accent-light: #E8601A;
+  --color-accent-bg: #FDF2ED;
+
+  /* Secondary — deep teal (scientific, trustworthy) */
+  --color-teal: #0A7B6F;
+  --color-teal-light: #0FA292;
+  --color-teal-bg: #EDFAF7;
+
+  /* Functional */
+  --color-success: #2D8A56;
+  --color-border: #E5E2DB;
+  --color-border-dark: #D4D0C8;
+
+  --font-sans: "Crimson Pro", Georgia, serif;
+  --font-mono: "JetBrains Mono", monospace;
+  --font-display: "Bricolage Grotesque", sans-serif;
+
+  --radius-sm: 3px;
+  --radius-md: 6px;
+  --radius-lg: 10px;
+}
+
+@layer base {
+  *, *::before, *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+  html {
+    scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    color-scheme: light;
+  }
+  html.dark {
+    color-scheme: dark;
+    --color-paper: #0F1419;
+    --color-paper2: #161C24;
+    --color-cream: #1A2028;
+    --color-white: #1E2530;
+
+    --color-ink: #080C10;
+    --color-ink2: #0E1218;
+    --color-ink-border: #232A34;
+
+    --color-heading: #E8ECF2;
+    --color-body: #9CA3AF;
+    --color-caption: #6B7280;
+    --color-ghost: #3D4A63;
+
+    --color-accent-bg: rgba(200, 60, 12, 0.12);
+    --color-teal-bg: rgba(10, 123, 111, 0.12);
+
+    --color-border: #2D343D;
+    --color-border-dark: #3D4A63;
+  }
+  /* In dark mode, bg-white cards should use surface color */
+  html.dark .bg-white { background-color: var(--color-white); }
+  body {
+    font-family: var(--font-sans);
+    background: var(--color-paper);
+    color: var(--color-body);
+    font-size: 17px;
+    line-height: 1.75;
+    overflow-x: hidden;
+    transition: background-color 0.2s, color 0.2s;
+  }
+  ::selection {
+    background: var(--color-accent);
+    color: #fff;
+  }
+  ::-webkit-scrollbar { width: 8px; }
+  ::-webkit-scrollbar-track { background: var(--color-paper); }
+  ::-webkit-scrollbar-thumb { background: var(--color-border-dark); border-radius: 4px; }
+}
+
+@layer utilities {
+  .font-display {
+    font-family: var(--font-display);
+  }
+  .font-mono {
+    font-family: var(--font-mono);
+  }
+
+  /* Dot grid background — like lab graph paper */
+  .dot-grid {
+    background-image: radial-gradient(circle, var(--color-border) 0.8px, transparent 0.8px);
+    background-size: 24px 24px;
+  }
+  .dot-grid-dark {
+    background-image: radial-gradient(circle, rgba(255,255,255,0.06) 0.8px, transparent 0.8px);
+    background-size: 24px 24px;
+  }
+
+  /* Noise texture overlay */
+  .noise {
+    position: relative;
+  }
+  .noise::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    opacity: 0.35;
+    pointer-events: none;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+    background-repeat: repeat;
+    background-size: 256px 256px;
+  }
+
+  /* Accent underline decoration */
+  .accent-line {
+    position: relative;
+    display: inline;
+  }
+  .accent-line::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    bottom: 0.05em;
+    width: 100%;
+    height: 0.12em;
+    background: var(--color-accent);
+    opacity: 0.35;
+    border-radius: 1px;
+  }
+
+  /* Code panel styling */
+  .code-panel {
+    background: var(--color-ink);
+    border: 1px solid var(--color-ink-border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+  }
+  .code-panel-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--color-ink-border);
+    background: var(--color-ink2);
+  }
+}

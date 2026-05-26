@@ -1,0 +1,21 @@
+services:
+  openldr-external-database:
+    image: openldr-external-database:latest
+    build:
+      context: ../../
+      dockerfile: ./apps/openldr-external-database/Dockerfile
+    container_name: openldr-external-database
+    hostname: openldr-external-database
+    restart: unless-stopped
+    env_file:
+      - .env
+    # ports:
+    #   - "${EXTERNAL_DATABASE_PORT}:3009"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - openldr-network
+
+networks:
+  openldr-network:
+    driver: bridge

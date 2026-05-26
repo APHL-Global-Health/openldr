@@ -1,0 +1,642 @@
+name: openldr
+
+services:
+  # ============================================================
+  # Infrastructure: Database
+  # ============================================================
+
+  openldr-postgres:
+    image: ${DOCKER_REGISTRY:-openldr}/openldr-internal-database:${IMAGE_TAG:-latest}
+    container_name: openldr-postgres
+    hostname: openldr-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - ./config/postgres/migrations/01-openldr.sql:/docker-entrypoint-initdb.d/01-openldr.sql
+      - ./config/postgres/migrations/02-openldr_external.sql:/docker-entrypoint-initdb.d/02-openldr_external.sql
+      - ./config/postgres/migrations/03-keycloak.sql:/docker-entrypoint-initdb.d/03-keycloak.sql
+      - ./config/postgres/migrations/04-conduktor_console.sql:/docker-entrypoint-initdb.d/04-conduktor_console.sql
+      - ./config/postgres/migrations/97-openldr_external_whonet_reference.sql:/docker-entrypoint-initdb.d/97-openldr_external_whonet_reference.sql
+      - ./config/postgres/migrations/98-openldr_external_amr_for_r_ref.sql:/docker-entrypoint-initdb.d/98-openldr_external_amr_for_r_ref.sql
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - openldr-network
+
+  openldr-pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: openldr-pgadmin
+    restart: unless-stopped
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=${PGADMIN_DEFAULT_EMAIL}
+      - PGADMIN_DEFAULT_PASSWORD=${PGADMIN_DEFAULT_PASSWORD}
+      - PGADMIN_CONFIG_SERVER_MODE=${PGADMIN_CONFIG_SERVER_MODE}
+      - PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED=${PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED}
+      - PGADMIN_SERVER_JSON_FILE=/pgadmin4/servers.json
+      - SCRIPT_NAME=/postgres-console
+    user: root
+    entrypoint: /bin/sh -c
+    command: >
+      "
+      mkdir -p /var/lib/pgadmin &&
+      echo 'openldr-postgres:5432:*:postgres:${POSTGRES_PASSWORD}' > /var/lib/pgadmin/pgpass &&
+      chmod 600 /var/lib/pgadmin/pgpass &&
+      chown 5050:5050 /var/lib/pgadmin/pgpass &&
+      chown 5050:5050 /pgadmin4/servers.json &&
+      exec /entrypoint.sh
+      "
+    configs:
+      - source: servers.json
+        target: /pgadmin4/servers.json
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    depends_on:
+      openldr-postgres:
+        condition: service_healthy
+    networks:
+      - openldr-network
+
+  # ============================================================
+  # Infrastructure: Messaging (Kafka)
+  # ============================================================
+
+  openldr-kafka-zoo1:
+    image: confluentinc/cp-zookeeper:7.7.1
+    hostname: openldr-kafka-zoo1
+    container_name: openldr-kafka-zoo1
+    restart: unless-stopped
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_SERVER_ID: 1
+      ZOOKEEPER_SERVERS: openldr-kafka-zoo1:2888:3888
+    networks:
+      - openldr-network
+    depends_on:
+      opensearch:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+        reservations:
+          memory: 1024M
+    memswap_limit: 3G
+    volumes:
+      - zoo-data:/var/lib/zookeeper/data
+      - zoo-log:/var/lib/zookeeper/log
+
+  openldr-kafka1:
+    image: confluentinc/cp-kafka:7.7.1
+    hostname: openldr-kafka1
+    container_name: openldr-kafka1
+    restart: unless-stopped
+    environment:
+      KAFKA_ADVERTISED_LISTENERS: INTERNAL://openldr-kafka1:19092,EXTERNAL://${DOCKER_HOST_IP:-127.0.0.1}:${KAFKA_EXTERNAL_PORT},DOCKER://localhost:${KAFKA_DOCKER_PORT}
+      KAFKA_LISTENERS: INTERNAL://0.0.0.0:19092,EXTERNAL://0.0.0.0:9092,DOCKER://0.0.0.0:29092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT,DOCKER:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
+      KAFKA_ZOOKEEPER_CONNECT: "openldr-kafka-zoo1:2181"
+      KAFKA_BROKER_ID: 1
+      KAFKA_LOG4J_LOGGERS: "kafka.controller=INFO,kafka.producer.async.DefaultEventHandler=INFO,state.change.logger=INFO"
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_JMX_PORT: 9001
+      KAFKA_JMX_HOSTNAME: ${DOCKER_HOST_IP}
+      KAFKA_AUTHORIZER_CLASS_NAME: kafka.security.authorizer.AclAuthorizer
+      KAFKA_ALLOW_EVERYONE_IF_NO_ACL_FOUND: "true"
+      KAFKA_LOG_RETENTION_HOURS: 1
+      KAFKA_LOG_RETENTION_CHECK_INTERVAL_MS: 60000
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "/usr/bin/kafka-topics --bootstrap-server openldr-kafka1:19092 --list || exit 1",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    depends_on:
+      - openldr-kafka-zoo1
+    networks:
+      - openldr-network
+    volumes:
+      - kafka-data:/var/lib/kafka/data
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+        reservations:
+          memory: 1024M
+    memswap_limit: 3G
+
+  openldr-kafka-connect:
+    image: confluentinc/cp-kafka-connect:7.7.1
+    hostname: openldr-kafka-connect
+    container_name: openldr-kafka-connect
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+        reservations:
+          memory: 1024M
+    memswap_limit: 3G
+    environment:
+      CONNECT_BOOTSTRAP_SERVERS: "openldr-kafka1:19092"
+      CONNECT_REST_PORT: 8083
+      CONNECT_GROUP_ID: compose-connect-group
+      CONNECT_CONFIG_STORAGE_TOPIC: connect-configs
+      CONNECT_OFFSET_STORAGE_TOPIC: connect-offsets
+      CONNECT_STATUS_STORAGE_TOPIC: connect-status
+      CONNECT_KEY_CONVERTER: "org.apache.kafka.connect.json.JsonConverter"
+      CONNECT_VALUE_CONVERTER: "org.apache.kafka.connect.json.JsonConverter"
+      CONNECT_KEY_CONVERTER_SCHEMAS_ENABLE: "false"
+      CONNECT_VALUE_CONVERTER_SCHEMAS_ENABLE: "false"
+      CONNECT_INTERNAL_KEY_CONVERTER: "org.apache.kafka.connect.json.JsonConverter"
+      CONNECT_INTERNAL_VALUE_CONVERTER: "org.apache.kafka.connect.json.JsonConverter"
+      CONNECT_REST_ADVERTISED_HOST_NAME: "openldr-kafka-connect"
+      CONNECT_LOG4J_ROOT_LOGLEVEL: "INFO"
+      CONNECT_LOG4J_LOGGERS: "org.apache.kafka.connect.runtime.rest=WARN,org.reflections=ERROR"
+      CONNECT_CONFIG_STORAGE_REPLICATION_FACTOR: "1"
+      CONNECT_OFFSET_STORAGE_REPLICATION_FACTOR: "1"
+      CONNECT_STATUS_STORAGE_REPLICATION_FACTOR: "1"
+      CONNECT_PLUGIN_PATH: "/etc/kafka-connect/jars"
+    volumes:
+      - ./config/kafka-connect:/etc/kafka-connect/jars/
+    depends_on:
+      openldr-kafka1:
+        condition: service_healthy
+      openldr-kafka-zoo1:
+        condition: service_started
+    command: |
+      bash -c '
+        echo "Starting Kafka Connect worker"
+        /etc/confluent/docker/run &
+        echo "Kafka Connect worker started"
+        sleep infinity
+      '
+    networks:
+      - openldr-network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -s -f http://localhost:8083/ || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  openldr-kafka-conduktor-console:
+    image: conduktor/conduktor-console:1.41.0
+    hostname: openldr-kafka-conduktor-console
+    container_name: openldr-kafka-conduktor-console
+    restart: unless-stopped
+    user: "0:0"
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+        reservations:
+          memory: 1024M
+    memswap_limit: 3G
+    volumes:
+      - conduktor-data:/var/conduktor
+    environment:
+      CDK_ADMIN_EMAIL: "${KAFKA_CONDUKTOR_USERNAME}"
+      CDK_ADMIN_PASSWORD: "${KAFKA_CONDUKTOR_PASSWORD}"
+      CDK_DATABASE_URL: "postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOSTNAME}:5432/conduktor_console"
+      CDK_CLUSTERS_0_ID: "default"
+      CDK_CLUSTERS_0_NAME: "OpenLDR Kafka"
+      CDK_CLUSTERS_0_COLOR: "#0013E7"
+      CDK_CLUSTERS_0_BOOTSTRAPSERVERS: "PLAINTEXT://openldr-kafka1:19092"
+      CDK_CLUSTERS_0_KAFKACONNECTS_0_URL: "http://openldr-kafka-connect:8083"
+      CDK_CLUSTERS_0_KAFKACONNECTS_0_NAME: "full stack kafka connect"
+    networks:
+      - openldr-network
+    depends_on:
+      openldr-kafka-connect:
+        condition: service_healthy
+
+  # ============================================================
+  # Infrastructure: Object Storage (MinIO)
+  # ============================================================
+
+  openldr-minio:
+    image: minio/minio:RELEASE.2025-02-28T09-55-16Z
+    container_name: openldr-minio
+    command: server /data --console-address ":9001"
+    restart: unless-stopped
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+      MINIO_BROWSER_REDIRECT_URL: ${MINIO_BROWSER_REDIRECT_URL}
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - openldr-network
+    depends_on:
+      openldr-kafka-connect:
+        condition: service_healthy
+
+  # ============================================================
+  # Infrastructure: Search (OpenSearch)
+  # ============================================================
+
+  opensearch:
+    image: opensearchproject/opensearch:2.18.0
+    container_name: openldr-opensearch
+    hostname: openldr-opensearch
+    restart: unless-stopped
+    environment:
+      - discovery.type=single-node
+      - plugins.ml_commons.only_run_on_ml_node=false
+      - plugins.ml_commons.native_memory_threshold=0
+      - OPENSEARCH_JAVA_OPTS=-Xms${OPENSEARCH_MEMORY:-512m} -Xmx${OPENSEARCH_MEMORY:-512m}
+      - DISABLE_INSTALL_DEMO_CONFIG=true
+      - DISABLE_SECURITY_PLUGIN=true
+    networks:
+      - openldr-network
+    depends_on:
+      openldr-keycloak:
+        condition: service_healthy
+    volumes:
+      - opensearch-data:/usr/share/opensearch/data
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "curl",
+          "-f",
+          "http://localhost:9200/_cluster/health?wait_for_status=yellow&timeout=5s",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+        reservations:
+          memory: 1024M
+    memswap_limit: 3G
+
+  opensearch-dashboard:
+    image: opensearchproject/opensearch-dashboards:2.18.0
+    container_name: openldr-opensearch-dashboard
+    restart: unless-stopped
+    environment:
+      - OPENSEARCH_HOSTS=["http://openldr-opensearch:9200"]
+      - DISABLE_SECURITY_DASHBOARDS_PLUGIN=true
+      - SERVER_BASEPATH=/opensearch-dashboard
+      - SERVER_REWRITEBASEPATH=false
+    networks:
+      - openldr-network
+    depends_on:
+      opensearch:
+        condition: service_healthy
+
+  # ============================================================
+  # Infrastructure: Authentication (Keycloak)
+  # ============================================================
+
+  openldr-keycloak:
+    image: quay.io/keycloak/keycloak:26.0
+    container_name: openldr-keycloak
+    hostname: openldr-keycloak
+    restart: unless-stopped
+    environment:
+      KC_DB: postgres
+      KC_DB_URL_HOST: openldr-postgres
+      KC_DB_URL_DATABASE: keycloak
+      KC_DB_USERNAME: postgres
+      KC_DB_PASSWORD: postgres
+      KC_BOOTSTRAP_ADMIN_USERNAME: ${KEYCLOAK_ADMIN_USER}
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
+      KC_HOSTNAME_STRICT: false
+      KC_HOSTNAME_STRICT_HTTPS: true
+      KC_HTTP_ENABLED: true
+      KC_HTTPS_ENABLED: true
+      KC_HTTP_RELATIVE_PATH: /keycloak/
+      KC_PROXY: edge
+      KC_HEALTH_ENABLED: false
+      KC_METRICS_ENABLED: true
+      KEYCLOAK_SSL_REQUIRED: none
+      KC_ENABLE_STATISTICS: true
+      KC_LOG_LEVEL: info
+      QUARKUS_TRANSACTION_MANAGER_ENABLE_RECOVERY: true
+      KC_HTTPS_CERTIFICATE_FILE: /opt/keycloak/conf/server.crt
+      KC_HTTPS_CERTIFICATE_KEY_FILE: /opt/keycloak/conf/server.key
+    entrypoint: /bin/bash
+    command:
+      - -c
+      - |
+        echo "Waiting for PostgreSQL TCP to be ready..."
+        until exec 3<>/dev/tcp/openldr-postgres/5432 2>/dev/null; do
+          sleep 2
+        done
+        echo "PostgreSQL is accepting TCP connections. Starting Keycloak..."
+        exec /opt/keycloak/bin/kc.sh start
+    volumes:
+      - ./certs/domain.crt:/opt/keycloak/conf/server.crt
+      - ./certs/domain.key:/opt/keycloak/conf/server.key
+      - ./config/keycloak:/opt/keycloak/data/import
+    networks:
+      - openldr-network
+    depends_on:
+      openldr-nginx:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "exec 3<>/dev/tcp/127.0.0.1/8080;echo -e 'GET /health/ready HTTP/1.1\r\nhost: http://localhost\r\nConnection: close\r\n\r\n' >&3;if [ $? -eq 0 ]; then echo 'Healthcheck Successful';exit 0;else echo 'Healthcheck Failed';exit 1;fi;",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 30
+      start_period: 60s
+
+  # ============================================================
+  # Initialization (one-shot: configures Keycloak, Kafka, MinIO)
+  # ============================================================
+
+  openldr-init:
+    image: ${DOCKER_REGISTRY:-openldr}/openldr-init:${IMAGE_TAG:-latest}
+    container_name: openldr-init
+    restart: "no"
+    env_file:
+      - .env
+    environment:
+      # Inside the container, 127.0.0.1 is the container itself.
+      # KEYCLOAK_API_URL: internal URL for API calls (direct to Keycloak, no gateway)
+      # KEYCLOAK_PUBLIC_URL: stays as real public URL (baked into realm frontendUrl)
+      # HOST_IP: remapped to gateway's Docker hostname for Kafka init
+      KEYCLOAK_API_URL: http://openldr-keycloak:8080/keycloak
+      HOST_IP: openldr-nginx
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - openldr-network
+    depends_on:
+      openldr-keycloak:
+        condition: service_healthy
+      openldr-kafka-connect:
+        condition: service_healthy
+      openldr-minio:
+        condition: service_healthy
+
+  # ============================================================
+  # Application: Gateway (Nginx reverse proxy)
+  # ============================================================
+
+  openldr-nginx:
+    image: ${DOCKER_REGISTRY:-openldr}/openldr-gateway:${IMAGE_TAG:-latest}
+    container_name: openldr-nginx
+    restart: unless-stopped
+    env_file:
+      - .env
+    volumes:
+      - ./certs:/etc/nginx/certs
+    networks:
+      - openldr-network
+    depends_on:
+      openldr-postgres:
+        condition: service_healthy
+    ports:
+      - "80:80"
+      - "443:443"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "-k", "https://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+
+  # ============================================================
+  # Application: Frontend
+  # ============================================================
+
+  openldr-web:
+    image: ${DOCKER_REGISTRY:-openldr}/openldr-web:${IMAGE_TAG:-latest}
+    container_name: openldr-web
+    hostname: openldr-web
+    restart: unless-stopped
+    env_file:
+      - .env
+    stdin_open: true
+    networks:
+      - openldr-network
+    depends_on:
+      openldr-ai:
+        condition: service_healthy
+
+  openldr-studio:
+    image: ${DOCKER_REGISTRY:-openldr}/openldr-studio:${IMAGE_TAG:-latest}
+    container_name: openldr-studio
+    hostname: openldr-studio
+    restart: unless-stopped
+    env_file:
+      - .env
+    stdin_open: true
+    networks:
+      - openldr-network
+    depends_on:
+      openldr-ai:
+        condition: service_healthy
+
+  # ============================================================
+  # Application: Backend Services
+  # ============================================================
+
+  openldr-entity-services:
+    image: ${DOCKER_REGISTRY:-openldr}/openldr-entity-services:${IMAGE_TAG:-latest}
+    container_name: openldr-entity-services
+    hostname: openldr-entity-services
+    restart: unless-stopped
+    env_file:
+      - .env
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - openldr-network
+    depends_on:
+      openldr-external-database:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "wget",
+          "-qO-",
+          "--no-check-certificate",
+          "http://localhost:3002/health",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+
+  openldr-data-processing:
+    image: ${DOCKER_REGISTRY:-openldr}/openldr-data-processing:${IMAGE_TAG:-latest}
+    container_name: openldr-data-processing
+    hostname: openldr-data-processing
+    restart: unless-stopped
+    env_file:
+      - .env
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - openldr-network
+    depends_on:
+      openldr-entity-services:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "wget",
+          "-qO-",
+          "--no-check-certificate",
+          "http://localhost:3001/health",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+
+  openldr-external-database:
+    image: ${DOCKER_REGISTRY:-openldr}/openldr-external-database:${IMAGE_TAG:-latest}
+    container_name: openldr-external-database
+    hostname: openldr-external-database
+    restart: unless-stopped
+    env_file:
+      - .env
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - openldr-network
+    depends_on:
+      openldr-minio:
+        condition: service_healthy
+      openldr-init:
+        condition: service_completed_successfully
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "wget",
+          "-qO-",
+          "--no-check-certificate",
+          "http://localhost:3009/health",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+
+  # ============================================================
+  # Application: AI & MCP
+  # ============================================================
+
+  openldr-ai:
+    image: ${DOCKER_REGISTRY:-openldr}/openldr-ai:${IMAGE_TAG:-latest}
+    container_name: openldr-ai
+    restart: unless-stopped
+    env_file:
+      - .env
+    volumes:
+      - ai_models:/app/ai
+    ports:
+      - "8100:8100"
+    networks:
+      - openldr-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8100/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+    depends_on:
+      openldr-mcp-server:
+        condition: service_healthy
+
+  openldr-mcp-server:
+    image: ${DOCKER_REGISTRY:-openldr}/openldr-mcp-server:${IMAGE_TAG:-latest}
+    container_name: openldr-mcp-server
+    hostname: openldr-mcp-server
+    restart: unless-stopped
+    env_file:
+      - .env
+    ports:
+      - "6060:6060"
+    networks:
+      - openldr-network
+    depends_on:
+      openldr-data-processing:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "wget",
+          "-qO-",
+          "--no-check-certificate",
+          "http://localhost:6060/health",
+        ]
+
+# ============================================================
+# Volumes
+# ============================================================
+
+volumes:
+  postgres_data:
+    driver: local
+  pgadmin_data:
+    driver: local
+  kafka-data: {}
+  zoo-data: {}
+  zoo-log: {}
+  conduktor-data: {}
+  minio_data: {}
+  opensearch-data: {}
+  ai_models:
+    driver: local
+
+# ============================================================
+# Networks
+# ============================================================
+
+networks:
+  openldr-network:
+    driver: bridge
+
+# ============================================================
+# Configs
+# ============================================================
+
+configs:
+  servers.json:
+    content: |
+      {"Servers": {"1": {
+        "Group": "Servers",
+        "Name": "Server",
+        "Host": "openldr-postgres",
+        "Port": 5432,
+        "MaintenanceDB": "postgres",
+        "Username": "postgres",
+        "PassFile": "/var/lib/pgadmin/pgpass",
+        "SSLMode": "prefer"
+      }}}

@@ -1,0 +1,22 @@
+# version: "3"
+services:
+  openldr-studio:
+    image: openldr-studio:latest
+    build:
+      context: ../../
+      dockerfile: ./apps/openldr-studio/Dockerfile
+    container_name: openldr-studio
+    hostname: openldr-studio
+    restart: unless-stopped
+    env_file:
+      - .env
+    ##uncomment below if not using proxy
+    # ports:
+    #   - "3111:3000"
+    stdin_open: true
+    networks:
+      - openldr-network
+
+networks:
+  openldr-network:
+    driver: bridge

@@ -1,0 +1,179 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import { useShallow } from "zustand/react/shallow";
+import { useModelStore } from "@/store/model-store";
+import { ModelDownloadProgress } from "@/components/chat/chat-model-download-progress";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import { DownloadIcon, RefreshCwIcon } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { ModelLoadingIndicator } from "./chat-model-loading-indicator";
+
+export const SUGGESTED_MODELS = [
+  {
+    id: "LiquidAI/LFM2-1.2B-GGUF",
+    label: "LFM2-1.2B",
+    filename: "LFM2-1.2B-Q8_0.gguf",
+    description: "Lightweight · 1.2B · ~1.3 GB",
+    tag: "small",
+    supportsThinking: false,
+  },
+  {
+    id: "LiquidAI/LFM2-2.6B-GGUF",
+    label: "LFM2-2.6B",
+    filename: "LFM2-2.6B-Q8_0.gguf",
+    description: "RAG + tool calling · 2.6B · ~2.7 GB",
+    tag: "recommended",
+    supportsThinking: false,
+  },
+  {
+    id: "unsloth/Qwen3.5-4B-GGUF",
+    label: "Qwen3.5-4B",
+    filename: "Qwen3.5-4B-Q8_0.gguf",
+    description: "Strong tool calling · 4B · ~4.5 GB",
+    tag: "quality",
+    supportsThinking: true,
+  },
+];
+
+interface ModelSelectorProps {
+  className?: string;
+}
+
+export function ModelSelector({ className }: ModelSelectorProps) {
+  const [customModelId, setCustomModelId] = useState("");
+  const [customFilename, setCustomFilename] = useState("");
+
+  // Stable scalar/primitive selectors - safe without useShallow
+  const loadedModelId = useModelStore((s) => s.loadedModelId);
+
+  // Array selector - must use useShallow to stabilize reference
+  const availableModels = useModelStore(useShallow((s) => s.availableModels));
+
+  // Actions are stable references (Zustand guarantees this) - no useShallow needed
+  const startDownload = useModelStore((s) => s.startDownload);
+  const fetchAvailableModels = useModelStore((s) => s.fetchAvailableModels);
+
+  // Fetch on mount using getState() - avoids re-render loop
+  useEffect(() => {
+    useModelStore.getState().fetchAvailableModels();
+    useModelStore.getState().syncLoadedModel();
+  }, []);
+
+  const handleCustomDownload = () => {
+    const id = customModelId.trim();
+    if (!id) return;
+    startDownload(id, customFilename.trim() || undefined);
+    setCustomModelId("");
+    setCustomFilename("");
+  };
+
+  return (
+    <div className={cn("flex flex-col gap-4", className)}>
+      {/* Header */}
+      <div className="flex items-center justify-between  px-2">
+        <div className="flex items-center gap-2 justify-between w-full">
+          <span className="text-sm font-medium"> Models</span>
+          {loadedModelId && (
+            <Badge
+              variant="outline"
+              className="text-xs border-green-500/40 text-green-600"
+            >
+              {loadedModelId.split("/").pop()} active
+            </Badge>
+          )}
+        </div>
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          onClick={fetchAvailableModels}
+          title="Refresh model list"
+        >
+          <RefreshCwIcon className="size-3.5" />
+        </Button>
+      </div>
+
+      <ModelLoadingIndicator />
+
+      <Separator />
+
+      {/* Suggested models */}
+      <div className="space-y-3  px-2">
+        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+          Suggested
+        </p>
+        {SUGGESTED_MODELS.map((m) => (
+          <div key={m.id} className="space-y-1">
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-medium">{m.label}</span>
+              {m.tag && (
+                <Badge variant="secondary" className="text-xs">
+                  {m.tag}
+                </Badge>
+              )}
+            </div>
+            <p className="text-xs text-muted-foreground">{m.description}</p>
+            <ModelDownloadProgress modelId={m.id} filename={m.filename} />
+          </div>
+        ))}
+      </div>
+
+      <Separator />
+
+      {/* Already downloaded */}
+      {availableModels.length > 0 && (
+        <>
+          <div className="space-y-2  px-2">
+            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+              Downloaded
+            </p>
+            {availableModels.map((m) => (
+              <ModelDownloadProgress
+                key={m.model_id}
+                modelId={m.model_id}
+                filename={(m as any).filename}
+                showLoadButton
+              />
+            ))}
+          </div>
+          <Separator />
+        </>
+      )}
+
+      {/* Custom model input */}
+      <div className="space-y-2  px-2">
+        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+          Custom HuggingFace model
+        </p>
+        <div className="flex gap-2">
+          <Input
+            placeholder="org/model-name"
+            value={customModelId}
+            onChange={(e) => setCustomModelId(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && handleCustomDownload()}
+            className="h-8 text-sm rounded-xs"
+          />
+          <Input
+            placeholder="model-file.gguf"
+            value={customFilename}
+            onChange={(e) => setCustomFilename(e.target.value)}
+            className="h-8 text-sm rounded-xs"
+          />
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={handleCustomDownload}
+            disabled={!customModelId.trim()}
+            className="gap-1.5 shrink-0 rounded-xs"
+          >
+            <DownloadIcon className="size-3.5" />
+            Get
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}

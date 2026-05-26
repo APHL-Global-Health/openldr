@@ -1,0 +1,9 @@
+{
+  "extends": "../../packages/typescript-config/openldr.json",
+  "compilerOptions": {
+    /* Shadcn requirements */
+    "paths": {
+      "@/*": ["../openldr-entity-services/src/*"]
+    }
+  }
+}

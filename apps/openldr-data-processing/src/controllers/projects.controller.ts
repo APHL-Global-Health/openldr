@@ -1,0 +1,289 @@
+// ─────────────────────────────────────────────────────────────────────────────
+// Mount in your main Express app:
+//   import pluginTestRouter from './routes/plugin-test.route';
+//   app.use('/api/plugin-tests', pluginTestRouter);
+// ─────────────────────────────────────────────────────────────────────────────
+
+import { Router, type Request, type Response } from "express";
+import multer from "multer";
+import { db } from "@/lib/db.plugin.test";
+import { runPluginTest } from "@/services/plugin.runner.service";
+import { convertSqliteToJson } from "@/lib/sqlite-convert";
+import type {
+  RunPluginTestRequest,
+  SavePluginAssignmentRequest,
+  // CreateProjectRequest,
+  // CreateUseCaseRequest,
+  // CreateDataFeedRequest,
+  // CreatePluginRequest,
+  PluginSlotType,
+} from "@/types/plugin.test.types";
+
+const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 50 * 1024 * 1024 } });
+
+const BINARY_CONTENT_TYPES = new Set([
+  "application/vnd.sqlite3",
+  "application/x-sqlite3",
+  "application/octet-stream",
+  "application/pdf",
+  "image/jpeg",
+  "image/png",
+]);
+
+const router = Router();
+
+// ── Utility ───────────────────────────────────────────────────────────────────
+const ok = (res: Response, data: unknown) =>
+  res.json({ ok: true, ...(typeof data === "object" ? data : { data }) });
+const err = (res: Response, msg: string, status = 400) =>
+  res.status(status).json({ ok: false, error: msg });
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Context lookups
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** GET /api/plugin-tests/projects */
+router.get("", async (_req, res) => {
+  ok(res, { projects: await db.getProjects() });
+});
+
+/** POST /api/plugin-tests/projects */
+// router.post("", async (req: Request<{}, {}, CreateProjectRequest>, res) => {
+//   const { name } = req.body;
+//   if (!name?.trim()) return err(res, "name is required");
+//   ok(res, { project: await db.createProject(name.trim()) });
+// });
+
+/** GET /api/plugin-tests/projects/:projectId/use-cases */
+router.get("/:projectId/use-cases", async (req, res) => {
+  const { projectId } = req.params;
+  if (!(await db.getProject(projectId)))
+    return err(res, "Project not found", 404);
+  ok(res, { useCases: await db.getUseCases(projectId) });
+});
+
+/** POST /api/plugin-tests/use-cases */
+// router.post(
+//   "/use-cases",
+//   async (req: Request<{}, {}, CreateUseCaseRequest>, res) => {
+//     const { name, projectId } = req.body;
+//     if (!name?.trim()) return err(res, "name is required");
+//     if (!projectId) return err(res, "projectId is required");
+//     if (!(await db.getProject(projectId)))
+//       return err(res, "Project not found", 404);
+//     ok(res, { useCase: await db.createUseCase(name.trim(), projectId) });
+//   },
+// );
+
+/** GET /api/plugin-tests/use-cases/:useCaseId/feeds */
+router.get("/use-cases/:useCaseId/feeds", async (req, res) => {
+  ok(res, { feeds: await db.getDataFeeds(req.params.useCaseId) });
+});
+
+/** POST /api/plugin-tests/feeds */
+// router.post(
+//   "/feeds",
+//   async (req: Request<{}, {}, CreateDataFeedRequest>, res) => {
+//     const { name, useCaseId } = req.body;
+//     if (!name?.trim()) return err(res, "name is required");
+//     if (!useCaseId) return err(res, "useCaseId is required");
+//     ok(res, { feed: await db.createDataFeed(name.trim(), useCaseId) });
+//   },
+// );
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Plugins
+// ─────────────────────────────────────────────────────────────────────────────
+
+const VALID_SLOTS: PluginSlotType[] = ["validation", "mapping", "storage", "outpost"];
+
+/** GET /api/plugin-tests/plugins?slot=validation */
+router.get("/plugins", async (req, res) => {
+  const slot = req.query.slot as PluginSlotType | undefined;
+  if (slot && !VALID_SLOTS.includes(slot)) return err(res, "Invalid slot");
+  ok(res, {
+    plugins: slot
+      ? await db.getPlugins(slot)
+      : await Promise.all(VALID_SLOTS.map((s) => db.getPlugins(s))),
+  });
+});
+
+/** POST /api/plugin-tests/plugins */
+// router.post(
+//   "/plugins",
+//   async (req: Request<{}, {}, CreatePluginRequest>, res) => {
+//     const { name, slot, code } = req.body;
+//     if (!name?.trim()) return err(res, "name is required");
+//     if (!VALID_SLOTS.includes(slot))
+//       return err(res, "slot must be validation | mapping | outpost");
+//     ok(res, { plugin: await db.createPlugin(name.trim(), slot, code) });
+//   },
+// );
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Test runner  (the core endpoint)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * POST /api/plugin-tests/run
+ *
+ * Accepts either:
+ * - JSON body: RunPluginTestRequest (text payloads)
+ * - multipart/form-data: file + contentType + plugin IDs (binary payloads)
+ *
+ * Runs selected plugins in VM (no Kafka).
+ * Returns per-stage results + allPassed flag.
+ */
+router.post("/run", upload.single("file"), async (req: Request, res) => {
+  // Extract fields from either JSON body or multipart form fields
+  const isMultipart = !!req.file;
+  const body = isMultipart ? req.body : (req.body as RunPluginTestRequest);
+
+  const contentType = body.contentType ?? "application/json";
+  const validationPluginId = body.validationPluginId || null;
+  const mappingPluginId = body.mappingPluginId || null;
+  const storagePluginId = body.storagePluginId || null;
+  const outpostPluginId = body.outpostPluginId || null;
+
+  // For binary uploads: pre-convert the file to a text payload the plugins can process
+  let payload: string;
+  if (isMultipart && req.file) {
+    const fileBuffer = req.file.buffer;
+    if (!fileBuffer || fileBuffer.length === 0)
+      return err(res, "Uploaded file is empty");
+
+    // SQLite: convert to JSON rows (same as the live pipeline's validation handler)
+    const header = fileBuffer.subarray(0, 16).toString("ascii");
+    if (
+      header.startsWith("SQLite format 3") ||
+      BINARY_CONTENT_TYPES.has(contentType)
+    ) {
+      try {
+        payload = await convertSqliteToJson(fileBuffer, 100);
+      } catch (e) {
+        return err(res, `Failed to pre-convert binary file: ${(e as Error).message}`);
+      }
+    } else {
+      // Non-SQLite binary: treat file as UTF-8 text
+      payload = fileBuffer.toString("utf-8");
+    }
+  } else {
+    payload = body.payload ?? "";
+  }
+
+  if (!payload.trim()) return err(res, "payload is required");
+  if (!validationPluginId && !mappingPluginId && !storagePluginId && !outpostPluginId)
+    return err(
+      res,
+      "At least one of validationPluginId, mappingPluginId, storagePluginId, or outpostPluginId is required",
+    );
+
+  // Resolve plugin code from store
+  let validation: { id: string; code: string; type: string } | null = null;
+  let mapping: { id: string; code: string; type: string } | null = null;
+  let storage: { id: string; code: string; type: string } | null = null;
+  let outpost: { id: string; code: string; type: string } | null = null;
+
+  if (validationPluginId) {
+    const p = await db.getPluginById(validationPluginId);
+    if (!p)
+      return err(
+        res,
+        `Validation plugin "${validationPluginId}" not found`,
+        404,
+      );
+    validation = {
+      id: p.pluginId,
+      code: p.pluginMinioObjectPath,
+      type: p.pluginType,
+    };
+  }
+
+  if (mappingPluginId) {
+    const p = await db.getPluginById(mappingPluginId);
+    if (!p)
+      return err(res, `Mapping plugin "${mappingPluginId}" not found`, 404);
+
+    mapping = {
+      id: p.pluginId,
+      code: p.pluginMinioObjectPath,
+      type: p.pluginType,
+    };
+  }
+
+  if (storagePluginId) {
+    const p = await db.getPluginById(storagePluginId);
+    if (!p)
+      return err(res, `Storage plugin "${storagePluginId}" not found`, 404);
+
+    storage = {
+      id: p.pluginId,
+      code: p.pluginMinioObjectPath,
+      type: p.pluginType,
+    };
+  }
+
+  if (outpostPluginId) {
+    const p = await db.getPluginById(outpostPluginId);
+    if (!p)
+      return err(res, `Outpost plugin "${outpostPluginId}" not found`, 404);
+
+    outpost = {
+      id: p.pluginId,
+      code: p.pluginMinioObjectPath,
+      type: p.pluginType,
+    };
+  }
+
+  try {
+    const result = await runPluginTest({
+      payload,
+      contentType: isMultipart ? "text/plain" : contentType,
+      validation,
+      mapping,
+      storage,
+      outpost,
+    });
+    res.json(result);
+  } catch (e) {
+    console.error("[plugin-test] run error:", e);
+    err(res, (e as Error).message, 500);
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Save assignment
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * POST /api/plugin-tests/assignments
+ *
+ * Persists plugin assignment to a data feed after successful test.
+ */
+router.post(
+  "/assignments",
+  async (req: Request<{}, {}, SavePluginAssignmentRequest>, res) => {
+    const { feedId, validationPluginId, mappingPluginId, storagePluginId, outpostPluginId } =
+      req.body;
+    if (!feedId) return err(res, "feedId is required");
+
+    const assignment = await db.upsertAssignment({
+      feedId,
+      validationPluginId: validationPluginId ?? null,
+      mappingPluginId: mappingPluginId ?? null,
+      storagePluginId: storagePluginId ?? null,
+      outpostPluginId: outpostPluginId ?? null,
+    });
+
+    ok(res, { assignment });
+  },
+);
+
+/** GET /api/plugin-tests/assignments/:feedId */
+router.get("/assignments/:feedId", async (req, res) => {
+  const assignment = await db.getAssignment(req.params.feedId);
+  if (!assignment) return err(res, "No assignment found for this feed", 404);
+  ok(res, { assignment });
+});
+
+export default router;

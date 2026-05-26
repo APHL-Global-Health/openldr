@@ -1,0 +1,130 @@
+{
+  "resourceType": "Bundle",
+  "id": "lab-bundle-2024-00456",
+  "type": "collection",
+  "entry": [
+    {
+      "resource": {
+        "resourceType": "Patient",
+        "id": "PAT-2024-00123",
+        "identifier": [
+          {
+            "system": "urn:mrn",
+            "value": "FLD-9981"
+          }
+        ],
+        "name": [
+          {
+            "family": "Doe",
+            "given": ["Jane"]
+          }
+        ],
+        "gender": "female",
+        "birthDate": "1990-05-14"
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Specimen",
+        "id": "spec-1",
+        "type": {
+          "coding": [
+            {
+              "system": "http://terminology.hl7.org/CodeSystem/v2-0487",
+              "code": "BLD",
+              "display": "Blood"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Observation",
+        "id": "obs-1",
+        "status": "final",
+        "code": {
+          "coding": [
+            {
+              "system": "http://loinc.org",
+              "code": "ORGS",
+              "display": "Organism Identified"
+            }
+          ]
+        },
+        "effectiveDateTime": "2024-07-21T09:00:00Z",
+        "valueCodeableConcept": {
+          "coding": [
+            {
+              "system": "http://loinc.org",
+              "code": "ECO",
+              "display": "Escherichia coli"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Observation",
+        "id": "obs-2",
+        "status": "final",
+        "code": {
+          "coding": [
+            {
+              "system": "http://loinc.org",
+              "code": "WBC",
+              "display": "White Blood Cell Count"
+            }
+          ]
+        },
+        "effectiveDateTime": "2024-07-20T16:00:00Z",
+        "valueQuantity": {
+          "value": 15.2,
+          "unit": "x10^9/L",
+          "system": "http://unitsofmeasure.org",
+          "code": "10*9/L"
+        }
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "DiagnosticReport",
+        "id": "DEFAULT_REQ-2024-00456",
+        "status": "final",
+        "code": {
+          "coding": [
+            {
+              "system": "http://loinc.org",
+              "code": "CULT",
+              "display": "Blood Culture"
+            }
+          ]
+        },
+        "subject": {
+          "reference": "Patient/PAT-2024-00123"
+        },
+        "effectiveDateTime": "2024-07-20T08:30:00Z",
+        "performer": [
+          {
+            "display": "Central Hospital Lab"
+          }
+        ],
+        "specimen": [
+          {
+            "reference": "Specimen/spec-1",
+            "display": "Blood"
+          }
+        ],
+        "result": [
+          {
+            "reference": "Observation/obs-1"
+          },
+          {
+            "reference": "Observation/obs-2"
+          }
+        ]
+      }
+    }
+  ]
+}
