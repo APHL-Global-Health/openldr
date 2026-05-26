@@ -8,121 +8,180 @@
   <a href="https://www.docker.com/"><img src="https://img.shields.io/badge/Docker-ready-brightgreen.svg" alt="Docker"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-Apache%202.0-blue.svg" alt="License"></a>
   <a href="https://nodejs.org/"><img src="https://img.shields.io/badge/Node.js-24+-brightgreen.svg" alt="Node.js"></a>
-  <a href="https://www.typescriptlang.org/"><img src="https://img.shields.io/badge/TypeScript-5.0+-blue.svg" alt="TypeScript"></a>
-  <a href="https://turborepo.dev/"><img src="https://img.shields.io/badge/Turborepo-2.7+-brightgreen.svg?logoColor=white" alt="Turborepo"></a>
+  <a href="https://pnpm.io/"><img src="https://img.shields.io/badge/pnpm-10.33.0-orange.svg" alt="pnpm"></a>
+  <a href="https://turborepo.dev/"><img src="https://img.shields.io/badge/Turborepo-2.8+-brightgreen.svg?logoColor=white" alt="Turborepo"></a>
 </p>
 
 <p align="center">
-  A comprehensive, microservices-based platform for managing and processing laboratory data using open source tools/resources.
+  OpenLDR is a Docker-first, TypeScript monorepo for managing laboratory data,
+  file storage, data processing, search, authentication, public documentation,
+  and operator workflows.
 </p>
 
 ---
 
-## Key Features
+## What Is In This Repository
 
-- **Microservices Architecture**: Distributed system with dedicated services for authentication, data management, file storage, and search
-- **Multi-Format Support**: Handle JSON, JSONL, ZIP, CSV, TSV, and other laboratory data formats
-- **Real-Time Processing**: Event-driven architecture using Apache Kafka for data streaming and processing
-- **Advanced Search**: Full-text search capabilities powered by OpenSearch
-- **Object Storage**: Scalable file storage using MinIO S3-compatible storage
-- **Enterprise Authentication**: Secure identity management with Keycloak SSO
-- **API Gateway**: Centralized API management with APISIX
-- **Extension Marketplace**: VSCode-style extension system for custom workflows and integrations
-- **AI-Powered Interactions**: Model Context Protocol (MCP) server for natural language queries
-- **Internationalization**: Multi-language support for global deployment
-- **Dynamic Forms**: JSONB-based flexible form system for diverse data structures
+OpenLDR is organized as a pnpm workspace with Turborepo orchestration.
 
-## Technology Stack
+| Area | Packages |
+| --- | --- |
+| Public web app | `apps/openldr-web` |
+| Operator UI | `apps/openldr-studio` |
+| API and processing services | `apps/openldr-entity-services`, `apps/openldr-data-processing`, `apps/openldr-external-database` |
+| Infrastructure wrappers | `apps/openldr-gateway`, `apps/openldr-keycloak`, `apps/openldr-kafka`, `apps/openldr-minio`, `apps/openldr-opensearch`, `apps/openldr-internal-database` |
+| AI and MCP | `apps/openldr-ai`, `apps/openldr-mcp-server` |
+| Setup and CLI | `apps/openldr-setup`, `apps/openldr-cli`, `apps/openldr-init` |
+| Shared packages | `packages/openldr-core`, `packages/openldr-extensions`, `packages/minio-js`, `packages/eslint-config`, `packages/typescript-config` |
 
-### Frontend
+The public website is a React/Vite app served under `/web/`. It contains the
+landing page and public documentation routes. See
+[apps/openldr-web/README.md](apps/openldr-web/README.md) for web-specific setup,
+environment variables, screenshots, routes, and deployment notes.
 
-- React
-- TypeScript
-- Modern UI/UX components
+## Core Capabilities
 
-### Backend
+- Public landing page and `/docs` routes for onboarding and reference material
+- Studio interface for projects, dashboards, data entry, reports, concepts,
+  extensions, and pipeline runs
+- Entity and data-processing services for laboratory data workflows
+- PostgreSQL-backed internal and external databases
+- MinIO object storage with seeded buckets and plugin assets
+- OpenSearch-backed search and analytics
+- Kafka-based event streaming and connector setup
+- Keycloak authentication behind the gateway
+- MCP server and AI service for natural-language workflows
 
-- Node.js
-- TypeScript
-- RESTful APIs
+## Prerequisites
 
-### Data Layer
+- Node.js 24+
+- pnpm 10 through Corepack
+- Docker Engine 24+ and Docker Compose v2 for the full containerized stack
+- Git
+- 16GB+ RAM for local full-stack runs; 32GB+ is more comfortable for production
+  or large datasets
 
-- **PostgreSQL**: Primary relational database
-- **OpenSearch**: Full-text search and analytics
-- **MinIO**: S3-compatible object storage
-- **Apache Kafka**: Message streaming and event processing
-
-### Infrastructure
-
-- **Keycloak**: Identity and access management
-- **APISIX**: API Gateway
-- **Docker**: Containerization
-- **Docker Compose**: Multi-container orchestration
-
-### Documentation
-
-- Scalar API Documentation
-
-## Use Cases
-
-- Laboratory data management and tracking
-- Healthcare informatics and clinical data processing
-- Research data repositories
-- Multi-tenant laboratory environments
-- Legacy data migration from traditional LIMS
-
-## Getting Started
-
-### Prerequisites
-
-- Docker and Docker Compose
-- Node.js 24+ (for local development)
-- [pnpm](https://pnpm.io/) 10+ (the monorepo pins `pnpm@10.33.0` via `packageManager`; run `corepack enable` once to activate it automatically)
-- 16GB+ RAM recommended for running all services (in production)
-
-### Quick Start
+Enable the package-manager version pinned by the repository:
 
 ```bash
-# Clone the repository
+corepack enable
+```
+
+The root `package.json` pins `pnpm@10.33.0`.
+
+## Repository Setup
+
+```bash
 git clone https://github.com/APHL-Global-Health/openldr.git
 cd openldr
-
-# fetch dependencies
 pnpm install
-
-# initialize environmental variables
 pnpm init
+```
 
-# build all services
+`pnpm init` runs the OpenLDR setup flow from `apps/openldr-setup`. It prepares
+environment files and asks for host/IP choices used by the Docker services,
+gateway, and authentication redirects.
+
+If you only need to work on the public web app, install dependencies from the
+root, then use the app-local commands documented in
+[apps/openldr-web/README.md](apps/openldr-web/README.md).
+
+## Full Stack Docker Run
+
+Build and start the stack from the repository root:
+
+```bash
 pnpm docker:build
-
-# start all services
 pnpm docker:start
 ```
 
-## Deploy with Docker Hub Images
+Stop or reset the stack:
 
-Already have images published to Docker Hub? Deploy without building:
+```bash
+pnpm docker:stop
+pnpm docker:reset
+```
+
+The gateway serves the public web app at:
+
+```text
+https://127.0.0.1/web/
+```
+
+For remote deployments, use the public host or IP selected during `pnpm init`:
+
+```text
+https://<your-host-or-ip>/web/
+```
+
+Initial startup can take several minutes while infrastructure services become
+healthy and the one-shot init service configures Keycloak, Kafka, and MinIO.
+
+## Local Development
+
+Run all workspace development tasks:
+
+```bash
+pnpm dev
+```
+
+Run a specific package with pnpm filters:
+
+```bash
+pnpm --filter @openldr/web dev
+pnpm --filter @openldr/studio dev
+pnpm --filter @openldr/entity-services dev
+```
+
+Build all packages:
+
+```bash
+pnpm build
+```
+
+Build only the public web app:
+
+```bash
+pnpm --filter @openldr/web copy:env
+pnpm --filter @openldr/web build
+```
+
+## Docker Hub Deployment
+
+For deployments using pre-built images, use the files under `docker/`:
 
 ```bash
 cd docker
 cp .env.example .env
-# Edit .env — set passwords and HOST_IP
 docker compose up -d
 ```
 
-For maintainers publishing images, run from repo root:
+Edit `.env` before starting the stack. Set passwords, `DOCKER_REGISTRY`,
+`HOST_IP`, `DOCKER_HOST_IP`, and the public service URLs for your environment.
+
+Maintainers can build and publish images from the repository root:
 
 ```bash
-# Linux/macOS
 ./docker/scripts/build-and-push.sh --registry myorg --tag v1.0.0
-
-# Windows (PowerShell)
-.\docker\scripts\build-and-push.ps1 -Registry myorg -Tag v1.0.0
 ```
 
-See [docker/README.md](docker/README.md) for full deployment documentation.
+See [docker/README.md](docker/README.md) for the complete Docker Hub deployment
+workflow, image list, certificate notes, and Kafka connector requirements.
+
+## Environment Files
+
+Source templates live in `environments/`. Package-level `copy:env` scripts merge
+the relevant files into each app's local `.env`.
+
+Examples:
+
+- `apps/openldr-web` merges `.env.base`, `.env.openldr-web`, and
+  `.env.openldr-web-vite`
+- `apps/openldr-studio` merges `.env.base`, `.env.openldr-studio`, and
+  `.env.openldr-studio-vite`
+- Backend services merge `.env.base` plus their service-specific dependencies
+
+Browser-exposed frontend settings must use a `VITE_` prefix.
 
 ## Documentation
 
@@ -131,37 +190,41 @@ See [docker/README.md](docker/README.md) for full deployment documentation.
 - [Plugin Guide](docs/plugins.md)
 - [MCP Server Guide](docs/mcp-server.md)
 - [Extensions Guide](docs/extensions.md)
+- [Docker Deployment](docker/README.md)
+- [Public Web App](apps/openldr-web/README.md)
+- [Studio App](apps/openldr-studio/README.md)
 
-## Architecture
+## Troubleshooting
 
-OpenLDR follows a microservices architecture with the following core components:
+### Keycloak redirects fail on a remote server
 
-- **API Gateway (APISIX)**: Routes and manages all API requests
-- **Authentication Service (Keycloak)**: Handles user authentication and authorization
-- **Data Service**: Manages laboratory data and metadata
-- **File Service**: Handles file uploads and storage with MinIO
-- **Search Service**: Provides full-text search via OpenSearch
-- **Event Service**: Processes events through Kafka
-- **Extension Service**: Manages the extension marketplace
+Re-run setup with the server's public host or IP. Using `127.0.0.1` for a remote
+deployment breaks browser redirects and token flows.
 
-## Contributing
+### Port conflicts
 
-Contributions are welcome! Please read our [Contributing Guide](docs/contributing.md) for details on our code of conduct and the process for submitting pull requests.
+Change the relevant environment value under `environments/`, regenerate the
+package `.env` through the package `copy:env` script or `pnpm init`, then rebuild
+and restart the affected service.
+
+### Containers start slowly
+
+Check Docker resources first. The full stack needs substantial memory and CPU,
+especially during first startup, image builds, database initialization, and Kafka
+connector setup.
+
+### The public web app loads without assets or nested routes
+
+The web app is served under `/web/` by default. Check
+`environments/.env.openldr-web-vite` and keep `VITE_BASE_URL=/web/` unless you
+are intentionally deploying it at another base path.
 
 ## License
 
-This project is licensed under the Apache 2.0 License - see the [LICENSE](LICENSE) file for details.
-
-## Acknowledgments
-
-- Built with modern open-source technologies
-- Inspired by best practices in laboratory data management
-- Community-driven development
+OpenLDR is licensed under Apache 2.0. See [LICENSE](LICENSE).
 
 ## Support
 
 - Issues: [GitHub Issues](https://github.com/APHL-Global-Health/openldr/issues)
 
----
-
-**Note**: OpenLDR is under active development. Some features may be in beta or experimental stages.
+OpenLDR is under active development. Some features may be beta or experimental.
