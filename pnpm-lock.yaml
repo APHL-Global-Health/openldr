@@ -24,6 +24,9 @@ importers:
       '@repo/typescript-config':
         specifier: '*'
         version: link:packages/typescript-config
+      tsx:
+        specifier: ^4.22.0
+        version: 4.22.0
     optionalDependencies:
       '@rollup/rollup-linux-x64-gnu':
         specifier: 4.59.0
@@ -1255,9 +1258,15 @@ importers:
       globals:
         specifier: ^16.5.0
         version: 16.5.0
+      rimraf:
+        specifier: ^6.1.3
+        version: 6.1.3
       rollup-plugin-visualizer:
         specifier: ^6.0.5
         version: 6.0.11(rollup@4.60.4)
+      tsx:
+        specifier: ^4.22.0
+        version: 4.22.0
       typescript:
         specifier: ~5.9.3
         version: 5.9.3

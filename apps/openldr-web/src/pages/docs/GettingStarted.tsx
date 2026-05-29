@@ -63,7 +63,7 @@ export default function GettingStarted() {
       <P>Before you begin, make sure you have the following installed:</P>
       <ul className="mb-6">
         <Li>Docker and Docker Compose (v2+)</Li>
-        <Li>Node.js 18+ and npm (for development)</Li>
+        <Li>Node.js 24+ and pnpm 10 through Corepack</Li>
         <Li>Git</Li>
       </ul>
 
@@ -78,12 +78,14 @@ export default function GettingStarted() {
       <CodeBlock title="terminal">{`git clone ${GITHUB_URL}.git
 cd openldr`}</CodeBlock>
 
-      <H3>2. Copy environment files</H3>
+      <H3>2. Install dependencies and initialize</H3>
       <P>
-        Each service has its own environment file. The setup script copies
-        default configurations from the shared environments directory.
+        Install workspace dependencies, then run the OpenLDR setup flow to
+        prepare environment files and host/IP settings for the Docker services.
       </P>
-      <CodeBlock title="terminal">{`npm run copy:env`}</CodeBlock>
+      <CodeBlock title="terminal">{`corepack enable
+pnpm install
+pnpm run init`}</CodeBlock>
 
       <H3>3. Start the platform</H3>
       <P>
@@ -91,10 +93,10 @@ cd openldr`}</CodeBlock>
         images and build the services — this may take several minutes.
       </P>
       <CodeBlock title="terminal">{`# Build all containers
-npm run docker:build
+pnpm docker:build
 
 # Start all services
-npm run docker:start`}</CodeBlock>
+pnpm docker:start`}</CodeBlock>
 
       <H3>4. Access the platform</H3>
       <P>Once all services are running, you can access:</P>
@@ -112,12 +114,12 @@ npm run docker:start`}</CodeBlock>
           </thead>
           <tbody className="divide-y divide-border">
             {[
-              ["OpenLDR Studio", "https://localhost/studio"],
-              ["OpenLDR Web", "https://localhost/web"],
-              ["Keycloak Admin", "https://localhost/keycloak"],
-              ["Kafka Dashboard", "https://localhost/kafka-ui"],
-              ["MinIO Console", "https://localhost/minio"],
-              ["OpenSearch", "https://localhost/opensearch"],
+              ["OpenLDR Web", "https://127.0.0.1/web/"],
+              ["OpenLDR Studio", "https://127.0.0.1/studio"],
+              ["Keycloak Admin", "https://127.0.0.1/keycloak"],
+              ["Kafka Dashboard", "https://127.0.0.1/kafka-ui"],
+              ["MinIO Console", "https://127.0.0.1/minio"],
+              ["OpenSearch", "https://127.0.0.1/opensearch"],
             ].map(([service, url]) => (
               <tr key={service} className="hover:bg-paper2/50 transition-colors">
                 <td className="px-4 py-2.5 text-body">{service}</td>
@@ -138,7 +140,7 @@ npm run docker:start`}</CodeBlock>
       <CodeBlock title="directory structure">{`openldr/
 ├── apps/
 │   ├── openldr-studio/          # Main web application (React)
-│   ├── openldr-web/             # Public landing page
+│   ├── openldr-web/             # Public landing page and /docs routes
 │   ├── openldr-entity-services/ # REST API (Node.js/Express)
 │   ├── openldr-data-processing/ # Data pipeline (Kafka consumers)
 │   ├── openldr-ai/              # AI chat service (Python/FastAPI)
@@ -146,7 +148,8 @@ npm run docker:start`}</CodeBlock>
 │   ├── openldr-keycloak/        # Authentication (Keycloak)
 │   ├── openldr-minio/           # Object storage + default plugins
 │   └── openldr-internal-database/ # PostgreSQL migrations
-├── extensions/                  # Extension source code
+├── packages/                    # Shared TypeScript packages
+├── environments/                # Source environment templates
 └── turbo.json                   # Turborepo configuration`}</CodeBlock>
 
       <H2>Data Processing Pipeline</H2>

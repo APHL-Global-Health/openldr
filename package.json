@@ -21,7 +21,7 @@
   },
   "keywords": [],
   "author": "",
-  "license": "ISC",
+  "license": "Apache-2.0",
   "dependencies": {
     "turbo": "^2.8.3"
   },
@@ -47,10 +47,11 @@
   },
   "devDependencies": {
     "@repo/eslint-config": "*",
-    "@repo/typescript-config": "*"
+    "@repo/typescript-config": "*",
+    "tsx": "^4.22.0"
   },
   "engines": {
-    "node": ">=18"
+    "node": ">=24"
   },
   "packageManager": "pnpm@10.33.0"
 }

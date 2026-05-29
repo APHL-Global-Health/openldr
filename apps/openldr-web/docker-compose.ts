@@ -18,9 +18,9 @@ const compose = async (tries: number = 0) => {
         // && (fallbackError.message.includes("failed to resolve") ||
         //   fallbackError.message.includes("failed to do request"))
       ) {
-        //Wait 2 seconds and try again
+        // Wait 2 seconds and try again.
         await sleep(2000);
-        compose(tries++);
+        await compose(tries + 1);
       } else {
         console.error(
           "Neither docker compose nor docker-compose worked: " +

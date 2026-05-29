@@ -75,10 +75,10 @@ The root `package.json` pins `pnpm@10.33.0`.
 git clone https://github.com/APHL-Global-Health/openldr.git
 cd openldr
 pnpm install
-pnpm init
+pnpm run init
 ```
 
-`pnpm init` runs the OpenLDR setup flow from `apps/openldr-setup`. It prepares
+`pnpm run init` runs the OpenLDR setup flow from `apps/openldr-setup`. It prepares
 environment files and asks for host/IP choices used by the Docker services,
 gateway, and authentication redirects.
 
@@ -108,7 +108,7 @@ The gateway serves the public web app at:
 https://127.0.0.1/web/
 ```
 
-For remote deployments, use the public host or IP selected during `pnpm init`:
+For remote deployments, use the public host or IP selected during `pnpm run init`:
 
 ```text
 https://<your-host-or-ip>/web/
@@ -204,8 +204,8 @@ deployment breaks browser redirects and token flows.
 ### Port conflicts
 
 Change the relevant environment value under `environments/`, regenerate the
-package `.env` through the package `copy:env` script or `pnpm init`, then rebuild
-and restart the affected service.
+package `.env` through the package `copy:env` script or `pnpm run init`, then
+rebuild and restart the affected service.
 
 ### Containers start slowly
 

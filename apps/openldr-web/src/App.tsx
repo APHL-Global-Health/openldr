@@ -277,7 +277,7 @@ function Hero() {
       />
 
       <div className="relative z-10 max-w-7xl mx-auto px-6 lg:px-10 w-full py-20 lg:py-0">
-        <div className="grid lg:grid-cols-[1fr,0.8fr] gap-12 lg:gap-16 items-center">
+        <div className="grid lg:grid-cols-[1fr_0.8fr] gap-12 lg:gap-16 items-center">
           {/* Left — copy */}
           <div>
             <motion.h1

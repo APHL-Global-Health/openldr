@@ -63,7 +63,7 @@ export default defineConfig(({ mode }) => {
 
     // Optimize dependencies
     optimizeDeps: {
-      include: ["react", "react-dom", "recharts", "@sqlite.org/sqlite-wasm"],
+      include: ["react", "react-dom"],
       exclude: [],
     },
 
