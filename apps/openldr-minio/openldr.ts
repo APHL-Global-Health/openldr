@@ -36,6 +36,60 @@ type SeedPlugin = {
   status: "active" | "draft" | "inactive" | "deprecated";
 };
 
+// Fixed UUIDs for the Built-in-Forms data feed and its four plugins.
+const FORMS_SCHEMA_PLUGIN_ID = "1a000001-0000-4000-8000-000000000001";
+const FORMS_MAPPER_PLUGIN_ID = "1a000001-0000-4000-8000-000000000002";
+const FORMS_STORAGE_PLUGIN_ID = "1a000001-0000-4000-8000-000000000003";
+const FORMS_OUTPOST_PLUGIN_ID = "1a000001-0000-4000-8000-000000000004";
+const BUILTIN_FORMS_FEED_ID = "00000000-0000-0000-0001-000000000005";
+
+const FORMS_PLUGINS: SeedPlugin[] = [
+  {
+    pluginId: FORMS_SCHEMA_PLUGIN_ID,
+    pluginType: "validation",
+    pluginName: "default-forms-schema",
+    pluginVersion: "1.0.0",
+    fileName: "default.forms.schema.js",
+    localRelativePath: "default-plugins/schema/default.forms.schema.js",
+    securityLevel: "high",
+    notes: "Bundled forms schema (validation) plugin",
+    status: "active",
+  },
+  {
+    pluginId: FORMS_MAPPER_PLUGIN_ID,
+    pluginType: "mapping",
+    pluginName: "default-forms-mapper",
+    pluginVersion: "1.0.0",
+    fileName: "default.forms.mapper.js",
+    localRelativePath: "default-plugins/mapper/default.forms.mapper.js",
+    securityLevel: "high",
+    notes: "Bundled forms mapper plugin",
+    status: "active",
+  },
+  {
+    pluginId: FORMS_STORAGE_PLUGIN_ID,
+    pluginType: "storage",
+    pluginName: "default-forms-storage",
+    pluginVersion: "1.0.0",
+    fileName: "default.forms.storage.js",
+    localRelativePath: "default-plugins/storage/default.forms.storage.js",
+    securityLevel: "high",
+    notes: "Bundled forms storage plugin",
+    status: "active",
+  },
+  {
+    pluginId: FORMS_OUTPOST_PLUGIN_ID,
+    pluginType: "outpost",
+    pluginName: "default-forms-outpost",
+    pluginVersion: "1.0.0",
+    fileName: "default.forms.outpost.js",
+    localRelativePath: "default-plugins/outpost/default.forms.outpost.js",
+    securityLevel: "high",
+    notes: "Bundled forms outpost plugin",
+    status: "active",
+  },
+];
+
 const DEFAULT_PLUGINS: SeedPlugin[] = [
   {
     pluginId: "7f7207f2-ed04-4e49-a566-6ed244dea111",
@@ -289,6 +343,67 @@ const runSqlInPostgres = (sql: string): void => {
 };
 
 /**
+ * Uploads the four built-in forms plugin JS files to the MinIO plugins bucket
+ * and upserts their records in the database. Mirrors the pattern used by
+ * seedDefaultPlugins(). Safe to run multiple times (idempotent).
+ */
+const seedFormsPlugins = async (dir: string): Promise<void> => {
+  console.log("Seeding forms plugins to MinIO and database");
+
+  const sqlStatements: string[] = [];
+
+  for (const plugin of FORMS_PLUGINS) {
+    const localPath = path.resolve(dir, plugin.localRelativePath);
+    const containerTmpPath = `/tmp/openldr-plugin-${plugin.pluginId}.js`;
+    const minioObjectPath = `${plugin.pluginId}/${plugin.fileName}`;
+
+    // 1. Copy plugin file from host into the MinIO container's /tmp
+    execSync(`docker cp "${localPath}" openldr-minio:${containerTmpPath}`);
+    console.log(
+      `  Copied ${plugin.pluginName} v${plugin.pluginVersion} to container`,
+    );
+
+    // 2. Upload from container /tmp into the plugins bucket via mc
+    await minio.executeMinIOCommand([
+      "cp",
+      containerTmpPath,
+      `myminio/plugins/${minioObjectPath}`,
+    ]);
+    console.log(`  Uploaded to MinIO: plugins/${minioObjectPath}`);
+
+    // 3. Build upsert SQL
+    sqlStatements.push(`
+INSERT INTO plugins (
+  "pluginId", "pluginType", "pluginName", "pluginVersion",
+  "pluginMinioObjectPath", "securityLevel", config, notes, status, "isBundled"
+) VALUES (
+  '${plugin.pluginId}',
+  '${plugin.pluginType}',
+  '${plugin.pluginName}',
+  '${plugin.pluginVersion}',
+  '${minioObjectPath}',
+  '${plugin.securityLevel}',
+  '{}',
+  $$${plugin.notes}$$,
+  '${plugin.status}',
+  true
+)
+ON CONFLICT ("pluginId") DO UPDATE SET
+  "pluginMinioObjectPath" = EXCLUDED."pluginMinioObjectPath",
+  "pluginVersion"         = EXCLUDED."pluginVersion",
+  status                  = EXCLUDED.status,
+  "isBundled"             = true;
+`);
+  }
+
+  // 4. Run all upserts in a single psql call
+  runSqlInPostgres(sqlStatements.join("\n"));
+  console.log("Forms plugin database records upserted");
+
+  console.log("Forms plugin seeding complete");
+};
+
+/**
  * Uploads each default plugin file to the MinIO plugins bucket and upserts
  * its record in the database. Safe to run multiple times (idempotent).
  */
@@ -344,6 +459,9 @@ ON CONFLICT ("pluginId") DO UPDATE SET
   // 4. Run all upserts in a single psql call
   runSqlInPostgres(sqlStatements.join("\n"));
   console.log("Default plugin database records upserted");
+
+  // 5. Seed the forms plugins (schema, mapper, storage, outpost)
+  await seedFormsPlugins(dir);
 
   console.log("Default plugin seeding complete");
 };
@@ -414,6 +532,31 @@ ON CONFLICT ("dataFeedId") DO UPDATE SET
   "mapperPluginId"    = EXCLUDED."mapperPluginId",
   "storagePluginId"   = EXCLUDED."storagePluginId",
   "outpostPluginId"   = EXCLUDED."outpostPluginId";
+
+INSERT INTO "dataFeeds" (
+  "dataFeedId", "dataFeedName", "useCaseId",
+  "schemaPluginId", "mapperPluginId", "storagePluginId", "outpostPluginId",
+  "isEnabled", "isProtected", "createdAt", "updatedAt"
+)
+VALUES (
+  '${BUILTIN_FORMS_FEED_ID}',
+  'Built-in-Forms',
+  '${BUILTIN_USE_CASE_ID}',
+  '${FORMS_SCHEMA_PLUGIN_ID}',
+  '${FORMS_MAPPER_PLUGIN_ID}',
+  '${FORMS_STORAGE_PLUGIN_ID}',
+  '${FORMS_OUTPOST_PLUGIN_ID}',
+  true, true,
+  NOW(), NOW()
+)
+ON CONFLICT ("dataFeedId") DO UPDATE SET
+  "dataFeedName"    = EXCLUDED."dataFeedName",
+  "schemaPluginId"  = EXCLUDED."schemaPluginId",
+  "mapperPluginId"  = EXCLUDED."mapperPluginId",
+  "storagePluginId" = EXCLUDED."storagePluginId",
+  "outpostPluginId" = EXCLUDED."outpostPluginId",
+  "useCaseId"       = EXCLUDED."useCaseId",
+  "updatedAt"       = NOW();
 
 INSERT INTO "formSchemas" (
   "schemaId", "schemaName", "schemaType", "version",
