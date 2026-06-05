@@ -19,6 +19,8 @@ CREATE TABLE form_submissions (
     form_code           VARCHAR(100),                     -- logical form code (e.g. hiv_vl_documentation)
     form_schema_id      UUID,                             -- optional; FK declared after formSchemas reachable
     submission_data     JSONB DEFAULT '{}',               -- full original payload for provenance
+    -- import_batch_id intentionally has no ON DELETE clause: matches lab_requests
+    -- convention (default RESTRICT — batches with attached submissions cannot be deleted).
     import_batch_id     UUID REFERENCES import_batches(id),
     created_at          TIMESTAMPTZ DEFAULT NOW(),
     updated_at          TIMESTAMPTZ DEFAULT NOW(),
@@ -38,6 +40,9 @@ CREATE TRIGGER set_form_submissions_updated_at
     BEFORE UPDATE ON form_submissions
     FOR EACH ROW EXECUTE FUNCTION update_updated_at();
 
+-- form_responses is INSERT-ONLY by design: no updated_at column, no trigger.
+-- The persistence service treats responses as immutable per submission — on
+-- re-ingest it DELETEs the prior set and INSERTs the fresh one transactionally.
 CREATE TABLE form_responses (
     id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     submission_id   UUID NOT NULL REFERENCES form_submissions(id) ON DELETE CASCADE,
