@@ -289,6 +289,34 @@ export async function persistFormSubmissionToExternal(
         );
       }
 
+      // Normalize concept reference across the three shapes that reach here:
+      //   1. Production (post-resolver): the terminology service walked the
+      //      response's `concept_code` ref, wrote `concept_concept_id`, STRIPPED
+      //      the original `concept_code` field, and pushed a record into
+      //      `r._resolved_concepts` with { source_field, concept_id, system_id,
+      //      concept_code, display_name, ... }.
+      //   2. Pre-resolver object (defensive — mapper passed it through raw).
+      //   3. Unit tests: flat strings on r.concept_code / r.concept_system.
+      const conceptRes = Array.isArray(r._resolved_concepts)
+        ? r._resolved_concepts.find((e: any) => e?.source_field === "concept_code")
+        : null;
+      let conceptCodeStr: string | null = null;
+      let conceptSystemStr: string | null = null;
+      let conceptId: string | null = null;
+      if (conceptRes) {
+        conceptCodeStr   = normalizeNullableString(conceptRes.concept_code);
+        conceptSystemStr = normalizeNullableString(conceptRes.system_id);
+        conceptId        = conceptRes.concept_id ?? null;
+      } else if (r.concept_code && typeof r.concept_code === "object") {
+        conceptCodeStr   = normalizeNullableString(r.concept_code.concept_code);
+        conceptSystemStr = normalizeNullableString(r.concept_code.system_id);
+        conceptId        = r.concept_concept_id ?? r.concept_id ?? null;
+      } else {
+        conceptCodeStr   = normalizeNullableString(r.concept_code);
+        conceptSystemStr = normalizeNullableString(r.concept_system);
+        conceptId        = r.concept_id ?? null;
+      }
+
       await client.query(
         `INSERT INTO form_responses
            (submission_id, concept_id, concept_code, concept_system,
@@ -297,9 +325,9 @@ export async function persistFormSubmissionToExternal(
          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10::jsonb)`,
         [
           submissionId,
-          r.concept_id ?? null,
-          normalizeNullableString(r.concept_code),
-          normalizeNullableString(r.concept_system),
+          conceptId,
+          conceptCodeStr,
+          conceptSystemStr,
           valueType,
           valueType === "numeric" && r.numeric_value != null ? Number(r.numeric_value) : null,
           valueType === "text"    ? (r.text_value ?? null)                              : null,
