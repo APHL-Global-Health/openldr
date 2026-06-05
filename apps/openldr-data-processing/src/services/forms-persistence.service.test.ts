@@ -48,8 +48,12 @@ test("persistFormSubmissionToExternal writes submission + responses", async () =
         source_system: "disa",
         form_code: "hiv_vl_documentation",
         submitted_at: "2019-01-25T09:49:00",
-        patient: { patient_guid: "TEST-PAT" },
-        facility_concept_id: facilityId,
+        patient: { patient_guid: "TEST-PAT-GUID-001" },
+        facility_code: {
+          system_id: "DEFAULT_FAC", concept_code: "TEST-FAC-001",
+          display_name: "Test Facility",
+          concept_class: "facility", datatype: "coded",
+        },
         responses: [
           {
             concept_id: null, concept_code: "ARTRS", concept_system: "DEFAULT_RESULT",
@@ -61,7 +65,7 @@ test("persistFormSubmissionToExternal writes submission + responses", async () =
           },
         ],
       },
-      _metadata: { facility: { facility_id: facilityId } },
+      _metadata: { facility: { facility_code: "TEST-FAC-001", facility_name: "Test Facility" } },
       _resolved_patient_id: patientId,
     },
     dataFeed: { dataFeedId: "00000000-0000-0000-0001-000000000005" } as any,
@@ -98,8 +102,12 @@ test("persistFormSubmissionToExternal is idempotent on (external_ref, facility_i
         external_ref: externalRef,
         source_system: "disa",
         form_code: "hiv_vl_documentation",
-        patient: { patient_guid: "TEST-PAT" },
-        facility_concept_id: facilityId,
+        patient: { patient_guid: "TEST-PAT-GUID-001" },
+        facility_code: {
+          system_id: "DEFAULT_FAC", concept_code: "TEST-FAC-001",
+          display_name: "Test Facility",
+          concept_class: "facility", datatype: "coded",
+        },
         responses: [
           {
             concept_code: "ARTRS", concept_system: "DEFAULT_RESULT",
@@ -107,7 +115,7 @@ test("persistFormSubmissionToExternal is idempotent on (external_ref, facility_i
           },
         ],
       },
-      _metadata: { facility: { facility_id: facilityId } },
+      _metadata: { facility: { facility_code: "TEST-FAC-001", facility_name: "Test Facility" } },
       _resolved_patient_id: patientId,
     },
     dataFeed: { dataFeedId: "00000000-0000-0000-0001-000000000005" } as any,
@@ -158,8 +166,12 @@ test("related_request_id resolves when lab_requests row exists with the ref", as
         related_request_id: LAB_REQ_REQUEST_ID,
         source_system: "disa",
         form_code: "hiv_vl_documentation",
-        patient: { patient_guid: "TEST-PAT" },
-        facility_concept_id: facilityId,
+        patient: { patient_guid: "TEST-PAT-GUID-001" },
+        facility_code: {
+          system_id: "DEFAULT_FAC", concept_code: "TEST-FAC-001",
+          display_name: "Test Facility",
+          concept_class: "facility", datatype: "coded",
+        },
         responses: [
           {
             concept_code: "X", concept_system: "S",
@@ -167,7 +179,7 @@ test("related_request_id resolves when lab_requests row exists with the ref", as
           },
         ],
       },
-      _metadata: { facility: { facility_id: facilityId } },
+      _metadata: { facility: { facility_code: "TEST-FAC-001", facility_name: "Test Facility" } },
       _resolved_patient_id: patientId,
     },
     dataFeed: { dataFeedId: "00000000-0000-0000-0001-000000000005" } as any,

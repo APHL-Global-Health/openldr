@@ -22,6 +22,13 @@ function normalizeNullableString(value: any): string | null {
   return s.length > 0 ? s : null;
 }
 
+function normalizeCode(value: any, maxLength = 3): string | null {
+  const text = normalizeNullableString(value);
+  if (!text) return null;
+  const normalized = text.toUpperCase();
+  return normalized.length <= maxLength ? normalized : null;
+}
+
 function toIsoTimestamp(value: any): string | null {
   if (!value) return null;
   const d = new Date(value);
@@ -30,6 +37,107 @@ function toIsoTimestamp(value: any): string | null {
 
 function asJson(value: any): string {
   return JSON.stringify(value ?? {});
+}
+
+// ---------------------------------------------------------------------------
+// Facility upsert — mirrors upsertFacility in external-persistence.service.ts
+// but reads from the FORMS submission envelope instead of the lab envelope.
+//
+// Resolution priority:
+//   1. submission._resolved_concepts entry with source_field === "facility_code"
+//   2. _metadata.facility.facility_code / .facility_name
+// ---------------------------------------------------------------------------
+
+async function upsertFormsFacility(
+  client: any,
+  message: any,
+): Promise<{ id: string }> {
+  // 1. Look for a resolved concept (written by the terminology service)
+  const resolvedFacility = (
+    message?.submission?._resolved_concepts ?? []
+  ).find((r: any) => r.source_field === "facility_code");
+
+  // 2. Raw facility_code block on submission (concept-ref shape from mapper)
+  const rawFacilityBlock = message?.submission?.facility_code ?? {};
+
+  const facilityCode =
+    normalizeNullableString(resolvedFacility?.concept_code) ||
+    normalizeNullableString(rawFacilityBlock?.concept_code) ||
+    normalizeNullableString(message?._metadata?.facility?.facility_code);
+
+  const facilityName =
+    normalizeNullableString(resolvedFacility?.display_name) ||
+    normalizeNullableString(rawFacilityBlock?.display_name) ||
+    normalizeNullableString(message?._metadata?.facility?.facility_name) ||
+    facilityCode;
+
+  if (!facilityCode || !facilityName) {
+    throw new Error(
+      "forms persistence: cannot upsert facility — no facility_code resolved from submission",
+    );
+  }
+
+  const facilityConceptId =
+    normalizeNullableString(message?.submission?.facility_concept_id) ?? null;
+
+  const countryCode  = normalizeCode(message?._metadata?.facility?.country_code,  3);
+  const provinceCode = normalizeCode(message?._metadata?.facility?.province_code, 3);
+  const cityCode     = normalizeCode(message?._metadata?.facility?.district_code,  3);
+
+  const metadata = {
+    source_data_feed_id:     message?._metadata?.data_feed_id ?? null,
+    source_metadata_facility: message?._metadata?.facility ?? null,
+    concept: facilityConceptId ? { facility_concept_id: facilityConceptId } : null,
+  };
+
+  const sql = `
+    INSERT INTO facilities (
+      facility_code,
+      facility_name,
+      facility_type,
+      country_code,
+      region,
+      district,
+      province,
+      city,
+      address,
+      metadata,
+      facility_concept_id,
+      updated_at
+    ) VALUES (
+      $1,$2,$3,$4,$5,$6,$7,$8,$9,$10::jsonb,$11,NOW()
+    )
+    ON CONFLICT (facility_code)
+    DO UPDATE SET
+      facility_name        = EXCLUDED.facility_name,
+      facility_type        = COALESCE(EXCLUDED.facility_type,        facilities.facility_type),
+      country_code         = COALESCE(EXCLUDED.country_code,         facilities.country_code),
+      region               = COALESCE(EXCLUDED.region,               facilities.region),
+      district             = COALESCE(EXCLUDED.district,             facilities.district),
+      province             = COALESCE(EXCLUDED.province,             facilities.province),
+      city                 = COALESCE(EXCLUDED.city,                 facilities.city),
+      address              = COALESCE(EXCLUDED.address,              facilities.address),
+      facility_concept_id  = COALESCE(EXCLUDED.facility_concept_id,  facilities.facility_concept_id),
+      metadata             = COALESCE(facilities.metadata, '{}'::jsonb) || EXCLUDED.metadata,
+      updated_at           = NOW()
+    RETURNING id;
+  `;
+
+  const result = await client.query(sql, [
+    facilityCode,
+    facilityName,
+    null,                                  // facility_type — not in forms submission
+    normalizeNullableString(countryCode),
+    null,                                  // region
+    null,                                  // district
+    normalizeNullableString(provinceCode),
+    normalizeNullableString(cityCode),
+    null,                                  // address
+    asJson(metadata),
+    facilityConceptId,
+  ]);
+
+  return result.rows[0] as { id: string };
 }
 
 // ---------------------------------------------------------------------------
@@ -49,22 +157,13 @@ function asJson(value: any): string {
  *
  * Patient is upserted inline (same pattern as persistProcessedMessageToExternal)
  * because the mapper plugin runs in a sandboxed VM with no DB access.
- * facility_id comes from _metadata.facility.facility_id populated by the
- * storage handler's enrichMessageWithMetadata call before persistence runs.
+ * Facility is upserted inline via upsertFormsFacility (reads submission.facility_code
+ * concept-ref or _metadata.facility fallback) — dataFeed has no facilityId column.
  */
 export async function persistFormSubmissionToExternal(
   args: PersistFormsArgs,
 ): Promise<PersistFormsResult> {
   const sub = args.message?.submission ?? {};
-
-  const facilityId =
-    args.message?._metadata?.facility?.facility_id ??
-    args.message?._resolved_facility_id ??
-    sub.facility_concept_id;
-
-  if (!facilityId) {
-    throw new Error("forms persistence: missing facility_id after mapper");
-  }
 
   const externalRef   = String(sub.external_ref);
   const formCode      = normalizeNullableString(sub.form_code);
@@ -76,8 +175,16 @@ export async function persistFormSubmissionToExternal(
     await client.query("BEGIN");
 
     // ------------------------------------------------------------------
-    // 0. Upsert patient — mirrors persistProcessedMessageToExternal so the
-    //    mapper plugin (a sandboxed VM) never needs DB access.
+    // 0a. Upsert facility — same pattern as upsertFacility in
+    //     external-persistence.service.ts.  dataFeed has NO facilityId
+    //     column, so we derive the id from the submission's facility_code.
+    // ------------------------------------------------------------------
+    const facilityRow = await upsertFormsFacility(client, args.message);
+    const facilityId  = facilityRow.id;
+
+    // ------------------------------------------------------------------
+    // 0b. Upsert patient — mirrors persistProcessedMessageToExternal so the
+    //     mapper plugin (a sandboxed VM) never needs DB access.
     // ------------------------------------------------------------------
     const patientGuid = normalizeNullableString(sub.patient?.patient_guid);
     if (!patientGuid) {
