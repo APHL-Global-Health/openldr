@@ -46,6 +46,11 @@ function asJson(value: any): string {
  * related_request_id is resolved by looking up lab_requests.request_id at the
  * same facility matching submission.related_request_id.  When no row is found
  * the FK is left NULL but the raw ref is always stored in related_request_ref.
+ *
+ * Patient is upserted inline (same pattern as persistProcessedMessageToExternal)
+ * because the mapper plugin runs in a sandboxed VM with no DB access.
+ * facility_id comes from _metadata.facility.facility_id populated by the
+ * storage handler's enrichMessageWithMetadata call before persistence runs.
  */
 export async function persistFormSubmissionToExternal(
   args: PersistFormsArgs,
@@ -57,15 +62,8 @@ export async function persistFormSubmissionToExternal(
     args.message?._resolved_facility_id ??
     sub.facility_concept_id;
 
-  const patientId =
-    args.message?._resolved_patient_id ??
-    args.message?._metadata?.patient?.patient_id;
-
   if (!facilityId) {
     throw new Error("forms persistence: missing facility_id after mapper");
-  }
-  if (!patientId) {
-    throw new Error("forms persistence: missing patient_id after mapper");
   }
 
   const externalRef   = String(sub.external_ref);
@@ -76,6 +74,43 @@ export async function persistFormSubmissionToExternal(
   const client = await externalPool.connect();
   try {
     await client.query("BEGIN");
+
+    // ------------------------------------------------------------------
+    // 0. Upsert patient — mirrors persistProcessedMessageToExternal so the
+    //    mapper plugin (a sandboxed VM) never needs DB access.
+    // ------------------------------------------------------------------
+    const patientGuid = normalizeNullableString(sub.patient?.patient_guid);
+    if (!patientGuid) {
+      throw new Error("forms persistence: missing submission.patient.patient_guid");
+    }
+    const patientUpsert = await client.query<{ id: string }>(
+      `INSERT INTO patients
+         (patient_guid, facility_id, surname, firstname, date_of_birth,
+          sex, national_id, patient_data, source_system, updated_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8::jsonb, $9, NOW())
+       ON CONFLICT (patient_guid, facility_id) DO UPDATE
+         SET surname      = COALESCE(EXCLUDED.surname,     patients.surname),
+             firstname    = COALESCE(EXCLUDED.firstname,   patients.firstname),
+             date_of_birth= COALESCE(EXCLUDED.date_of_birth, patients.date_of_birth),
+             sex          = COALESCE(EXCLUDED.sex,         patients.sex),
+             national_id  = COALESCE(EXCLUDED.national_id, patients.national_id),
+             patient_data = COALESCE(patients.patient_data, '{}'::jsonb) || EXCLUDED.patient_data,
+             source_system= EXCLUDED.source_system,
+             updated_at   = NOW()
+       RETURNING id`,
+      [
+        patientGuid,
+        facilityId,
+        normalizeNullableString(sub.patient?.surname),
+        normalizeNullableString(sub.patient?.firstname),
+        toIsoTimestamp(sub.patient?.date_of_birth) ?? null,
+        normalizeNullableString(sub.patient?.sex),
+        normalizeNullableString(sub.patient?.national_id),
+        JSON.stringify(sub.patient ?? {}),
+        normalizeNullableString(sub.source_system),
+      ],
+    );
+    const patientId = patientUpsert.rows[0].id;
 
     // ------------------------------------------------------------------
     // 1. Resolve related_request_id (optional FK to lab_requests)
