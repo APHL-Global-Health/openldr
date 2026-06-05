@@ -6,7 +6,7 @@
   "author": "Association of Public Health Laboratories (APHL)",
   "license": "Apache-2.0",
   "dependencies": {
-    "@repo/openldr-core": "*",
+    "@repo/openldr-core": "workspace:*",
     "ts-node": "^10.9.2"
   },
   "devDependencies": {

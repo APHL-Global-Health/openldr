@@ -326,7 +326,7 @@ All endpoints are prefixed with `/api/v1`.
 ## Prerequisites
 
 - **Node.js** >= 18
-- **pnpm** >= 10 (the monorepo pins `pnpm@10.33.0` via `packageManager`; run `corepack enable` once to activate it automatically)
+- **pnpm** >= 10 (the monorepo pins `pnpm@11.5.1` via `packageManager`; run `corepack enable` once to activate it automatically)
 - **PostgreSQL** with the `openldr_external` database initialized
 - **Docker** and **Docker Compose** (for containerized deployment)
 

@@ -94,7 +94,7 @@
     "jszip": "^3.10.1",
     "keycloak-js": "^26.2.2",
     "lucide-react": "^0.562.0",
-    "minio": "*",
+    "minio": "workspace:*",
     "motion-dom": "^12.38.0",
     "next-themes": "^0.4.6",
     "papaparse": "^5.5.3",
@@ -123,7 +123,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.39.2",
-    "@openldr/extensions": "*",
+    "@openldr/extensions": "workspace:*",
     "@types/d3": "^7.4.3",
     "@types/express": "^4.17.25",
     "@types/node": "^24.10.9",

@@ -10,10 +10,10 @@
     "docker:reset": "pnpm run copy:env && tsx ./docker-compose.ts down --rmi all -v --remove-orphans && rimraf ./.env"
   },
   "devDependencies": {
-    "@openldr/mcp-server": "*",
-    "@repo/eslint-config": "*",
-    "@repo/openldr-core": "*",
-    "@repo/typescript-config": "*",
+    "@openldr/mcp-server": "workspace:*",
+    "@repo/eslint-config": "workspace:*",
+    "@repo/openldr-core": "workspace:*",
+    "@repo/typescript-config": "workspace:*",
     "@types/node": "^24.2.0",
     "eslint": "^9.39.2",
     "typescript": "^5.8.3",

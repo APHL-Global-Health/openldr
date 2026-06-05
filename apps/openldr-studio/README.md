@@ -105,7 +105,7 @@ Keycloak-based authentication with role-based access control and a dedicated log
 ## Prerequisites
 
 - **Node.js** >= 18
-- **pnpm** >= 10 (the root pins `pnpm@10.33.0` as `packageManager`; run `corepack enable` once to activate it)
+- **pnpm** >= 10 (the root pins `pnpm@11.5.1` as `packageManager`; run `corepack enable` once to activate it)
 - **Docker** (optional, for containerized deployment)
 - A running **Keycloak** instance (for authentication)
 - Access to the OpenLDR backend services (entity-services, data-processing, AI) -- typically through the API gateway

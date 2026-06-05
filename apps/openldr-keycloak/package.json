@@ -21,10 +21,10 @@
     "uuid": "^14.0.0"
   },
   "devDependencies": {
-    "@openldr/gateway": "*",
-    "@repo/eslint-config": "*",
-    "@repo/openldr-core": "*",
-    "@repo/typescript-config": "*",
+    "@openldr/gateway": "workspace:*",
+    "@repo/eslint-config": "workspace:*",
+    "@repo/openldr-core": "workspace:*",
+    "@repo/typescript-config": "workspace:*",
     "@types/dockerode": "^4.0.1",
     "@types/node": "^24.2.0",
     "eslint": "^9.39.2",

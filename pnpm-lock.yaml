@@ -19,10 +19,10 @@ importers:
         version: 2.9.14
     devDependencies:
       '@repo/eslint-config':
-        specifier: '*'
+        specifier: workspace:*
         version: link:packages/eslint-config
       '@repo/typescript-config':
-        specifier: '*'
+        specifier: workspace:*
         version: link:packages/typescript-config
     optionalDependencies:
       '@rollup/rollup-linux-x64-gnu':
@@ -42,16 +42,16 @@ importers:
         version: 4.22.0
     devDependencies:
       '@openldr/mcp-server':
-        specifier: '*'
+        specifier: workspace:*
         version: link:../openldr-mcp-server
       '@repo/eslint-config':
-        specifier: '*'
+        specifier: workspace:*
         version: link:../../packages/eslint-config
       '@repo/openldr-core':
-        specifier: '*'
+        specifier: workspace:*
         version: link:../../packages/openldr-core
       '@repo/typescript-config':
-        specifier: '*'
+        specifier: workspace:*
         version: link:../../packages/typescript-config
       '@types/node':
         specifier: ^24.2.0
@@ -106,7 +106,7 @@ importers:
         version: 4.4.3
     devDependencies:
       '@repo/typescript-config':
-        specifier: '*'
+        specifier: workspace:*
         version: link:../../packages/typescript-config
       '@types/node':
         specifier: ^24.7.0
@@ -163,7 +163,7 @@ importers:
         specifier: ^2.2.4
         version: 2.2.4
       minio:
-        specifier: '*'
+        specifier: workspace:*
         version: link:../../packages/minio-js
       morgan:
         specifier: ^1.10.1
@@ -185,16 +185,16 @@ importers:
         version: 1.14.1
     devDependencies:
       '@openldr/entity-services':
-        specifier: '*'
+        specifier: workspace:*
         version: link:../openldr-entity-services
       '@repo/eslint-config':
-        specifier: '*'
+        specifier: workspace:*
         version: link:../../packages/eslint-config
       '@repo/openldr-core':
-        specifier: '*'
+        specifier: workspace:*
         version: link:../../packages/openldr-core
       '@repo/typescript-config':
-        specifier: '*'
+        specifier: workspace:*
         version: link:../../packages/typescript-config
       '@types/compression':
         specifier: ^1.8.1
@@ -245,7 +245,7 @@ importers:
         specifier: ^3.5.1
         version: 3.6.0
       '@repo/openldr-core':
-        specifier: '*'
+        specifier: workspace:*
         version: link:../../packages/openldr-core
       adm-zip:
         specifier: ^0.5.16
@@ -278,7 +278,7 @@ importers:
         specifier: ^1.5.0
         version: 1.5.0
       minio:
-        specifier: '*'
+        specifier: workspace:*
         version: link:../../packages/minio-js
       morgan:
         specifier: ^1.10.1
@@ -309,16 +309,16 @@ importers:
         version: 4.4.3
     devDependencies:
       '@openldr/extensions':
-        specifier: '*'
+        specifier: workspace:*
         version: link:../../packages/openldr-extensions
       '@openldr/external-database':
-        specifier: '*'
+        specifier: workspace:*
         version: link:../openldr-external-database
       '@repo/eslint-config':
-        specifier: '*'
+        specifier: workspace:*
         version: link:../../packages/eslint-config
       '@repo/typescript-config':
-        specifier: '*'
+        specifier: workspace:*
         version: link:../../packages/typescript-config
       '@types/adm-zip':
         specifier: ^0.5.7
@@ -372,7 +372,7 @@ importers:
   apps/openldr-external-database:
     dependencies:
       '@repo/openldr-core':
-        specifier: '*'
+        specifier: workspace:*
         version: link:../../packages/openldr-core
       axios:
         specifier: ^1.13.5
@@ -402,7 +402,7 @@ importers:
         specifier: ^8.1.0
         version: 8.1.0
       minio:
-        specifier: '*'
+        specifier: workspace:*
         version: link:../../packages/minio-js
       morgan:
         specifier: ^1.10.1
@@ -421,13 +421,13 @@ importers:
         version: 10.3.1
     devDependencies:
       '@openldr/minio':
-        specifier: '*'
+        specifier: workspace:*
         version: link:../openldr-minio
       '@repo/eslint-config':
-        specifier: '*'
+        specifier: workspace:*
         version: link:../../packages/eslint-config
       '@repo/typescript-config':
-        specifier: '*'
+        specifier: workspace:*
         version: link:../../packages/typescript-config
       '@types/compression':
         specifier: ^1.8.1
@@ -469,13 +469,13 @@ importers:
   apps/openldr-gateway:
     devDependencies:
       '@openldr/internal-database':
-        specifier: '*'
+        specifier: workspace:*
         version: link:../openldr-internal-database
       '@repo/eslint-config':
-        specifier: '*'
+        specifier: workspace:*
         version: link:../../packages/eslint-config
       '@repo/typescript-config':
-        specifier: '*'
+        specifier: workspace:*
         version: link:../../packages/typescript-config
       '@types/express':
         specifier: ^4.17.21
@@ -506,19 +506,19 @@ importers:
         version: 4.22.0
     devDependencies:
       '@openldr/kafka':
-        specifier: '*'
+        specifier: workspace:*
         version: link:../openldr-kafka
       '@openldr/keycloak':
-        specifier: '*'
+        specifier: workspace:*
         version: link:../openldr-keycloak
       '@openldr/minio':
-        specifier: '*'
+        specifier: workspace:*
         version: link:../openldr-minio
       '@repo/openldr-core':
-        specifier: '*'
+        specifier: workspace:*
         version: link:../../packages/openldr-core
       '@repo/typescript-config':
-        specifier: '*'
+        specifier: workspace:*
         version: link:../../packages/typescript-config
       '@types/node':
         specifier: ^24.2.0
@@ -540,16 +540,16 @@ importers:
         version: 4.22.0
     devDependencies:
       '@openldr/setup':
-        specifier: '*'
+        specifier: workspace:*
         version: link:../openldr-setup
       '@repo/eslint-config':
-        specifier: '*'
+        specifier: workspace:*
         version: link:../../packages/eslint-config
       '@repo/openldr-core':
-        specifier: '*'
+        specifier: workspace:*
         version: link:../../packages/openldr-core
       '@repo/typescript-config':
-        specifier: '*'
+        specifier: workspace:*
         version: link:../../packages/typescript-config
       '@types/dockerode':
         specifier: ^4.0.1
@@ -574,16 +574,16 @@ importers:
         version: 4.22.0
     devDependencies:
       '@openldr/opensearch':
-        specifier: '*'
+        specifier: workspace:*
         version: link:../openldr-opensearch
       '@repo/eslint-config':
-        specifier: '*'
+        specifier: workspace:*
         version: link:../../packages/eslint-config
       '@repo/openldr-core':
-        specifier: '*'
+        specifier: workspace:*
         version: link:../../packages/openldr-core
       '@repo/typescript-config':
-        specifier: '*'
+        specifier: workspace:*
         version: link:../../packages/typescript-config
       '@types/node':
         specifier: ^24.2.0
@@ -614,16 +614,16 @@ importers:
         version: 14.0.0
     devDependencies:
       '@openldr/gateway':
-        specifier: '*'
+        specifier: workspace:*
         version: link:../openldr-gateway
       '@repo/eslint-config':
-        specifier: '*'
+        specifier: workspace:*
         version: link:../../packages/eslint-config
       '@repo/openldr-core':
-        specifier: '*'
+        specifier: workspace:*
         version: link:../../packages/openldr-core
       '@repo/typescript-config':
-        specifier: '*'
+        specifier: workspace:*
         version: link:../../packages/typescript-config
       '@types/dockerode':
         specifier: ^4.0.1
@@ -659,7 +659,7 @@ importers:
         specifier: ^3.5.1
         version: 3.6.0
       '@repo/typescript-config':
-        specifier: '*'
+        specifier: workspace:*
         version: link:../../packages/typescript-config
       axios:
         specifier: ^1.13.2
@@ -680,7 +680,7 @@ importers:
         specifier: ^2.2.4
         version: 2.2.4
       minio:
-        specifier: '*'
+        specifier: workspace:*
         version: link:../../packages/minio-js
       pg:
         specifier: ^8.13.1
@@ -696,7 +696,7 @@ importers:
         specifier: ^0.21.0
         version: 0.21.2(@types/node@24.12.4)(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(typescript@5.9.3)
       '@openldr/data-processing':
-        specifier: '*'
+        specifier: workspace:*
         version: link:../openldr-data-processing
       '@types/cors':
         specifier: ^2.8.19
@@ -730,16 +730,16 @@ importers:
         version: 4.22.0
     devDependencies:
       '@openldr/kafka':
-        specifier: '*'
+        specifier: workspace:*
         version: link:../openldr-kafka
       '@repo/eslint-config':
-        specifier: '*'
+        specifier: workspace:*
         version: link:../../packages/eslint-config
       '@repo/openldr-core':
-        specifier: '*'
+        specifier: workspace:*
         version: link:../../packages/openldr-core
       '@repo/typescript-config':
-        specifier: '*'
+        specifier: workspace:*
         version: link:../../packages/typescript-config
       '@types/node':
         specifier: ^24.2.0
@@ -761,16 +761,16 @@ importers:
         version: 4.22.0
     devDependencies:
       '@openldr/keycloak':
-        specifier: '*'
+        specifier: workspace:*
         version: link:../openldr-keycloak
       '@repo/eslint-config':
-        specifier: '*'
+        specifier: workspace:*
         version: link:../../packages/eslint-config
       '@repo/openldr-core':
-        specifier: '*'
+        specifier: workspace:*
         version: link:../../packages/openldr-core
       '@repo/typescript-config':
-        specifier: '*'
+        specifier: workspace:*
         version: link:../../packages/typescript-config
       '@types/node':
         specifier: ^24.2.0
@@ -795,13 +795,13 @@ importers:
         version: 4.22.0
     devDependencies:
       '@repo/eslint-config':
-        specifier: '*'
+        specifier: workspace:*
         version: link:../../packages/eslint-config
       '@repo/openldr-core':
-        specifier: '*'
+        specifier: workspace:*
         version: link:../../packages/openldr-core
       '@repo/typescript-config':
-        specifier: '*'
+        specifier: workspace:*
         version: link:../../packages/typescript-config
       '@types/node':
         specifier: ^24.2.0
@@ -1041,7 +1041,7 @@ importers:
         specifier: ^0.562.0
         version: 0.562.0(react@19.2.6)
       minio:
-        specifier: '*'
+        specifier: workspace:*
         version: link:../../packages/minio-js
       motion-dom:
         specifier: ^12.38.0
@@ -1123,7 +1123,7 @@ importers:
         specifier: ^9.39.2
         version: 9.39.4
       '@openldr/extensions':
-        specifier: '*'
+        specifier: workspace:*
         version: link:../../packages/openldr-extensions
       '@types/d3':
         specifier: ^7.4.3
@@ -1274,7 +1274,7 @@ importers:
   packages/eslint-config:
     dependencies:
       minio:
-        specifier: '*'
+        specifier: workspace:*
         version: link:../minio-js
     devDependencies:
       '@eslint/js':
@@ -1532,7 +1532,7 @@ importers:
   packages/openldr-extensions:
     dependencies:
       '@repo/openldr-core':
-        specifier: '*'
+        specifier: workspace:*
         version: link:../openldr-core
       ts-node:
         specifier: ^10.9.2
@@ -1639,6 +1639,7 @@ packages:
   '@aws-sdk/core@3.974.10':
     resolution: {integrity: sha512-ZGFFlYynBR78Y/F8b/7y4i4sgW/iGwJSjoM7AZo5Et6vyr4/L0bunN+uzKMsvecCZyqcPp4RRK7Rs17l0kMujg==}
     engines: {node: '>=20.0.0'}
+    deprecated: Deprecated due to an error deserialization bug in JSON 1.0 protocol services, see https://github.com/aws/aws-sdk-js-v3/pull/8031. Newer version available.
 
   '@aws-sdk/crc64-nvme@3.972.8':
     resolution: {integrity: sha512-fVfUCL/Xh2zINYMPZvj+iBn6XWouQf0DAnjaWCI9MkmqXzL2Iy5FoQB8O7syFe6gN6AH1ecDDU58T51Ou0kFkA==}
@@ -8056,6 +8057,7 @@ packages:
   recharts@2.15.4:
     resolution: {integrity: sha512-UT/q6fwS3c1dHbXv2uFgYJ9BMFHu3fwnd7AYZaEQhXuYQ4hgsxLvsUXzGdKeZrW5xopzDCvuA2N41WJ88I7zIw==}
     engines: {node: '>=14'}
+    deprecated: 1.x and 2.x branches are no longer active. Bump to Recharts v3 to receive latest features and bugfixes. See https://github.com/recharts/recharts/wiki/3.0-migration-guide
     peerDependencies:
       react: ^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
       react-dom: ^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
@@ -10724,7 +10726,7 @@ snapshots:
     dependencies:
       '@floating-ui/dom': 1.7.6
       react: 18.3.1
-      react-dom: 18.3.1(react@18.3.1)
+      react-dom: 18.3.1(react@19.2.6)
 
   '@floating-ui/react-dom@2.1.8(react-dom@19.2.6(react@19.2.6))(react@19.2.6)':
     dependencies:
@@ -11017,10 +11019,10 @@ snapshots:
 
   '@mcp-ui/client@6.1.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
     dependencies:
-      '@modelcontextprotocol/ext-apps': 1.7.1(@modelcontextprotocol/sdk@1.29.0(zod@4.4.3))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(zod@3.25.76)
+      '@modelcontextprotocol/ext-apps': 1.7.1(@modelcontextprotocol/sdk@1.29.0(zod@3.25.76))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(zod@3.25.76)
       '@modelcontextprotocol/sdk': 1.29.0(zod@3.25.76)
       react: 18.3.1
-      react-dom: 18.3.1(react@18.3.1)
+      react-dom: 18.3.1(react@19.2.6)
       zod: 3.25.76
     transitivePeerDependencies:
       - '@cfworker/json-schema'
@@ -11059,14 +11061,14 @@ snapshots:
       '@microsoft/kiota-abstractions': 1.0.0-preview.100
       tslib: 2.8.1
 
-  '@modelcontextprotocol/ext-apps@1.7.1(@modelcontextprotocol/sdk@1.29.0(zod@4.4.3))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(zod@3.25.76)':
+  '@modelcontextprotocol/ext-apps@1.7.1(@modelcontextprotocol/sdk@1.29.0(zod@3.25.76))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(zod@3.25.76)':
     dependencies:
-      '@modelcontextprotocol/sdk': 1.29.0(zod@4.4.3)
+      '@modelcontextprotocol/sdk': 1.29.0(zod@3.25.76)
       '@standard-schema/spec': 1.1.0
       zod: 3.25.76
     optionalDependencies:
       react: 18.3.1
-      react-dom: 18.3.1(react@18.3.1)
+      react-dom: 18.3.1(react@19.2.6)
 
   '@modelcontextprotocol/inspector-cli@0.21.2(zod@3.25.76)':
     dependencies:
@@ -11082,7 +11084,7 @@ snapshots:
   '@modelcontextprotocol/inspector-client@0.21.2(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)':
     dependencies:
       '@mcp-ui/client': 6.1.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      '@modelcontextprotocol/ext-apps': 1.7.1(@modelcontextprotocol/sdk@1.29.0(zod@4.4.3))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(zod@3.25.76)
+      '@modelcontextprotocol/ext-apps': 1.7.1(@modelcontextprotocol/sdk@1.29.0(zod@3.25.76))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(zod@3.25.76)
       '@modelcontextprotocol/sdk': 1.29.0(zod@3.25.76)
       '@radix-ui/react-checkbox': 1.3.3(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@radix-ui/react-dialog': 1.1.15(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -11103,7 +11105,7 @@ snapshots:
       pkce-challenge: 4.1.0
       prismjs: 1.30.0
       react: 18.3.1
-      react-dom: 18.3.1(react@18.3.1)
+      react-dom: 18.3.1(react@19.2.6)
       react-simple-code-editor: 0.14.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       serve-handler: 6.1.7
       tailwind-merge: 2.6.1
@@ -11360,7 +11362,7 @@ snapshots:
     dependencies:
       '@radix-ui/react-primitive': 2.1.3(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       react: 18.3.1
-      react-dom: 18.3.1(react@18.3.1)
+      react-dom: 18.3.1(react@19.2.6)
     optionalDependencies:
       '@types/react': 19.2.14
       '@types/react-dom': 19.2.3(@types/react@19.2.14)
@@ -11429,7 +11431,7 @@ snapshots:
       '@radix-ui/react-use-previous': 1.1.1(@types/react@19.2.14)(react@18.3.1)
       '@radix-ui/react-use-size': 1.1.1(@types/react@19.2.14)(react@18.3.1)
       react: 18.3.1
-      react-dom: 18.3.1(react@18.3.1)
+      react-dom: 18.3.1(react@19.2.6)
     optionalDependencies:
       '@types/react': 19.2.14
       '@types/react-dom': 19.2.3(@types/react@19.2.14)
@@ -11473,7 +11475,7 @@ snapshots:
       '@radix-ui/react-primitive': 2.1.3(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@radix-ui/react-slot': 1.2.3(@types/react@19.2.14)(react@18.3.1)
       react: 18.3.1
-      react-dom: 18.3.1(react@18.3.1)
+      react-dom: 18.3.1(react@19.2.6)
     optionalDependencies:
       '@types/react': 19.2.14
       '@types/react-dom': 19.2.3(@types/react@19.2.14)
@@ -11550,7 +11552,7 @@ snapshots:
       '@radix-ui/react-use-controllable-state': 1.2.2(@types/react@19.2.14)(react@18.3.1)
       aria-hidden: 1.2.6
       react: 18.3.1
-      react-dom: 18.3.1(react@18.3.1)
+      react-dom: 18.3.1(react@19.2.6)
       react-remove-scroll: 2.7.2(@types/react@19.2.14)(react@18.3.1)
     optionalDependencies:
       '@types/react': 19.2.14
@@ -11598,7 +11600,7 @@ snapshots:
       '@radix-ui/react-use-callback-ref': 1.1.1(@types/react@19.2.14)(react@18.3.1)
       '@radix-ui/react-use-escape-keydown': 1.1.1(@types/react@19.2.14)(react@18.3.1)
       react: 18.3.1
-      react-dom: 18.3.1(react@18.3.1)
+      react-dom: 18.3.1(react@19.2.6)
     optionalDependencies:
       '@types/react': 19.2.14
       '@types/react-dom': 19.2.3(@types/react@19.2.14)
@@ -11649,7 +11651,7 @@ snapshots:
       '@radix-ui/react-primitive': 2.1.3(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@radix-ui/react-use-callback-ref': 1.1.1(@types/react@19.2.14)(react@18.3.1)
       react: 18.3.1
-      react-dom: 18.3.1(react@18.3.1)
+      react-dom: 18.3.1(react@19.2.6)
     optionalDependencies:
       '@types/react': 19.2.14
       '@types/react-dom': 19.2.3(@types/react@19.2.14)
@@ -11731,7 +11733,7 @@ snapshots:
     dependencies:
       '@radix-ui/react-primitive': 2.1.4(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       react: 18.3.1
-      react-dom: 18.3.1(react@18.3.1)
+      react-dom: 18.3.1(react@19.2.6)
     optionalDependencies:
       '@types/react': 19.2.14
       '@types/react-dom': 19.2.3(@types/react@19.2.14)
@@ -11864,7 +11866,7 @@ snapshots:
       '@radix-ui/react-use-controllable-state': 1.2.2(@types/react@19.2.14)(react@18.3.1)
       aria-hidden: 1.2.6
       react: 18.3.1
-      react-dom: 18.3.1(react@18.3.1)
+      react-dom: 18.3.1(react@19.2.6)
       react-remove-scroll: 2.7.2(@types/react@19.2.14)(react@18.3.1)
     optionalDependencies:
       '@types/react': 19.2.14
@@ -11906,7 +11908,7 @@ snapshots:
       '@radix-ui/react-use-size': 1.1.1(@types/react@19.2.14)(react@18.3.1)
       '@radix-ui/rect': 1.1.1
       react: 18.3.1
-      react-dom: 18.3.1(react@18.3.1)
+      react-dom: 18.3.1(react@19.2.6)
     optionalDependencies:
       '@types/react': 19.2.14
       '@types/react-dom': 19.2.3(@types/react@19.2.14)
@@ -11934,7 +11936,7 @@ snapshots:
       '@radix-ui/react-primitive': 2.1.3(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@radix-ui/react-use-layout-effect': 1.1.1(@types/react@19.2.14)(react@18.3.1)
       react: 18.3.1
-      react-dom: 18.3.1(react@18.3.1)
+      react-dom: 18.3.1(react@19.2.6)
     optionalDependencies:
       '@types/react': 19.2.14
       '@types/react-dom': 19.2.3(@types/react@19.2.14)
@@ -11954,7 +11956,7 @@ snapshots:
       '@radix-ui/react-compose-refs': 1.1.2(@types/react@19.2.14)(react@18.3.1)
       '@radix-ui/react-use-layout-effect': 1.1.1(@types/react@19.2.14)(react@18.3.1)
       react: 18.3.1
-      react-dom: 18.3.1(react@18.3.1)
+      react-dom: 18.3.1(react@19.2.6)
     optionalDependencies:
       '@types/react': 19.2.14
       '@types/react-dom': 19.2.3(@types/react@19.2.14)
@@ -11973,7 +11975,7 @@ snapshots:
     dependencies:
       '@radix-ui/react-slot': 1.2.3(@types/react@19.2.14)(react@18.3.1)
       react: 18.3.1
-      react-dom: 18.3.1(react@18.3.1)
+      react-dom: 18.3.1(react@19.2.6)
     optionalDependencies:
       '@types/react': 19.2.14
       '@types/react-dom': 19.2.3(@types/react@19.2.14)
@@ -11991,7 +11993,7 @@ snapshots:
     dependencies:
       '@radix-ui/react-slot': 1.2.4(@types/react@19.2.14)(react@18.3.1)
       react: 18.3.1
-      react-dom: 18.3.1(react@18.3.1)
+      react-dom: 18.3.1(react@19.2.6)
     optionalDependencies:
       '@types/react': 19.2.14
       '@types/react-dom': 19.2.3(@types/react@19.2.14)
@@ -12055,7 +12057,7 @@ snapshots:
       '@radix-ui/react-use-callback-ref': 1.1.1(@types/react@19.2.14)(react@18.3.1)
       '@radix-ui/react-use-controllable-state': 1.2.2(@types/react@19.2.14)(react@18.3.1)
       react: 18.3.1
-      react-dom: 18.3.1(react@18.3.1)
+      react-dom: 18.3.1(react@19.2.6)
     optionalDependencies:
       '@types/react': 19.2.14
       '@types/react-dom': 19.2.3(@types/react@19.2.14)
@@ -12117,7 +12119,7 @@ snapshots:
       '@radix-ui/react-visually-hidden': 1.2.3(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       aria-hidden: 1.2.6
       react: 18.3.1
-      react-dom: 18.3.1(react@18.3.1)
+      react-dom: 18.3.1(react@19.2.6)
       react-remove-scroll: 2.7.2(@types/react@19.2.14)(react@18.3.1)
     optionalDependencies:
       '@types/react': 19.2.14
@@ -12227,7 +12229,7 @@ snapshots:
       '@radix-ui/react-use-previous': 1.1.1(@types/react@19.2.14)(react@18.3.1)
       '@radix-ui/react-use-size': 1.1.1(@types/react@19.2.14)(react@18.3.1)
       react: 18.3.1
-      react-dom: 18.3.1(react@18.3.1)
+      react-dom: 18.3.1(react@19.2.6)
     optionalDependencies:
       '@types/react': 19.2.14
       '@types/react-dom': 19.2.3(@types/react@19.2.14)
@@ -12258,7 +12260,7 @@ snapshots:
       '@radix-ui/react-roving-focus': 1.1.11(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@radix-ui/react-use-controllable-state': 1.2.2(@types/react@19.2.14)(react@18.3.1)
       react: 18.3.1
-      react-dom: 18.3.1(react@18.3.1)
+      react-dom: 18.3.1(react@19.2.6)
     optionalDependencies:
       '@types/react': 19.2.14
       '@types/react-dom': 19.2.3(@types/react@19.2.14)
@@ -12294,7 +12296,7 @@ snapshots:
       '@radix-ui/react-use-layout-effect': 1.1.1(@types/react@19.2.14)(react@18.3.1)
       '@radix-ui/react-visually-hidden': 1.2.3(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       react: 18.3.1
-      react-dom: 18.3.1(react@18.3.1)
+      react-dom: 18.3.1(react@19.2.6)
     optionalDependencies:
       '@types/react': 19.2.14
       '@types/react-dom': 19.2.3(@types/react@19.2.14)
@@ -12375,7 +12377,7 @@ snapshots:
       '@radix-ui/react-use-controllable-state': 1.2.2(@types/react@19.2.14)(react@18.3.1)
       '@radix-ui/react-visually-hidden': 1.2.3(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       react: 18.3.1
-      react-dom: 18.3.1(react@18.3.1)
+      react-dom: 18.3.1(react@19.2.6)
     optionalDependencies:
       '@types/react': 19.2.14
       '@types/react-dom': 19.2.3(@types/react@19.2.14)
@@ -12519,7 +12521,7 @@ snapshots:
     dependencies:
       '@radix-ui/react-primitive': 2.1.3(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       react: 18.3.1
-      react-dom: 18.3.1(react@18.3.1)
+      react-dom: 18.3.1(react@19.2.6)
     optionalDependencies:
       '@types/react': 19.2.14
       '@types/react-dom': 19.2.3(@types/react@19.2.14)
@@ -13882,7 +13884,7 @@ snapshots:
       '@radix-ui/react-id': 1.1.1(@types/react@19.2.14)(react@18.3.1)
       '@radix-ui/react-primitive': 2.1.4(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       react: 18.3.1
-      react-dom: 18.3.1(react@18.3.1)
+      react-dom: 18.3.1(react@19.2.6)
     transitivePeerDependencies:
       - '@types/react'
       - '@types/react-dom'
@@ -16860,10 +16862,10 @@ snapshots:
       date-fns-jalali: 4.1.0-0
       react: 19.2.6
 
-  react-dom@18.3.1(react@18.3.1):
+  react-dom@18.3.1(react@19.2.6):
     dependencies:
       loose-envify: 1.4.0
-      react: 18.3.1
+      react: 19.2.6
       scheduler: 0.23.2
 
   react-dom@19.2.6(react@19.2.6):
@@ -16992,7 +16994,7 @@ snapshots:
   react-simple-code-editor@0.14.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1):
     dependencies:
       react: 18.3.1
-      react-dom: 18.3.1(react@18.3.1)
+      react-dom: 18.3.1(react@19.2.6)
 
   react-smooth@4.0.4(react-dom@19.2.6(react@19.2.6))(react@19.2.6):
     dependencies:

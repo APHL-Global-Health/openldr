@@ -16,10 +16,10 @@
     "tsx": "^4.21.0"
   },
   "devDependencies": {
-    "@openldr/setup": "*",
-    "@repo/openldr-core": "*",
-    "@repo/eslint-config": "*",
-    "@repo/typescript-config": "*",
+    "@openldr/setup": "workspace:*",
+    "@repo/openldr-core": "workspace:*",
+    "@repo/eslint-config": "workspace:*",
+    "@repo/typescript-config": "workspace:*",
     "@types/dockerode": "^4.0.1",
     "@types/node": "^24.2.0",
     "eslint": "^9.39.2",

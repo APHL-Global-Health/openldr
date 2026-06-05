@@ -39,7 +39,7 @@ tsx ./apps/openldr-setup/openldr.ts init
 ## Prerequisites
 
 - **Node.js** >= 18
-- **pnpm** >= 10 (the monorepo pins `pnpm@10.33.0` as `packageManager` in root `package.json`; run `corepack enable` once to activate it automatically)
+- **pnpm** >= 10 (the monorepo pins `pnpm@11.5.1` as `packageManager` in root `package.json`; run `corepack enable` once to activate it automatically)
 - **Docker** -- must be running; required for network creation and container management
 - **tsx** -- installed as a transitive dependency (no global install needed)
 

@@ -57,7 +57,7 @@ OpenLDR MinIO sits at the core of the data ingestion and processing pipeline:
 
 - **Node.js** >= 18
 - **Docker** (with Docker Compose v2 or v1)
-- **pnpm** 10+ (the monorepo pins `pnpm@10.33.0` via `packageManager`; run `corepack enable` once to activate it automatically)
+- **pnpm** 10+ (the monorepo pins `pnpm@11.5.1` via `packageManager`; run `corepack enable` once to activate it automatically)
 - The following sibling services should be available on the `openldr-network`:
   - `openldr-kafka` (for bucket event notifications)
   - `openldr-postgres` (for plugin metadata seeding)

@@ -14,10 +14,10 @@
     "start:services": "tsx openldr.ts start"
   },
   "devDependencies": {
-    "@openldr/opensearch": "*",
-    "@repo/eslint-config": "*",
-    "@repo/openldr-core": "*",
-    "@repo/typescript-config": "*",
+    "@openldr/opensearch": "workspace:*",
+    "@repo/eslint-config": "workspace:*",
+    "@repo/openldr-core": "workspace:*",
+    "@repo/typescript-config": "workspace:*",
     "@types/node": "^24.2.0",
     "eslint": "^9.39.2",
     "typescript": "^5.8.3",

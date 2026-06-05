@@ -78,7 +78,7 @@
 
 - Docker and Docker Compose
 - Node.js 24+ (for local development)
-- [pnpm](https://pnpm.io/) 10+ (the monorepo pins `pnpm@10.33.0` via `packageManager`; run `corepack enable` once to activate it automatically)
+- [pnpm](https://pnpm.io/) 10+ (the monorepo pins `pnpm@11.5.1` via `packageManager`; run `corepack enable` once to activate it automatically)
 - 16GB+ RAM recommended for running all services (in production)
 
 ### Quick Start

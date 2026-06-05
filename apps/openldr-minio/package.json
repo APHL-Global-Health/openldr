@@ -19,10 +19,10 @@
     "tsx": "^4.21.0"
   },
   "devDependencies": {
-    "@openldr/kafka": "*",
-    "@repo/eslint-config": "*",
-    "@repo/openldr-core": "*",
-    "@repo/typescript-config": "*",
+    "@openldr/kafka": "workspace:*",
+    "@repo/eslint-config": "workspace:*",
+    "@repo/openldr-core": "workspace:*",
+    "@repo/typescript-config": "workspace:*",
     "@types/node": "^24.2.0",
     "eslint": "^9.39.2",
     "typescript": "^5.8.3",
