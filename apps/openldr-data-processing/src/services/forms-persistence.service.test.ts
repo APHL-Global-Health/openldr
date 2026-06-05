@@ -12,9 +12,10 @@ import { externalPool } from "../lib/db.external.js";
 // facilities.UNIQUE is (facility_code).
 // lab_requests.UNIQUE is (request_id, obr_set_id, facility_id).
 
-const FACILITY_ID = "22222222-2222-2222-2222-222222222222";
-const PATIENT_ID  = "11111111-1111-1111-1111-111111111111";
-const LAB_REQ_ID  = "33333333-3333-3333-3333-333333333333";
+const FACILITY_ID          = "22222222-2222-2222-2222-222222222222";
+const PATIENT_ID           = "11111111-1111-1111-1111-111111111111";
+const LAB_REQ_ID           = "33333333-3333-3333-3333-333333333333";
+const LAB_REQ_REQUEST_ID   = "TEST-LAB-REQ-001";
 
 async function ensurePatientAndFacility() {
   // facilities NOT NULL: facility_code, facility_name
@@ -132,22 +133,29 @@ test("persistFormSubmissionToExternal is idempotent on (external_ref, facility_i
 
 test("related_request_id resolves when lab_requests row exists with the ref", async () => {
   const { patientId, facilityId } = await ensurePatientAndFacility();
+  // fresh external_ref each run so form_submissions never conflicts with prior runs
   const externalRef = `LINK-${Date.now()}`;
 
   // lab_requests NOT NULL: patient_id, facility_id, request_id
-  // UNIQUE: (request_id, obr_set_id, facility_id) — obr_set_id can be NULL
+  // UNIQUE (request_id, obr_set_id, facility_id) is unreliable as a conflict
+  // target here because obr_set_id is NULL and PG treats NULLs as distinct.
+  // Upsert by PK so the fixture converges to the correct request_id on every
+  // run regardless of prior state.
   await externalPool.query(
     `INSERT INTO lab_requests (id, patient_id, facility_id, request_id)
      VALUES ($1, $2, $3, $4)
-     ON CONFLICT (id) DO NOTHING`,
-    [LAB_REQ_ID, patientId, facilityId, externalRef],
+     ON CONFLICT (id) DO UPDATE
+       SET patient_id  = EXCLUDED.patient_id,
+           facility_id = EXCLUDED.facility_id,
+           request_id  = EXCLUDED.request_id`,
+    [LAB_REQ_ID, patientId, facilityId, LAB_REQ_REQUEST_ID],
   );
 
   const result = await persistFormSubmissionToExternal({
     message: {
       submission: {
         external_ref: externalRef,
-        related_request_id: externalRef,
+        related_request_id: LAB_REQ_REQUEST_ID,
         source_system: "disa",
         form_code: "hiv_vl_documentation",
         patient: { patient_guid: "TEST-PAT" },
@@ -173,7 +181,7 @@ test("related_request_id resolves when lab_requests row exists with the ref", as
     [result.recordIds.submissionId],
   );
   assert.equal(rows[0].related_request_id, LAB_REQ_ID);
-  assert.equal(rows[0].related_request_ref, externalRef);
+  assert.equal(rows[0].related_request_ref, LAB_REQ_REQUEST_ID);
 });
 
 test.after(async () => {

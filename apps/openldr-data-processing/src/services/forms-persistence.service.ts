@@ -122,7 +122,7 @@ export async function persistFormSubmissionToExternal(
     );
 
     const submissionId = upsert.rows[0].id;
-    const inserted     = upsert.rows[0].inserted as unknown as boolean;
+    const inserted     = upsert.rows[0].inserted;
 
     // ------------------------------------------------------------------
     // 3. Manage form_responses
