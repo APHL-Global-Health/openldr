@@ -8,6 +8,8 @@ import * as externalPersistenceService from "../../services/external-persistence
 import { logger } from "../../lib/logger";
 import * as messageTrackingService from "../../services/message.tracking.service";
 import { createStageError } from "../../lib/pipeline-error";
+import { isFormsEnvelope, validateCanonicalFormsRequirements } from "../../lib/forms-storage-validation";
+import * as formsPersistenceService from "../../services/forms-persistence.service";
 
 async function enrichMessageWithMetadata(
   messageContent: any,
@@ -202,7 +204,11 @@ export async function handleMessage(kafkaMessage: any) {
 
     const objectData = await readProjectObjectAsString(projectId, mappedName);
     const messageContent = JSON.parse(objectData);
-    validateCanonicalStorageRequirements(messageContent);
+    if (isFormsEnvelope(messageContent)) {
+      validateCanonicalFormsRequirements(messageContent);
+    } else {
+      validateCanonicalStorageRequirements(messageContent);
+    }
 
     const enrichedMessage = await enrichMessageWithMetadata(
       messageContent,
@@ -295,14 +301,21 @@ export async function handleMessage(kafkaMessage: any) {
 
     let persistenceResult: any;
     try {
-      persistenceResult =
-        await externalPersistenceService.persistProcessedMessageToExternal({
-          message: processedMessage,
-          dataFeed,
-          messageMetadata,
-          kafkaKey: key,
-          processedBody: bodyData,
-        });
+      persistenceResult = isFormsEnvelope(processedMessage)
+        ? await formsPersistenceService.persistFormSubmissionToExternal({
+            message: processedMessage,
+            dataFeed,
+            messageMetadata,
+            kafkaKey: key,
+            processedBody: bodyData,
+          })
+        : await externalPersistenceService.persistProcessedMessageToExternal({
+            message: processedMessage,
+            dataFeed,
+            messageMetadata,
+            kafkaKey: key,
+            processedBody: bodyData,
+          });
     } catch (error: any) {
       throw createStageError({
         stage: "storage",
