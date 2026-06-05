@@ -53,7 +53,7 @@ export function validateCanonicalFormsRequirements(message: any): void {
     throw createStageError({
       stage: "storage",
       code: "CANONICAL_FORMS_STORAGE_VALIDATION_FAILED",
-      message: `Forms storage validation failed: ${errors.join("; ")}`,
+      message: "Forms storage validation failed",
       details: { errors },
       retryable: false,
     });

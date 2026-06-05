@@ -31,7 +31,10 @@ test("rejects missing patient_guid", () => {
       responses: [{ concept_id: "c", value_type: "text", text_value: "v" }],
     },
   };
-  assert.throws(() => validateCanonicalFormsRequirements(msg), /patient_guid/);
+  assert.throws(
+    () => validateCanonicalFormsRequirements(msg),
+    (err: any) => err.details?.errors?.some((e: string) => /patient_guid/.test(e)),
+  );
 });
 
 test("rejects missing facility_concept_id (mapper must have resolved it)", () => {
@@ -42,7 +45,10 @@ test("rejects missing facility_concept_id (mapper must have resolved it)", () =>
       responses: [{ concept_id: "c", value_type: "text", text_value: "v" }],
     },
   };
-  assert.throws(() => validateCanonicalFormsRequirements(msg), /facility_concept_id/);
+  assert.throws(
+    () => validateCanonicalFormsRequirements(msg),
+    (err: any) => err.details?.errors?.some((e: string) => /facility_concept_id/.test(e)),
+  );
 });
 
 test("rejects response with unknown value_type", () => {
@@ -54,7 +60,10 @@ test("rejects response with unknown value_type", () => {
       responses: [{ value_type: "bogus" }],
     },
   };
-  assert.throws(() => validateCanonicalFormsRequirements(msg), /value_type/);
+  assert.throws(
+    () => validateCanonicalFormsRequirements(msg),
+    (err: any) => err.details?.errors?.some((e: string) => /value_type/.test(e)),
+  );
 });
 
 test("rejects empty responses array (a submission must carry at least one response)", () => {
@@ -66,5 +75,8 @@ test("rejects empty responses array (a submission must carry at least one respon
       responses: [],
     },
   };
-  assert.throws(() => validateCanonicalFormsRequirements(msg), /at least one response/);
+  assert.throws(
+    () => validateCanonicalFormsRequirements(msg),
+    (err: any) => err.details?.errors?.some((e: string) => /at least one response/.test(e)),
+  );
 });
