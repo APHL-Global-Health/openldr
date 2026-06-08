@@ -7,6 +7,14 @@
 -- quarantining for the missing specimen.
 -- ============================================================================
 
+-- These tables live in openldr_external. Their FK parents (patients, facilities,
+-- lab_requests, import_batches, concepts) and the update_updated_at() trigger
+-- function are all created in 02-openldr_external.sql, so connect there first.
+-- The postgres entrypoint runs each init file against the default POSTGRES_DB
+-- (openldr), so without this \c the foreign keys would resolve against the wrong
+-- database and fail.
+\c openldr_external
+
 CREATE TABLE form_submissions (
     id                  UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     patient_id          UUID NOT NULL REFERENCES patients(id),
