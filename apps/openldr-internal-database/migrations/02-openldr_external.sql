@@ -798,6 +798,7 @@ INSERT INTO coding_systems (system_code, system_name, system_uri, system_type, o
     ('DEFAULT_FAC',  'Default Facility Codes',                         NULL,                                  'external', NULL),
     ('DEFAULT_TEST', 'Default Test Codes',                             NULL,                                  'external', NULL),
     ('DEFAULT_RESULT', 'Default Result Codes',                         NULL,                                  'external', NULL),
+    ('DEFAULT_SPEC_ANOMALY', 'Anomalous Specimen Codes (recorded specimen may not apply to all ordered panels)', NULL, 'external', NULL),
     ('HL7_ORG',  'HL7 Organism Codes',                         'http://terminology.hl7.org',                                  'external', 'HL7 International'),
     ('HL7_ABX',  'HL7 Antibiotic Codes',                       'http://terminology.hl7.org',                                  'external', 'HL7 International'),
     ('HL7_SPEC', 'HL7 Specimen Codes',                         'http://terminology.hl7.org',                                  'external', 'HL7 International'),
