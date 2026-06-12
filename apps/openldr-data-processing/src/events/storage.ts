@@ -4,17 +4,19 @@ import { logger } from "../lib/logger";
 import { buildDlqBody } from "../lib/pipeline-error";
 import { resolveKafkaMessagePayload } from "../lib/dlq";
 import * as messageTrackingService from "../services/message.tracking.service";
+import { KAFKA_CLIENT_RETRY, CONSUMER_RETRY, scheduleRestart } from "../lib/kafka-resilience";
 
 export const start = async () => {
   try {
     const kafka = new Kafka({
       clientId: "openldr-storage",
       brokers: ["openldr-kafka1:19092"],
+      retry: KAFKA_CLIENT_RETRY,
     });
     const producer = kafka.producer();
     await producer.connect();
 
-    const consumer = kafka.consumer({ groupId: "openldr-storage-consumer" });
+    const consumer = kafka.consumer({ groupId: "openldr-storage-consumer", retry: CONSUMER_RETRY });
     await consumer.connect();
     await consumer.subscribe({ topic: "mapped-inbound", fromBeginning: true });
 
@@ -126,5 +128,6 @@ export const start = async () => {
       { error: err.message, stack: err.stack },
       "Storage service initialization failed",
     );
+    scheduleRestart(start, { name: "storage" });
   }
 };
